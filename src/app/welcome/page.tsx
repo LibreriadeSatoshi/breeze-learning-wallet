@@ -5,10 +5,16 @@ import { Button } from '@/components/ui/button';
 import { APP_NAME } from '@/lib/config';
 import { loginWithGitHub } from '@/lib/auth/github';
 import { useAuthStore } from '@/lib/auth/auth-store';
+import {
+  isDevelopment,
+  simulateAuthorizedLogin,
+  simulateUnauthorizedLogin,
+} from '@/lib/auth/mock-auth';
 
 export default function WelcomePage() {
   const [creatingWallet, setCreatingWallet] = useState(false);
-  const { githubUser, isAuthorized, authorizationChecked, clearAuth } = useAuthStore();
+  const { githubUser, isAuthorized, authorizationChecked, clearAuth, setGitHubAuth, setAuthorization } = useAuthStore();
+  const isDevMode = isDevelopment();
 
   const createWalletHandler = async () => {
     setCreatingWallet(true);
@@ -32,6 +38,20 @@ export default function WelcomePage() {
     if (confirm('Are you sure you want to log out?')) {
       clearAuth();
     }
+  };
+
+  // Dev-only: Simulate authorized login
+  const handleSimulateAuthorized = () => {
+    const mockData = simulateAuthorizedLogin();
+    setGitHubAuth(mockData.user, mockData.token);
+    setAuthorization(mockData.isAuthorized, mockData.userData);
+  };
+
+  // Dev-only: Simulate unauthorized login
+  const handleSimulateUnauthorized = () => {
+    const mockData = simulateUnauthorizedLogin();
+    setGitHubAuth(mockData.user, mockData.token);
+    setAuthorization(mockData.isAuthorized, mockData.userData);
   };
 
   // Determine if create wallet should be enabled
@@ -158,6 +178,43 @@ export default function WelcomePage() {
               </svg>
               Continue with GitHub
             </Button>
+
+            {/* Dev Mode: Simulate Login */}
+            {isDevMode && (
+              <>
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-dashed border-blue-300 dark:border-blue-700"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="px-2 bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 font-mono">
+                      DEV MODE
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSimulateAuthorized}
+                    disabled={creatingWallet}
+                    className="w-full text-xs border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/20"
+                  >
+                    🧪 Simulate Authorized User
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSimulateUnauthorized}
+                    disabled={creatingWallet}
+                    className="w-full text-xs border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                  >
+                    🧪 Simulate Unauthorized User
+                  </Button>
+                </div>
+              </>
+            )}
           </>
         )}
 
