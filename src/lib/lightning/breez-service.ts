@@ -28,7 +28,7 @@ async function getBreezApiKey(): Promise<string> {
   }
 
   cachedApiKey = data.apiKey;
-  return cachedApiKey;
+  return data.apiKey;
 }
 
 export interface SparkConfig {
