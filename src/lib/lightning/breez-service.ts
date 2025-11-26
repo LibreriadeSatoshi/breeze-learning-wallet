@@ -1,12 +1,35 @@
-import { BREEZ_API_KEY } from "@/lib/config";
 import type { SdkEvent } from "./sdk-events";
 
 let sdk: any = null;
 let eventListenerId: string | null = null;
 let isInitializing: boolean = false;
+let cachedApiKey: string | null = null;
 
 type EventCallback = (event: SdkEvent) => void;
 const eventCallbacks: EventCallback[] = [];
+
+/**
+ * Fetches the Breez API key from the server.
+ * This keeps the API key out of the client-side bundle.
+ */
+async function getBreezApiKey(): Promise<string> {
+  if (cachedApiKey) {
+    return cachedApiKey;
+  }
+
+  const response = await fetch('/api/breez/config');
+  if (!response.ok) {
+    throw new Error('Failed to fetch Breez API configuration');
+  }
+
+  const data = await response.json();
+  if (!data.apiKey) {
+    throw new Error('BREEZ_API_KEY is not configured. Please add it to your environment variables.');
+  }
+
+  cachedApiKey = data.apiKey;
+  return cachedApiKey;
+}
 
 export interface SparkConfig {
   network: "mainnet" | "regtest";
@@ -28,15 +51,12 @@ export async function initBreez(config: SparkConfig): Promise<void> {
   isInitializing = true;
 
   try {
-    if (!BREEZ_API_KEY) {
-      throw new Error(
-        "NEXT_PUBLIC_BREEZ_API_KEY is not configured. Please add it to your .env.local file."
-      );
-    }
+    // Fetch API key from server to avoid exposing it in client bundle
+    const apiKey = await getBreezApiKey();
 
     console.log("⚡ Initializing Breez SDK...");
     console.log("📡 Network:", config.network);
-    console.log("🔑 API Key configured:", !!BREEZ_API_KEY);
+    console.log("🔑 API Key configured:", !!apiKey);
 
     const breezSdkModule = await import("@breeztech/breez-sdk-spark");
 
@@ -59,7 +79,7 @@ export async function initBreez(config: SparkConfig): Promise<void> {
 
     const sdkConfig = defaultConfig(networkType);
 
-    sdkConfig.apiKey = BREEZ_API_KEY;
+    sdkConfig.apiKey = apiKey;
 
     console.log("⚙️ SDK Config created");
 
