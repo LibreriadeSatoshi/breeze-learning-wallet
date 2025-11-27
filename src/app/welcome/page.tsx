@@ -1,17 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/config";
 import { loginWithGitHub } from "@/lib/auth/github";
 import { useAuthStore } from "@/lib/auth/auth-store";
+import { useWalletStore } from "@/store/wallet-store";
 
 export default function WelcomePage() {
   const router = useRouter();
   const [creatingWallet, setCreatingWallet] = useState(false);
-  const { githubUser, isAuthorized, authorizationChecked, clearAuth } =
-    useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  const { githubUser, clearAuth } = useAuthStore();
+  const { isInitialized } = useWalletStore();
+
+  // Auto-redirect to wallet home if already logged in and wallet is initialized
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && githubUser && isInitialized) {
+      router.push("/wallet/home");
+    }
+  }, [mounted, githubUser, isInitialized, router]);
 
   const createWalletHandler = async () => {
     setCreatingWallet(true);
@@ -34,7 +48,7 @@ export default function WelcomePage() {
     }
   };
 
-  const canCreateWallet = githubUser && authorizationChecked && isAuthorized;
+  const canCreateWallet = !!githubUser;
 
   return (
     <div className="min-h-screen flex flex-col justify-between px-6 py-10">
@@ -47,13 +61,7 @@ export default function WelcomePage() {
                 alt={githubUser.login}
                 className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-700 cursor-pointer"
               />
-              <div
-                className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${
-                  authorizationChecked && isAuthorized
-                    ? "bg-green-500"
-                    : "bg-orange-500"
-                }`}
-              />
+              <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 bg-green-500" />
             </div>
 
             <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
@@ -74,21 +82,11 @@ export default function WelcomePage() {
                   </div>
                 </div>
 
-                {authorizationChecked && !isAuthorized && (
-                  <div className="mb-3 p-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 rounded">
-                    <p className="text-xs text-orange-800 dark:text-orange-300">
-                      ⚠️ Not authorized to create wallet
-                    </p>
-                  </div>
-                )}
-
-                {authorizationChecked && isAuthorized && (
-                  <div className="mb-3 p-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded">
-                    <p className="text-xs text-green-800 dark:text-green-300">
-                      ✅ Authorized
-                    </p>
-                  </div>
-                )}
+                <div className="mb-3 p-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded">
+                  <p className="text-xs text-green-800 dark:text-green-300">
+                    ✅ Logged in
+                  </p>
+                </div>
 
                 <button
                   onClick={handleLogout}

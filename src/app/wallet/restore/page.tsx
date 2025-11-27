@@ -13,7 +13,7 @@ export default function RestoreWalletPage() {
   const [error, setError] = useState('');
   const [isRestoring, setIsRestoring] = useState(false);
   
-  const { setTemporaryMnemonic, setInitialized } = useWalletStore();
+  const { setTemporaryMnemonic, setEncryptedMnemonic, setInitialized } = useWalletStore();
 
   const wordCount = mnemonic.trim().split(/\s+/).filter(Boolean).length;
 
@@ -36,12 +36,14 @@ export default function RestoreWalletPage() {
 
     try {
       const cleanedMnemonic = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
-      
+
       if (!validateMnemonic(cleanedMnemonic)) {
         throw new Error('Invalid recovery phrase. Please check the words and try again.');
       }
 
+      // Store mnemonic for use throughout the session and persist it
       setTemporaryMnemonic(cleanedMnemonic);
+      setEncryptedMnemonic(cleanedMnemonic); // TODO: Encrypt this in production!
       setInitialized(true);
 
       await new Promise(resolve => setTimeout(resolve, 500));
