@@ -19,10 +19,12 @@ import {
 } from "@/hooks/use-breez";
 import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
+import { useAuthStore } from "@/lib/auth/auth-store";
 
 export default function WalletHomePage() {
   const router = useRouter();
   const { isInitialized, hasBackedUp } = useWalletStore();
+  const { githubUser, clearAuth } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
@@ -89,6 +91,13 @@ export default function WalletHomePage() {
     return onSdkEvent(handleEvent);
   }, [isReady, refresh]);
 
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to log out?")) {
+      clearAuth();
+      router.push("/welcome");
+    }
+  };
+
   if (!isInitialized) return null;
 
   const isLoading = balanceLoading || paymentsLoading;
@@ -134,6 +143,51 @@ export default function WalletHomePage() {
                 />
                 <span>{isReady ? "Connected" : "Offline"}</span>
               </div>
+              {githubUser && (
+                <div className="relative group">
+                  <div className="relative">
+                    <img
+                      src={githubUser.avatar_url}
+                      alt={githubUser.login}
+                      className="w-10 h-10 rounded-full border-2 border-white/30 cursor-pointer hover:border-white/50 transition-colors"
+                    />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-orange-500 bg-green-500" />
+                  </div>
+
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                    <div className="p-4">
+                      <div className="flex items-start gap-3 mb-3">
+                        <img
+                          src={githubUser.avatar_url}
+                          alt={githubUser.login}
+                          className="w-10 h-10 rounded-full"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate text-gray-900 dark:text-gray-100">
+                            {githubUser.name || githubUser.login}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                            {githubUser.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mb-3 p-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded">
+                        <p className="text-xs text-green-800 dark:text-green-300">
+                          ✅ Logged in
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 py-2 px-3 rounded transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <BalanceDisplay balanceMsat={balance?.channelsBalanceMsat ?? 0} />
