@@ -23,6 +23,8 @@ import { useAuthStore } from "@/lib/auth/auth-store";
 
 export default function WalletHomePage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
   const { isInitialized, hasBackedUp } = useWalletStore();
   const { githubUser, clearAuth } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
@@ -35,11 +37,17 @@ export default function WalletHomePage() {
     usePayments(isReady);
   const { refresh, isRefetching } = useRefreshLightning();
 
+  // Wait for client-side mount before checking store
   useEffect(() => {
-    if (!isInitialized) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Only redirect after component has mounted and store has hydrated
+    if (mounted && !isInitialized) {
       router.push("/welcome");
     }
-  }, [isInitialized, router]);
+  }, [mounted, isInitialized, router]);
 
   useEffect(() => {
     if (!isInitialized || isReady || initializing) return;
@@ -98,7 +106,8 @@ export default function WalletHomePage() {
     }
   };
 
-  if (!isInitialized) return null;
+  // Don't render until mounted to prevent hydration issues
+  if (!mounted || !isInitialized) return null;
 
   const isLoading = balanceLoading || paymentsLoading;
   const lastSyncText = lastSyncTime

@@ -15,7 +15,7 @@ export default function CreateWalletPage() {
   const [confirmed, setConfirmed] = useState(false);
   const [revealed, setRevealed] = useState(false);
 
-  const { setTemporaryMnemonic } = useWalletStore();
+  const { setTemporaryMnemonic, setEncryptedMnemonic } = useWalletStore();
 
   useEffect(() => {
     // Generate mnemonic on mount
@@ -25,8 +25,9 @@ export default function CreateWalletPage() {
   }, []);
 
   const handleContinue = () => {
-    // Store mnemonic temporarily for backup
+    // Store mnemonic for use throughout the session and persist it
     setTemporaryMnemonic(mnemonic);
+    setEncryptedMnemonic(mnemonic); // TODO: Encrypt this in production!
     // Go to cloud backup first (user can choose manual if they prefer)
     router.push('/wallet/cloud-backup');
   };

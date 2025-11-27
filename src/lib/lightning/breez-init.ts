@@ -19,17 +19,20 @@ export async function initializeBreezWallet(): Promise<InitResult> {
   try {
     console.log('🔌 Initializing Breez SDK...');
     console.log('📡 Network:', SELECTED_BITCOIN_NETWORK);
-    
-    const { temporaryMnemonic } = useWalletStore.getState();
-    
-    if (!temporaryMnemonic) {
+
+    const { temporaryMnemonic, encryptedMnemonic } = useWalletStore.getState();
+
+    // Use temporary mnemonic if available (during setup), otherwise use persisted encrypted mnemonic
+    const mnemonic = temporaryMnemonic || encryptedMnemonic;
+
+    if (!mnemonic) {
       throw new Error('Wallet not initialized. Please create or restore a wallet first.');
     }
-    
+
     await initBreez({
       network: SELECTED_BITCOIN_NETWORK as 'mainnet' | 'regtest',
       workingDir: './lightning-data',
-      mnemonic: temporaryMnemonic,
+      mnemonic: mnemonic,
     });
 
     console.log('✅ Breez SDK initialized');
