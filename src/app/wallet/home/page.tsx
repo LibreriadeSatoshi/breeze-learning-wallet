@@ -30,6 +30,9 @@ export default function WalletHomePage() {
   const [isReady, setIsReady] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [claiming, setClaiming] = useState(false);
+  const [rewardsClaimed, setRewardsClaimed] = useState(false);
+  const [claimedTransactions, setClaimedTransactions] = useState<any[]>([]);
 
   const { data: balance, isLoading: balanceLoading } =
     useLightningBalance(isReady);
@@ -104,6 +107,27 @@ export default function WalletHomePage() {
       clearAuth();
       router.push("/welcome");
     }
+  };
+
+  const handleClaimRewards = async () => {
+    setClaiming(true);
+
+    // Simulate claiming process with delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Create a single compound transaction for all rewards
+    const compoundTransaction = {
+      id: `learning-rewards-${Date.now()}`,
+      description: "Learning Rewards",
+      amountMsat: 1500000, // 1,500 sats total
+      paymentTime: Date.now(),
+      status: "succeeded",
+      paymentType: "received",
+    };
+
+    setClaimedTransactions([compoundTransaction]);
+    setRewardsClaimed(true);
+    setClaiming(false);
   };
 
   // Don't render until mounted to prevent hydration issues
@@ -263,16 +287,126 @@ export default function WalletHomePage() {
           </Button>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-8 text-gray-500">
-            Loading transactions...
-          </div>
-        ) : payments.length > 0 ? (
-          <TransactionList
-            payments={payments}
-            onPaymentClick={(payment) => console.log(payment)}
-          />
-        ) : null}
+        {/* Pending Rewards Section */}
+        {!rewardsClaimed && (
+          <Card className="mb-6 shadow-md border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎓</span>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Learning Rewards</h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Total Pending</p>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">1,500 sats</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900">
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">What is Bitcoin?</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Completed course</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-green-600 dark:text-green-400">+500 sats</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900">
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Understanding Lightning Network</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Completed course</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-green-600 dark:text-green-400">+750 sats</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900">
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Security Best Practices Challenge</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Completed challenge</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-green-600 dark:text-green-400">+250 sats</p>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleClaimRewards}
+                loading={claiming}
+                disabled={claiming}
+                className="w-full shadow-lg hover:shadow-xl transition-all"
+              >
+                {claiming ? "⏳ Claiming..." : "🎉 Claim 1,500 sats"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recent Activity */}
+        <Card className="mb-6">
+          <CardHeader>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Recent Activity</h3>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8 text-gray-500">
+                Loading transactions...
+              </div>
+            ) : (
+              <div>
+                {/* Show claimed transactions first */}
+                {claimedTransactions.length > 0 && (
+                  <div className="mb-4">
+                    {claimedTransactions.map((tx) => (
+                      <div
+                        key={tx.id}
+                        className="flex items-center justify-between p-4 mb-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                            <span className="text-xl">✓</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">
+                              {tx.description}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              {new Date(tx.paymentTime).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-green-600 dark:text-green-400">
+                            +{(tx.amountMsat / 1000).toLocaleString()} sats
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Show regular payments */}
+                {payments.length > 0 ? (
+                  <TransactionList
+                    payments={payments}
+                    onPaymentClick={(payment) => console.log(payment)}
+                  />
+                ) : !claimedTransactions.length ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No recent activity</p>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {isReady && (
           <Card className="mt-6 shadow-md border-gray-200 dark:border-gray-700">
