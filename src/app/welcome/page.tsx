@@ -101,44 +101,56 @@ export default function WelcomePage() {
       )}
 
       <div className="flex-1 flex flex-col items-center justify-end pb-20">
-        <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center mb-6">
-          <span className="text-4xl">₿</span>
+        <div className="relative mb-8">
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl transform transition-transform hover:scale-105">
+            <span className="text-5xl">🎓</span>
+          </div>
+          <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-br from-cyan-400 to-sky-500 rounded-xl flex items-center justify-center shadow-lg">
+            <span className="text-2xl">₿</span>
+          </div>
         </div>
-        <h1 className="text-4xl font-bold mb-4 text-center">{APP_NAME}</h1>
-        <p className="text-center text-gray-600 dark:text-gray-400 max-w-xs">
-          Your Bitcoin & Lightning wallet for sovereign payments
+        <h1 className="text-5xl font-bold mb-3 text-center bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+          {APP_NAME}
+        </h1>
+        <p className="text-lg font-medium text-center text-blue-600 dark:text-blue-400 mb-2">
+          Learn Bitcoin, Earn Rewards
+        </p>
+        <p className="text-center text-gray-600 dark:text-gray-400 max-w-sm px-4">
+          Your educational Bitcoin & Lightning wallet. Master Bitcoin fundamentals while earning sats through interactive lessons.
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center space-y-3 max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-center space-y-4 max-w-md mx-auto w-full px-6">
         <Button
           variant="primary"
           size="lg"
           onClick={createWalletHandler}
           loading={creatingWallet}
           disabled={!canCreateWallet}
-          className="w-full"
+          className="w-full shadow-lg hover:shadow-xl transition-shadow"
         >
-          {creatingWallet ? "Creating wallet..." : "Create new wallet"}
+          {creatingWallet ? "Creating wallet..." : "🚀 Create new wallet"}
         </Button>
 
         {!canCreateWallet && (
-          <p className="text-center text-sm text-gray-500">
-            {!githubUser
-              ? "Please login with GitHub to create a wallet"
-              : "You must be authorized to create a wallet"}
-          </p>
+          <div className="text-center py-2 px-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              {!githubUser
+                ? "👇 Login with GitHub to get started"
+                : "You must be authorized to create a wallet"}
+            </p>
+          </div>
         )}
 
         {!githubUser && (
           <>
-            <div className="relative my-4">
+            <div className="relative my-2">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
-                  or
+                <span className="px-3 bg-white dark:bg-gray-900 text-gray-500 font-medium">
+                  Get Started
                 </span>
               </div>
             </div>
@@ -148,7 +160,7 @@ export default function WelcomePage() {
               size="lg"
               onClick={handleGitHubLogin}
               disabled={creatingWallet}
-              className="w-full flex items-center justify-center gap-2"
+              className="w-full flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -162,19 +174,30 @@ export default function WelcomePage() {
           </>
         )}
 
+        <div className="relative my-2">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="px-2 bg-white dark:bg-gray-900 text-gray-400">
+              Already have a wallet?
+            </span>
+          </div>
+        </div>
+
         <Button
           variant="ghost"
           size="lg"
           onClick={restoreWalletHandler}
           disabled={creatingWallet}
-          className="w-full"
+          className="w-full hover:bg-gray-100 dark:hover:bg-gray-800"
         >
-          Restore wallet
+          🔑 Restore wallet
         </Button>
       </div>
 
-      <div className="text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="text-center pb-6">
+        <p className="text-xs text-gray-500 dark:text-gray-400 px-8">
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>

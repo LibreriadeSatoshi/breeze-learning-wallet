@@ -38,12 +38,17 @@ export default function CreateWalletPage() {
   };
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-6 bg-gradient-to-b from-orange-50 to-white dark:from-gray-900 dark:to-gray-900">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Your Recovery Phrase</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl mb-4 shadow-lg">
+            <span className="text-3xl">🔐</span>
+          </div>
+          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+            Your Recovery Phrase
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
             Write down these 12 words in order and keep them safe. You&apos;ll need them to recover your wallet.
           </p>
         </div>
@@ -61,7 +66,7 @@ export default function CreateWalletPage() {
                   <li>• Never share your recovery phrase with anyone</li>
                   <li>• Store it offline in a secure location</li>
                   <li>• Anyone with these words can access your funds</li>
-                  <li>• EttaWallet will never ask for your recovery phrase</li>
+                  <li>• Satoshi Scholar will never ask for your recovery phrase</li>
                 </ul>
               </div>
             </div>
@@ -101,22 +106,22 @@ export default function CreateWalletPage() {
 
         {/* Action Buttons */}
         {confirmed && (
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => router.back()}
-              className="flex-1"
-            >
-              Back
-            </Button>
+          <div className="flex flex-col gap-3">
             <Button
               variant="primary"
               size="lg"
               onClick={handleContinue}
-              className="flex-1"
+              className="w-full shadow-lg hover:shadow-xl transition-shadow"
             >
-              I&apos;ve Written It Down
+              ✅ I&apos;ve Written It Down
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => router.back()}
+              className="w-full"
+            >
+              ← Back
             </Button>
           </div>
         )}

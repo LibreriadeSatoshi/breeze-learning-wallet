@@ -118,11 +118,19 @@ export default function WalletHomePage() {
     : "Never";
 
   return (
-    <div className="min-h-screen">
-      <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white px-6 pt-6 pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 text-white px-6 pt-6 pb-20">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold">Wallet</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🎓</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">My Wallet</h1>
+                <p className="text-sm text-blue-100">Satoshi Scholar</p>
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() =>
@@ -205,22 +213,22 @@ export default function WalletHomePage() {
 
       <div className="max-w-4xl mx-auto px-6 -mt-12">
         {!hasBackedUp && (
-          <Card className="mb-6 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20">
+          <Card className="mb-6 border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950/20">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">⚠️</span>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-1">
                     Backup Your Wallet
                   </h3>
-                  <p className="text-sm text-orange-800 dark:text-orange-300 mb-3">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-3">
                     Secure your funds by backing up your recovery phrase.
                   </p>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/wallet/cloud-backup")}
-                    className="border-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/20"
+                    className="border-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/20"
                   >
                     Backup Now
                   </Button>
@@ -236,20 +244,22 @@ export default function WalletHomePage() {
             size="lg"
             onClick={() => router.push("/wallet/send")}
             disabled={!isReady}
-            className="h-24 flex flex-col gap-2"
+            className="h-28 flex flex-col gap-2 shadow-lg hover:shadow-xl transition-all"
           >
-            <span className="text-3xl">↑</span>
-            <span>Send</span>
+            <span className="text-4xl">⚡</span>
+            <span className="font-semibold">Send</span>
+            <span className="text-xs opacity-80">Pay Lightning Invoice</span>
           </Button>
           <Button
             variant="outline"
             size="lg"
             onClick={() => router.push("/wallet/receive")}
             disabled={!isReady}
-            className="h-24 flex flex-col gap-2"
+            className="h-28 flex flex-col gap-2 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
           >
-            <span className="text-3xl">↓</span>
-            <span>Receive</span>
+            <span className="text-4xl">📥</span>
+            <span className="font-semibold">Receive</span>
+            <span className="text-xs opacity-70">Get Paid</span>
           </Button>
         </div>
 
@@ -265,26 +275,32 @@ export default function WalletHomePage() {
         ) : null}
 
         {isReady && (
-          <Card className="mt-6">
+          <Card className="mt-6 shadow-md border-gray-200 dark:border-gray-700">
             <CardHeader>
-              <h3 className="font-semibold">Lightning Node</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⚡</span>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Lightning Node</h3>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between items-center">
                 <span className="text-gray-600 dark:text-gray-400">Status</span>
-                <span className="font-medium">Connected</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="font-medium text-green-700 dark:text-green-400">Connected</span>
+                </div>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">
                   Last Sync
                 </span>
-                <span className="font-medium">{lastSyncText}</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{lastSyncText}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">
                   Network
                 </span>
-                <span className="font-medium capitalize">
+                <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
                   {SELECTED_BITCOIN_NETWORK}
                 </span>
               </div>
@@ -293,13 +309,20 @@ export default function WalletHomePage() {
         )}
 
         {!isReady && (
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-            <p className="text-sm text-blue-900 dark:text-blue-200">
-              ⚡ <strong>Lightning Node:</strong>{" "}
-              {initializing ? "Initializing..." : "Connecting..."}
-            </p>
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-900 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="animate-pulse">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <p className="text-sm text-blue-900 dark:text-blue-200">
+                <strong>Lightning Node:</strong>{" "}
+                {initializing ? "Initializing..." : "Connecting..."}
+              </p>
+            </div>
           </div>
         )}
+
+        <div className="mt-8 pb-6"></div>
       </div>
     </div>
   );

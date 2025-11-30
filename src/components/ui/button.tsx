@@ -19,10 +19,10 @@ export function Button({
   const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
 
   const variantStyles = {
-    primary: 'bg-orange-500 text-white hover:bg-orange-600 focus-visible:ring-orange-500',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600',
     secondary: 'bg-gray-900 text-white hover:bg-gray-800 focus-visible:ring-gray-900',
-    outline: 'border-2 border-gray-300 bg-transparent hover:bg-gray-50 focus-visible:ring-gray-300',
-    ghost: 'bg-transparent hover:bg-gray-100 focus-visible:ring-gray-300',
+    outline: 'border-2 border-gray-300 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:ring-gray-300',
+    ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-gray-300',
   };
 
   const sizeStyles = {
