@@ -56,18 +56,23 @@ export default function RestoreWalletPage() {
   };
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            className="mb-4 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors inline-flex items-center gap-2 text-gray-600 dark:text-gray-400"
           >
-            ←
+            ← Back
           </button>
-          <div>
-            <h1 className="text-3xl font-bold">Restore Wallet</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl mb-4 shadow-lg">
+              <span className="text-3xl">🔑</span>
+            </div>
+            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Restore Wallet
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
               Enter your 12-word recovery phrase
             </p>
           </div>
@@ -89,12 +94,12 @@ export default function RestoreWalletPage() {
           </CardContent>
         </Card>
 
-        <Card className="mb-6">
+        <Card className="mb-6 shadow-lg">
           <CardHeader>
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Recovery Phrase</h2>
-              <span className={`text-sm px-2 py-1 rounded ${
-                wordCount === 12 
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recovery Phrase</h2>
+              <span className={`text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
+                wordCount === 12
                   ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
               }`}>
@@ -111,20 +116,25 @@ export default function RestoreWalletPage() {
                   setError('');
                 }}
                 placeholder="word1 word2 word3 ... word12"
-                className="w-full min-h-[120px] px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none font-mono text-sm"
+                className="w-full min-h-[140px] px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm transition-colors"
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
               />
               {error && (
-                <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+                <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>{error}</span>
+                  </p>
+                </div>
               )}
             </div>
 
             <Button
               variant="outline"
               onClick={handlePaste}
-              className="w-full flex items-center justify-center gap-2"
+              className="w-full flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               <span>📋</span>
               <span>Paste from Clipboard</span>
@@ -136,9 +146,9 @@ export default function RestoreWalletPage() {
               onClick={handleRestore}
               disabled={wordCount !== 12 || isRestoring}
               loading={isRestoring}
-              className="w-full"
+              className="w-full shadow-lg hover:shadow-xl transition-shadow"
             >
-              {isRestoring ? 'Restoring...' : 'Restore Wallet'}
+              {isRestoring ? '⏳ Restoring...' : '✅ Restore Wallet'}
             </Button>
           </CardContent>
         </Card>

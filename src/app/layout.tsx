@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Etta Wallet",
-  description: "Bitcoin & Lightning Wallet",
+  title: "Satoshi Scholar | Learn Bitcoin, Earn Rewards",
+  description: "Your educational Bitcoin & Lightning wallet. Learn about Bitcoin while earning sats through interactive lessons and challenges.",
+  keywords: ["Bitcoin", "Lightning Network", "Education", "Wallet", "Learn Bitcoin", "Cryptocurrency"],
 };
 
 export default function RootLayout({
@@ -31,6 +32,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="bg-gradient-to-r from-red-600 via-orange-600 to-red-600 text-white py-2 px-4 text-center sticky top-0 z-50 shadow-lg">
+          <div className="flex items-center justify-center gap-2 text-sm font-semibold">
+            <span className="text-lg">⚠️</span>
+            <span>UNDER CONSTRUCTION - DO NOT USE WITH REAL FUNDS - TESTNET ONLY</span>
+            <span className="text-lg">⚠️</span>
+          </div>
+        </div>
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
