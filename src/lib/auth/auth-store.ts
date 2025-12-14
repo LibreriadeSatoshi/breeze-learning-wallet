@@ -44,12 +44,15 @@ export const useAuthStore = create<AuthState>()(
           console.error('Error signing out from Supabase:', error);
         }
         
+        const { useWalletStore } = await import('@/store/wallet-store');
+        useWalletStore.getState().clearWallet();
+
         set({
-        githubUser: null,
-        githubToken: null,
-        isAuthorized: false,
-        authorizationChecked: false,
-        userData: null,
+          githubUser: null,
+          githubToken: null,
+          isAuthorized: false,
+          authorizationChecked: false,
+          userData: null,
         });
       },
     }),

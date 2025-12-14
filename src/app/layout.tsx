@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/providers/query-provider";
+import { AuthRedirect } from "@/components/auth/auth-redirect";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,7 +40,10 @@ export default function RootLayout({
             <span className="text-lg">⚠️</span>
           </div>
         </div>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <AuthRedirect />
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );
