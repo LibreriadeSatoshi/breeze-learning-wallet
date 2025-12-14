@@ -35,7 +35,7 @@ export default function RootLayout({
         <div className="bg-gradient-to-r from-red-600 via-orange-600 to-red-600 text-white py-2 px-4 text-center sticky top-0 z-50 shadow-lg">
           <div className="flex items-center justify-center gap-2 text-sm font-semibold">
             <span className="text-lg">⚠️</span>
-            <span>UNDER CONSTRUCTION - DO NOT USE WITH REAL FUNDS - TESTNET ONLY</span>
+            <span>UNDER CONSTRUCTION - DO NOT USE WITH REAL FUNDS - BREEZ REGTEST ONLY</span>
             <span className="text-lg">⚠️</span>
           </div>
         </div>

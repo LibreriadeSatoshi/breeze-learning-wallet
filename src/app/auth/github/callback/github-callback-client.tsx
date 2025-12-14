@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
-import { exchangeCodeForToken, getGitHubUser } from '@/lib/auth/github';
+import { supabase } from '@/lib/supabase/client';
+import { supabaseUserToGitHubUser } from '@/lib/auth/github';
 import { useAuthStore } from '@/lib/auth/auth-store';
 
 export function GitHubCallbackClient() {
@@ -18,62 +19,83 @@ export function GitHubCallbackClient() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const code = searchParams.get('code');
-        const state = searchParams.get('state');
-
-        if (!code || !state) {
-          throw new Error('Missing authorization code or state');
-        }
-
         setStatus('loading');
 
-        // Exchange code for token
-        const accessToken = await exchangeCodeForToken(code, state);
-        if (!accessToken) {
-          throw new Error('Failed to get access token');
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const code = hashParams.get('code') || searchParams.get('code');
+
+        if (code) {
+          const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (exchangeError) {
+            throw new Error(exchangeError.message || 'Failed to exchange code for session');
+          }
+
+          if (!sessionData.session) {
+            throw new Error('No session found after code exchange');
+          }
+
+          const user = sessionData.session.user;
+          setUserEmail(user.email || '');
+
+          const githubUser = supabaseUserToGitHubUser(user);
+          if (!githubUser) {
+            throw new Error('Failed to parse user data');
+          }
+
+          setGitHubAuth(githubUser, sessionData.session.access_token);
+
+          setStatus('checking');
+          const syncResponse = await fetch('/api/auth/sync-student', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: user.email,
+              githubUsername: githubUser.login,
+            }),
+          });
+
+          if (!syncResponse.ok) {
+            const errorData = await syncResponse.json();
+            throw new Error(errorData.error || 'Failed to sync student');
+          }
+
+          const syncData = await syncResponse.json();
+
+          if (!syncData.success) {
+            throw new Error('Failed to sync student to database');
+          }
+
+          setAuthorization(true, syncData.student);
+          setStatus('success');
+
+          setTimeout(() => {
+            router.push('/welcome');
+          }, 1500);
+        } else {
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+          if (sessionError || !sessionData.session) {
+            throw new Error('No authentication code or session found');
+          }
+
+          const user = sessionData.session.user;
+          setUserEmail(user.email || '');
+
+          const githubUser = supabaseUserToGitHubUser(user);
+          if (githubUser) {
+            setGitHubAuth(githubUser, sessionData.session.access_token);
+            setAuthorization(true, null);
+            setStatus('success');
+            setTimeout(() => {
+              router.push('/welcome');
+            }, 1500);
+          } else {
+            throw new Error('Failed to parse user data');
+          }
         }
-
-        // Get user profile
-        const user = await getGitHubUser(accessToken);
-        if (!user) {
-          throw new Error('Failed to get user profile');
-        }
-
-        // Store GitHub authentication
-        setGitHubAuth(user, accessToken);
-        setUserEmail(user.email);
-
-        // Check authorization in external database
-        setStatus('checking');
-        const authResponse = await fetch('/api/auth/check-authorization', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email: user.email }),
-        });
-
-        if (!authResponse.ok) {
-          throw new Error('Failed to check authorization');
-        }
-
-        const authData = await authResponse.json();
-
-        if (!authData.authorized) {
-          // Email not authorized
-          setAuthorization(false);
-          setStatus('unauthorized');
-          return;
-        }
-
-        // Email is authorized
-        setAuthorization(true, authData.userData);
-        setStatus('success');
-
-        // Redirect to welcome page (with auth context)
-        setTimeout(() => {
-          router.push('/welcome');
-        }, 1500);
       } catch (err: unknown) {
         console.error('GitHub callback error:', err);
         const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
@@ -107,9 +129,9 @@ export function GitHubCallbackClient() {
                 <div className="mb-4">
                   <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Checking Authorization</h2>
+                <h2 className="text-xl font-semibold mb-2">Setting Up Your Account</h2>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Verifying your email: {userEmail}
+                  Syncing your account: {userEmail}
                 </p>
               </>
             )}
@@ -120,10 +142,10 @@ export function GitHubCallbackClient() {
                   <span className="text-6xl">&#10004;</span>
                 </div>
                 <h2 className="text-xl font-semibold text-green-600 dark:text-green-400 mb-2">
-                  Authorization Successful!
+                  Account Ready!
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-2">
-                  Welcome! Your email is authorized.
+                  Your account has been synced successfully.
                 </p>
                 <p className="text-sm text-gray-500">
                   Redirecting to wallet...
@@ -147,7 +169,6 @@ export function GitHubCallbackClient() {
                 </p>
                 <button
                   onClick={() => {
-                    // Clear auth and go back to welcome
                     useAuthStore.getState().clearAuth();
                     router.push('/welcome');
                   }}

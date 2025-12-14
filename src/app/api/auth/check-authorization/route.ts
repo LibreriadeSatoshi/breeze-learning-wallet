@@ -1,13 +1,6 @@
-/**
- * Email Authorization Check API
- * Checks if user's email is authorized in external database
- */
-
 import { NextRequest, NextResponse } from 'next/server';
-
-// Configure your external database connection here
-const EXTERNAL_DB_URL = process.env.EXTERNAL_DB_URL || '';
-const EXTERNAL_DB_API_KEY = process.env.EXTERNAL_DB_API_KEY || '';
+import { supabase } from '@/lib/supabase/client';
+import { SupabaseErrorCode } from '@/lib/supabase/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,45 +13,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!EXTERNAL_DB_URL) {
-      console.warn('External DB URL not configured, allowing all users for development');
-      // For development: allow all users
-      return NextResponse.json({
-        authorized: true,
-        userData: {
-          email,
-          allowedAt: new Date().toISOString(),
-        },
-      });
-    }
+    const { data: student, error: studentError } = await supabase
+      .from('students')
+      .select('id, email, github_username, created_at')
+      .eq('email', email)
+      .single();
 
-    // Check authorization in external database
-    const response = await fetch(`${EXTERNAL_DB_URL}/check-user`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${EXTERNAL_DB_API_KEY}`,
-      },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        // Email not found in database
+    if (studentError) {
+      if (studentError.code === SupabaseErrorCode.NOT_FOUND) {
         return NextResponse.json({
           authorized: false,
-          message: 'Email not authorized to create wallet',
+          message: 'Email not found in database',
         });
       }
 
-      throw new Error('Failed to check authorization');
+      console.error('Error checking student:', studentError);
+      return NextResponse.json(
+        { error: 'Failed to check authorization' },
+        { status: 500 }
+      );
     }
 
-    const userData = await response.json();
+    if (!student) {
+      return NextResponse.json({
+        authorized: false,
+        message: 'Email not authorized to create wallet',
+      });
+    }
 
     return NextResponse.json({
       authorized: true,
-      userData,
+      userData: student,
     });
   } catch (error) {
     console.error('Authorization check error:', error);
