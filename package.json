@@ -11,6 +11,7 @@
   "dependencies": {
     "@breeztech/breez-sdk-spark": "^0.4.3-dev1",
     "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.87.1",
     "@tanstack/react-query": "^5.90.10",
     "bip39": "^3.1.0",
     "bitcoinjs-lib": "^7.0.0",
