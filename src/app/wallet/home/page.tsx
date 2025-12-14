@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
 import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import { useAuthStore } from "@/lib/auth/auth-store";
+import type { RewardsResponse, PendingReward, ClaimRewardsResponse } from "@/types/rewards";
 
 export default function WalletHomePage() {
   const router = useRouter();
@@ -33,6 +34,10 @@ export default function WalletHomePage() {
   const [claiming, setClaiming] = useState(false);
   const [rewardsClaimed, setRewardsClaimed] = useState(false);
   const [claimedTransactions, setClaimedTransactions] = useState<any[]>([]);
+  const [pendingRewards, setPendingRewards] = useState<PendingReward[]>([]);
+  const [totalPendingSats, setTotalPendingSats] = useState(0);
+  const [loadingRewards, setLoadingRewards] = useState(false);
+  const [rewardsError, setRewardsError] = useState<string | null>(null);
 
   const { data: balance, isLoading: balanceLoading } =
     useLightningBalance(isReady);
@@ -102,6 +107,52 @@ export default function WalletHomePage() {
     return onSdkEvent(handleEvent);
   }, [isReady, refresh]);
 
+  // Fetch pending rewards function
+  const fetchPendingRewards = useCallback(async () => {
+    if (!githubUser?.email) return;
+
+    setLoadingRewards(true);
+    setRewardsError(null);
+
+    try {
+      const response = await fetch('/api/rewards/pending', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: githubUser.email }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch rewards');
+      }
+
+      const data: RewardsResponse = await response.json();
+      setPendingRewards(data.rewards);
+      setTotalPendingSats(data.totalSats);
+      
+      // Hide rewards section if no pending rewards
+      if (data.totalSats === 0) {
+        setRewardsClaimed(true);
+      }
+    } catch (error: any) {
+      console.error('Error fetching pending rewards:', error);
+      setRewardsError(error.message || 'Failed to load rewards');
+      // Don't show error to user if student not found (they might not be in DB yet)
+      if (error.message?.includes('Student not found')) {
+        setRewardsClaimed(true);
+      }
+    } finally {
+      setLoadingRewards(false);
+    }
+  }, [githubUser?.email]);
+
+  // Fetch pending rewards when user is available
+  useEffect(() => {
+    fetchPendingRewards();
+  }, [fetchPendingRewards]);
+
   const handleLogout = () => {
     if (confirm("Are you sure you want to log out?")) {
       clearAuth();
@@ -110,16 +161,40 @@ export default function WalletHomePage() {
   };
 
   const handleClaimRewards = async () => {
+    if (!githubUser?.email || pendingRewards.length === 0) {
+      return;
+    }
+
     setClaiming(true);
+    setRewardsError(null);
 
-    // Simulate claiming process with delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const rewardEventIds = pendingRewards.map(r => r.rewardEventId);
 
-    // Create a single compound transaction for all rewards
+      const response = await fetch('/api/rewards/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: githubUser.email,
+          rewardEventIds,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to claim rewards');
+      }
+
+      const data: ClaimRewardsResponse = await response.json();
+
+      if (data.success) {
+        // Create a transaction record for display
     const compoundTransaction = {
       id: `learning-rewards-${Date.now()}`,
       description: "Learning Rewards",
-      amountMsat: 1500000, // 1,500 sats total
+          amountMsat: data.amountSats * 1000,
       paymentTime: Date.now(),
       status: "succeeded",
       paymentType: "received",
@@ -127,7 +202,20 @@ export default function WalletHomePage() {
 
     setClaimedTransactions([compoundTransaction]);
     setRewardsClaimed(true);
+        setPendingRewards([]);
+        setTotalPendingSats(0);
+
+        // Refresh payments to show the new transaction
+        await refresh();
+      } else {
+        throw new Error(data.error || 'Failed to claim rewards');
+      }
+    } catch (error: any) {
+      console.error('Error claiming rewards:', error);
+      setRewardsError(error.message || 'Failed to claim rewards. Please try again.');
+    } finally {
     setClaiming(false);
+    }
   };
 
   // Don't render until mounted to prevent hydration issues
@@ -288,7 +376,7 @@ export default function WalletHomePage() {
         </div>
 
         {/* Pending Rewards Section */}
-        {!rewardsClaimed && (
+        {!rewardsClaimed && (loadingRewards || pendingRewards.length > 0 || rewardsError) && (
           <Card className="mb-6 shadow-md border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -296,43 +384,58 @@ export default function WalletHomePage() {
                   <span className="text-2xl">🎓</span>
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100">Learning Rewards</h3>
                 </div>
+                {!loadingRewards && (
                 <div className="text-right">
                   <p className="text-xs text-gray-600 dark:text-gray-400">Total Pending</p>
-                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">1,500 sats</p>
+                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                      {totalPendingSats.toLocaleString()} sats
+                    </p>
                 </div>
+                )}
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900">
+              {loadingRewards ? (
+                <div className="text-center py-8 text-gray-500">
+                  Loading rewards...
+                </div>
+              ) : rewardsError ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-red-600 dark:text-red-400 mb-3">{rewardsError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRewardsError(null);
+                      fetchPendingRewards();
+                    }}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : pendingRewards.length > 0 ? (
+                <>
+                  <div className="space-y-3 mb-4">
+                    {pendingRewards.map((reward) => (
+                      <div
+                        key={reward.rewardEventId}
+                        className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900"
+                      >
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">What is Bitcoin?</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Completed course</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">
+                            {reward.contentTitle}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            Completed {reward.contentType === 'course' ? 'course' : 'challenge'}
+                          </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-green-600 dark:text-green-400">+500 sats</p>
+                          <p className="font-semibold text-green-600 dark:text-green-400">
+                            +{reward.amountSats.toLocaleString()} sats
+                          </p>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">Understanding Lightning Network</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Completed course</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-green-600 dark:text-green-400">+750 sats</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100">Security Best Practices Challenge</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Completed challenge</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-green-600 dark:text-green-400">+250 sats</p>
-                  </div>
-                </div>
+                    ))}
               </div>
 
               <Button
@@ -340,11 +443,15 @@ export default function WalletHomePage() {
                 size="lg"
                 onClick={handleClaimRewards}
                 loading={claiming}
-                disabled={claiming}
+                    disabled={claiming || totalPendingSats === 0}
                 className="w-full shadow-lg hover:shadow-xl transition-all"
               >
-                {claiming ? "⏳ Claiming..." : "🎉 Claim 1,500 sats"}
+                    {claiming
+                      ? "⏳ Claiming..."
+                      : `🎉 Claim ${totalPendingSats.toLocaleString()} sats`}
               </Button>
+                </>
+              ) : null}
             </CardContent>
           </Card>
         )}
