@@ -251,21 +251,22 @@ export default function WalletHomePage() {
 
       if (data.success) {
         // Create a transaction record for display
-        const compoundTransaction = {
-          id: `learning-rewards-${Date.now()}`,
-          description: "Learning Rewards",
-          amountMsat: data.amountSats * 1000,
-          paymentTime: Date.now(),
-          status: "succeeded",
-          paymentType: "received",
-        };
-
-        setClaimedTransactions([compoundTransaction]);
-        setRewardsClaimed(true);
-        setPendingRewards([]);
-        setTotalPendingSats(0);
+        // const compoundTransaction = {
+        //   id: `learning-rewards-${Date.now()}`,
+        //   description: "Learning Rewards",
+        //   amountMsat: data.amountSats * 1000,
+        //   paymentTime: Date.now(),
+        //   status: "succeeded",
+        //   paymentType: "received",
+        // };
+        //
+        // setClaimedTransactions([compoundTransaction]);
+        // setRewardsClaimed(true);
+        // setPendingRewards([]);
+        // setTotalPendingSats(0);
 
         // Refresh payments to show the new transaction
+	await fetchPaymentsStatus();
         await refresh();
       } else {
         throw new Error(data.error || 'Failed to claim rewards');

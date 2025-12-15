@@ -4,7 +4,7 @@ import type { PaymentsStatusResponse } from '@/types/payments';
 
 export async function POST(request: NextRequest) {
   try {
-    const email = "ignacio.porte@proton.me" //await request.json();
+    const { email } = await request.json();
 
     if (!email) {
       return NextResponse.json(
