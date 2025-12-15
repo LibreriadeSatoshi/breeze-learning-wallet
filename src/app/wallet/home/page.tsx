@@ -16,11 +16,13 @@ import {
   useLightningBalance,
   usePayments,
   useRefreshLightning,
+  useReceivePayment
 } from "@/hooks/use-breez";
 import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import { useAuthStore } from "@/lib/auth/auth-store";
 import type { RewardsResponse, PendingReward, ClaimRewardsResponse } from "@/types/rewards";
+import type { PaymentsStatusResponse } from "@/types/payments";
 
 export default function WalletHomePage() {
   const router = useRouter();
@@ -38,6 +40,9 @@ export default function WalletHomePage() {
   const [totalPendingSats, setTotalPendingSats] = useState(0);
   const [loadingRewards, setLoadingRewards] = useState(false);
   const [rewardsError, setRewardsError] = useState<string | null>(null);
+  const receivePaymentMutation = useReceivePayment();
+  const [paymentsStatus, setPaymentsStatus] = useState<PaymentsStatusResponse | null>(null);
+
 
   const { data: balance, isLoading: balanceLoading } =
     useLightningBalance(isReady);
@@ -131,7 +136,7 @@ export default function WalletHomePage() {
       const data: RewardsResponse = await response.json();
       setPendingRewards(data.rewards);
       setTotalPendingSats(data.totalSats);
-      
+
       // Hide rewards section if no pending rewards
       if (data.totalSats === 0) {
         setRewardsClaimed(true);
@@ -153,6 +158,48 @@ export default function WalletHomePage() {
     fetchPendingRewards();
   }, [fetchPendingRewards]);
 
+
+  // Fetch payments status function
+  const fetchPaymentsStatus = useCallback(async () => {
+    if (!githubUser?.email) return;
+
+    setLoadingRewards(true);
+    setRewardsError(null);
+
+    try {
+      const response = await fetch('/api/rewards/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: githubUser.email }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch rewards');
+      }
+
+      const data: PaymentsStatusResponse = await response.json();
+      setPaymentsStatus(data);
+
+    } catch (error: any) {
+      console.error('Error fetching payments status :', error);
+      setRewardsError(error.message || 'Failed to load payments status');
+      // Don't show error to user if student not found (they might not be in DB yet)
+      if (error.message?.includes('Student not found')) {
+        setRewardsClaimed(true);
+      }
+    } finally {
+      setLoadingRewards(false);
+    }
+  }, [githubUser?.email]);
+
+  // Fetch payments status when user is available
+  useEffect(() => {
+    fetchPaymentsStatus();
+  }, [fetchPaymentsStatus]);
+
   const handleLogout = () => {
     if (confirm("Are you sure you want to log out?")) {
       clearAuth();
@@ -169,8 +216,20 @@ export default function WalletHomePage() {
     setRewardsError(null);
 
     try {
-      const rewardEventIds = pendingRewards.map(r => r.rewardEventId);
 
+      if (isNaN(totalPendingSats) || totalPendingSats <= 0) {
+        //setError("Please enter a valid amount");
+        return;
+      }
+
+      const result = await receivePaymentMutation.mutateAsync({
+        amountSats: totalPendingSats,
+        description: "Lightning payment",
+      });
+      
+
+      const rewardEventIds = pendingRewards.map(r => r.rewardEventId);
+      
       const response = await fetch('/api/rewards/claim', {
         method: 'POST',
         headers: {
@@ -179,6 +238,7 @@ export default function WalletHomePage() {
         body: JSON.stringify({
           email: githubUser.email,
           rewardEventIds,
+          bolt11: result.bolt11,
         }),
       });
 
@@ -191,17 +251,17 @@ export default function WalletHomePage() {
 
       if (data.success) {
         // Create a transaction record for display
-    const compoundTransaction = {
-      id: `learning-rewards-${Date.now()}`,
-      description: "Learning Rewards",
+        const compoundTransaction = {
+          id: `learning-rewards-${Date.now()}`,
+          description: "Learning Rewards",
           amountMsat: data.amountSats * 1000,
-      paymentTime: Date.now(),
-      status: "succeeded",
-      paymentType: "received",
-    };
+          paymentTime: Date.now(),
+          status: "succeeded",
+          paymentType: "received",
+        };
 
-    setClaimedTransactions([compoundTransaction]);
-    setRewardsClaimed(true);
+        setClaimedTransactions([compoundTransaction]);
+        setRewardsClaimed(true);
         setPendingRewards([]);
         setTotalPendingSats(0);
 
@@ -214,7 +274,7 @@ export default function WalletHomePage() {
       console.error('Error claiming rewards:', error);
       setRewardsError(error.message || 'Failed to claim rewards. Please try again.');
     } finally {
-    setClaiming(false);
+      setClaiming(false);
     }
   };
 
@@ -224,9 +284,9 @@ export default function WalletHomePage() {
   const isLoading = balanceLoading || paymentsLoading;
   const lastSyncText = lastSyncTime
     ? new Date(lastSyncTime).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : "Never";
 
   return (
@@ -254,8 +314,8 @@ export default function WalletHomePage() {
                   !isReady
                     ? "Wallet initializing..."
                     : isRefetching
-                    ? "Refreshing..."
-                    : "Refresh balance"
+                      ? "Refreshing..."
+                      : "Refresh balance"
                 }
               >
                 <span
@@ -266,9 +326,8 @@ export default function WalletHomePage() {
               </button>
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-sm">
                 <div
-                  className={`w-2 h-2 rounded-full ${
-                    isReady ? "bg-green-500" : "bg-gray-400"
-                  }`}
+                  className={`w-2 h-2 rounded-full ${isReady ? "bg-green-500" : "bg-gray-400"
+                    }`}
                 />
                 <span>{isReady ? "Connected" : "Offline"}</span>
               </div>
@@ -375,8 +434,12 @@ export default function WalletHomePage() {
           </Button>
         </div>
 
-        {/* Pending Rewards Section */}
-        {!rewardsClaimed && (loadingRewards || pendingRewards.length > 0 || rewardsError) && (
+        {/* Pending Rewards Section
+	    TODO here it is necessary to check by each group of rewards
+	*/}
+        {paymentsStatus?.status == "completed"
+	? <div></div>
+	: !rewardsClaimed && (loadingRewards || pendingRewards.length > 0 || rewardsError) && (
           <Card className="mb-6 shadow-md border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -385,12 +448,12 @@ export default function WalletHomePage() {
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100">Learning Rewards</h3>
                 </div>
                 {!loadingRewards && (
-                <div className="text-right">
-                  <p className="text-xs text-gray-600 dark:text-gray-400">Total Pending</p>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Total Pending</p>
                     <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {totalPendingSats.toLocaleString()} sats
                     </p>
-                </div>
+                  </div>
                 )}
               </div>
             </CardHeader>
@@ -421,40 +484,43 @@ export default function WalletHomePage() {
                         key={reward.rewardEventId}
                         className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-900"
                       >
-                  <div className="flex-1">
+                        <div className="flex-1">
                           <p className="font-medium text-gray-900 dark:text-gray-100">
                             {reward.contentTitle}
                           </p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
                             Completed {reward.contentType === 'course' ? 'course' : 'challenge'}
                           </p>
-                  </div>
-                  <div className="text-right">
+                        </div>
+                        <div className="text-right">
                           <p className="font-semibold text-green-600 dark:text-green-400">
                             +{reward.amountSats.toLocaleString()} sats
                           </p>
-                  </div>
-                </div>
+                        </div>
+                      </div>
                     ))}
-              </div>
+                  </div>
 
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handleClaimRewards}
-                loading={claiming}
-                    disabled={claiming || totalPendingSats === 0}
-                className="w-full shadow-lg hover:shadow-xl transition-all"
-              >
-                    {claiming
-                      ? "⏳ Claiming..."
-                      : `🎉 Claim ${totalPendingSats.toLocaleString()} sats`}
-              </Button>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleClaimRewards}
+                    loading={claiming}
+                    disabled={claiming || totalPendingSats === 0 || paymentsStatus?.status == "created"}
+                    className="w-full shadow-lg hover:shadow-xl transition-all"
+                  >
+                    {paymentsStatus?.status == "created"
+		      ? "Pending payment"
+		      :claiming
+			      ? "⏳ Claiming..."
+			      : `🎉 Claim ${totalPendingSats.toLocaleString()} sats`}
+                  </Button>
                 </>
               ) : null}
             </CardContent>
           </Card>
-        )}
+        )
+	}
 
         {/* Recent Activity */}
         <Card className="mb-6">

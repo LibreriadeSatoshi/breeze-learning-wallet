@@ -4,7 +4,7 @@ import type { ClaimRewardsResponse } from '@/types/rewards';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, rewardEventIds } = await request.json();
+    const { email, rewardEventIds, bolt11 } = await request.json();
 
     if (!email) {
       return NextResponse.json(
@@ -77,12 +77,13 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    const paymentRecords = claimableRewards.map((re: any) => ({
+    const paymentRecords = {
       student_id: student.id,
-      reward_event_id: re.id,
-      amount_sats: re.rewards.amount_sats,
+      reward_event_id: claimableRewards[0].id,
+      amount_sats: totalAmountSats,
       status: 'created',
-    }));
+      invoice_bolt11: bolt11
+    };
 
     const { data: payments, error: paymentsError } = await supabase
       .from('payments')
@@ -95,16 +96,6 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'Failed to create payment records' },
         { status: 500 }
       );
-    }
-
-    const paymentIds = payments.map((p: any) => p.id);
-    const { error: updateError } = await supabase
-      .from('payments')
-      .update({ status: 'processing' })
-      .in('id', paymentIds);
-
-    if (updateError) {
-      console.error('Error updating payment status:', updateError);
     }
 
     const response: ClaimRewardsResponse = {
