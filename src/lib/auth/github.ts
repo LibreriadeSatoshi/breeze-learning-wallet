@@ -11,10 +11,12 @@ export interface GitHubUser {
 
 export async function loginWithGitHub(): Promise<void> {
   try {
+    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/auth/github/callback`;
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/auth/github/callback`,
+        redirectTo: redirectUrl,
       },
     });
 
@@ -23,8 +25,6 @@ export async function loginWithGitHub(): Promise<void> {
       alert('Failed to initiate GitHub login. Please try again.');
       return;
     }
-
-
   } catch (error) {
     console.error('Error initiating GitHub login:', error);
     alert('Failed to initiate GitHub login. Please try again.');
