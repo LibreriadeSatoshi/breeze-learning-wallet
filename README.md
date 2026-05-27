@@ -50,7 +50,7 @@ This is a fresh web-native implementation migrated from the React Native version
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Bitcoin**: bitcoinjs-lib
-- **Lightning**: Breez Spark SDK
+- **Lightning**: Breez SDK Liquid
 - **State Management**: Zustand (planned)
 
 ## Development

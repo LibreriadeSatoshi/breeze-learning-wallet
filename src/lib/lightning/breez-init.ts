@@ -38,7 +38,7 @@ export async function initializeBreezWallet(): Promise<InitResult> {
     console.log('✅ Breez SDK initialized');
 
     const nodeState = await getNodeState();
-    const nodeId = nodeState?.id || null;
+    const nodeId = nodeState?.id ?? undefined;
     
     console.log('📊 Node ID:', nodeId);
 
