@@ -1,4 +1,5 @@
 import type { SdkEvent } from "./sdk-events";
+import type { PrepareSendResponse } from "@breeztech/breez-sdk-liquid";
 
 type LiquidSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-liquid").connect>>;
 
@@ -217,13 +218,29 @@ export async function getBitcoinAddress(): Promise<{
   };
 }
 
-export async function sendPayment(destination: string): Promise<unknown> {
+export type PrepareSendResult = PrepareSendResponse;
+
+export async function prepareSend(
+  destination: string,
+  amountSat?: number,
+): Promise<PrepareSendResult> {
+  if (!sdk) {
+    throw new Error("Wallet not ready.");
+  }
+
+  const request = amountSat
+    ? { destination, amount: { type: "bitcoin" as const, receiverAmountSat: amountSat } }
+    : { destination };
+
+  return sdk.prepareSendPayment(request);
+}
+
+export async function executeSend(prepareResponse: PrepareSendResult): Promise<unknown> {
   if (!sdk) {
     throw new Error("Wallet not ready.");
   }
 
   try {
-    const prepareResponse = await sdk.prepareSendPayment({ destination });
     return await sdk.sendPayment({ prepareResponse });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Send failed";
@@ -234,8 +251,6 @@ export async function sendPayment(destination: string): Promise<unknown> {
       throw new Error("Unable to find route to destination");
     } else if (message.includes("timeout")) {
       throw new Error("Payment timed out. Please try again.");
-    } else if (message.includes("invoice")) {
-      throw new Error("Invalid or expired invoice");
     }
 
     throw new Error(message);

@@ -3,9 +3,11 @@ import {
   getBalance,
   getNodeState,
   listPayments,
-  sendPayment,
+  prepareSend,
+  executeSend,
   receivePayment,
   getBitcoinAddress,
+  type PrepareSendResult,
 } from "@/lib/lightning/breez-service";
 import type { LightningBalance, Payment } from "@/lib/lightning/types";
 
@@ -51,12 +53,20 @@ export function usePayments(enabled: boolean = true) {
   });
 }
 
-export function useSendPayment() {
+export function usePrepareSend() {
+  return useMutation({
+    mutationFn: async ({ destination, amountSat }: { destination: string; amountSat?: number }) => {
+      return await prepareSend(destination, amountSat);
+    },
+  });
+}
+
+export function useExecuteSend() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (invoice: string) => {
-      return await sendPayment(invoice);
+    mutationFn: async (prepareResponse: PrepareSendResult) => {
+      return await executeSend(prepareResponse);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.balance() });
