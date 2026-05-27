@@ -16,7 +16,6 @@ import {
   usePayments,
   useRefreshLightning,
 } from "@/hooks/use-breez";
-import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 
 export default function WalletHomePage() {
@@ -31,7 +30,6 @@ export default function WalletHomePage() {
 
   const [isReady, setIsReady] = useState(false);
   const [initializing, setInitializing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
 
 
   const { data: balance, isLoading: balanceLoading } =
@@ -60,7 +58,6 @@ export default function WalletHomePage() {
         const result = await initializeBreezWallet();
         if (result.success) {
           setIsReady(true);
-          setLastSyncTime(Date.now());
           await refresh();
         } else {
           console.error("Failed to initialize:", result.error);
@@ -84,12 +81,7 @@ export default function WalletHomePage() {
         "paymentPending",
         "paymentFailed",
         "synced",
-        "claimedDeposits",
       ].includes(event.type);
-
-      if (event.type === "synced") {
-        setLastSyncTime(Date.now());
-      }
 
       if (event.type === "dataSynced" && event.didPullNewRecords) {
         await refresh();
@@ -109,12 +101,6 @@ export default function WalletHomePage() {
   if (!mounted || !isUnlocked) return null;
 
   const isLoading = balanceLoading || paymentsLoading;
-  const lastSyncText = lastSyncTime
-    ? new Date(lastSyncTime).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-    : "Never";
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -132,9 +118,7 @@ export default function WalletHomePage() {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={() =>
-                  refresh().then(() => setLastSyncTime(Date.now()))
-                }
+                onClick={() => refresh()}
                 disabled={isRefetching || !isReady}
                 className="p-2 rounded-full hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title={
@@ -243,40 +227,6 @@ export default function WalletHomePage() {
             )}
           </CardContent>
         </Card>
-
-        {isReady && (
-          <Card className="mt-6 shadow-md border-gray-200 dark:border-gray-700">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">⚡</span>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Lightning Node</h3>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">Status</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="font-medium text-green-700 dark:text-green-400">Connected</span>
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Last Sync
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{lastSyncText}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Network
-                </span>
-                <span className="font-medium text-gray-900 dark:text-gray-100 capitalize">
-                  {SELECTED_BITCOIN_NETWORK}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {!isReady && (
           <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-900 shadow-sm">
