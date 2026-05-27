@@ -1,62 +1,88 @@
-/**
- * Wallet State Management with Zustand
- */
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
+import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+// The plaintext mnemonic lives in a module-private variable, never in
+// persisted state, never observable from React props. The vault module
+// is the only place that holds it; the rest of the app sees only the
+// initialized Breez SDK and the booleans below.
+let mnemonicInMemory: string | null = null;
 
-interface WalletState {
-  // Wallet status
-  isInitialized: boolean;
+const LEGACY_STORAGE_KEYS = [
+  "etta-wallet-storage",
+  "etta-auth-storage",
+];
+
+interface WalletStore {
   hasBackedUp: boolean;
 
-  // Mnemonic (stored encrypted in localStorage)
-  // Note: In production, consider more secure storage like encrypted IndexedDB
-  encryptedMnemonic: string | null;
+  hasVault: boolean | null;
+  isUnlocked: boolean;
+  isBootstrapped: boolean;
 
-  // Temporary mnemonic (only stored in memory during setup)
-  temporaryMnemonic: string | null;
-
-  // Actions
-  setInitialized: (initialized: boolean) => void;
-  setHasBackedUp: (backedUp: boolean) => void;
-  setEncryptedMnemonic: (mnemonic: string | null) => void;
-  setTemporaryMnemonic: (mnemonic: string | null) => void;
-  clearWallet: () => void;
+  bootstrap: () => Promise<void>;
+  createVault: (mnemonic: string, password: string) => Promise<void>;
+  unlock: (password: string) => Promise<void>;
+  lock: () => void;
+  destroyVault: () => Promise<void>;
+  getMnemonic: () => string | null;
+  setHasBackedUp: (v: boolean) => void;
 }
 
-export const useWalletStore = create<WalletState>()(
+export const useWalletStore = create<WalletStore>()(
   persist(
-    (set) => ({
-      // Initial state
-      isInitialized: false,
+    (set, get) => ({
       hasBackedUp: false,
-      encryptedMnemonic: null,
-      temporaryMnemonic: null,
+      hasVault: null,
+      isUnlocked: false,
+      isBootstrapped: false,
 
-      // Actions
-      setInitialized: (initialized) => set({ isInitialized: initialized }),
-      setHasBackedUp: (backedUp) => set({ hasBackedUp: backedUp }),
-      setEncryptedMnemonic: (mnemonic) => set({ encryptedMnemonic: mnemonic }),
-      setTemporaryMnemonic: (mnemonic) => set({ temporaryMnemonic: mnemonic }),
+      bootstrap: async () => {
+        if (get().isBootstrapped) return;
+        if (typeof window !== "undefined") {
+          for (const key of LEGACY_STORAGE_KEYS) {
+            window.localStorage.removeItem(key);
+          }
+        }
+        const blob = await loadVault();
+        set({ hasVault: blob !== null, isBootstrapped: true });
+      },
 
-      clearWallet: () =>
-        set({
-          isInitialized: false,
-          hasBackedUp: false,
-          encryptedMnemonic: null,
-          temporaryMnemonic: null,
-        }),
+      createVault: async (mnemonic, password) => {
+        const blob = await encryptMnemonic(mnemonic, password);
+        await saveVault(blob);
+        mnemonicInMemory = mnemonic;
+        set({ hasVault: true, isUnlocked: true });
+      },
+
+      unlock: async (password) => {
+        const blob = await loadVault();
+        if (!blob) throw new Error("No vault found");
+        const plaintext = await decryptMnemonic(blob, password);
+        mnemonicInMemory = plaintext;
+        set({ isUnlocked: true });
+      },
+
+      lock: () => {
+        mnemonicInMemory = null;
+        set({ isUnlocked: false });
+      },
+
+      destroyVault: async () => {
+        await clearVault();
+        mnemonicInMemory = null;
+        set({ hasVault: false, isUnlocked: false, hasBackedUp: false });
+      },
+
+      getMnemonic: () => mnemonicInMemory,
+
+      setHasBackedUp: (v) => set({ hasBackedUp: v }),
     }),
     {
-      name: 'etta-wallet-storage',
+      name: "scholar-wallet-prefs",
       storage: createJSONStorage(() => localStorage),
-      // Persist encrypted mnemonic but not temporary mnemonic
-      partialize: (state) => ({
-        isInitialized: state.isInitialized,
-        hasBackedUp: state.hasBackedUp,
-        encryptedMnemonic: state.encryptedMnemonic,
-      }),
-    }
-  )
+      partialize: (state) => ({ hasBackedUp: state.hasBackedUp }),
+    },
+  ),
 );

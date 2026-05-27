@@ -21,7 +21,7 @@ interface InvoiceData {
 
 export default function SendPage() {
   const router = useRouter();
-  const { isInitialized } = useWalletStore();
+  const isUnlocked = useWalletStore((s) => s.isUnlocked);
   const [step, setStep] = useState<SendStep>("input");
   const [invoice, setInvoice] = useState("");
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
@@ -33,10 +33,10 @@ export default function SendPage() {
   const maxPayableMsat = balance?.maxPayableMsat ?? 0;
 
   useEffect(() => {
-    if (!isInitialized) {
+    if (!isUnlocked) {
       router.push("/welcome");
     }
-  }, [isInitialized, router]);
+  }, [isUnlocked, router]);
 
   const handleInvoiceChange = (value: string) => {
     setInvoice(value);
@@ -132,7 +132,7 @@ export default function SendPage() {
     setInvoiceData(null);
   };
 
-  if (!isInitialized) return null;
+  if (!isUnlocked) return null;
 
   if (step === "input") {
     return (

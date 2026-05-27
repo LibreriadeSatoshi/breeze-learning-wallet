@@ -35,7 +35,7 @@ interface ReceivedPaymentDetails {
 
 export default function ReceivePage() {
   const router = useRouter();
-  const { isInitialized } = useWalletStore();
+  const isUnlocked = useWalletStore((s) => s.isUnlocked);
 
   const [step, setStep] = useState<ReceiveStep>("input");
   const [paymentMethod, setPaymentMethod] =
@@ -57,10 +57,10 @@ export default function ReceivePage() {
   const maxReceivableMsat = balance?.maxReceivableMsat ?? 0;
 
   useEffect(() => {
-    if (!isInitialized) {
+    if (!isUnlocked) {
       router.push("/welcome");
     }
-  }, [isInitialized, router]);
+  }, [isUnlocked, router]);
 
   useEffect(() => {
     if (step !== "display" || !paymentInfo) return;
@@ -243,7 +243,7 @@ export default function ReceivePage() {
     return `${minutes}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (!isInitialized) {
+  if (!isUnlocked) {
     return null;
   }
 

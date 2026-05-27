@@ -9,47 +9,50 @@ import { mnemonicToWords } from '@/lib/bitcoin/mnemonic';
 
 export default function WalletBackupPage() {
   const router = useRouter();
-  const { temporaryMnemonic, isInitialized, setHasBackedUp, setInitialized, setTemporaryMnemonic } = useWalletStore();
+  const isUnlocked = useWalletStore((s) => s.isUnlocked);
+  const setHasBackedUp = useWalletStore((s) => s.setHasBackedUp);
+  const getMnemonic = useWalletStore((s) => s.getMnemonic);
 
+  const [mounted, setMounted] = useState(false);
   const [words, setWords] = useState<string[]>([]);
   const [selectedWords, setSelectedWords] = useState<number[]>([]);
   const [shuffledWords, setShuffledWords] = useState<Array<{ word: string; originalIndex: number }>>([]);
   const [verificationComplete, setVerificationComplete] = useState(false);
   const [error, setError] = useState(false);
 
-  // Randomly select 4 words to verify
   const [wordsToVerify] = useState<number[]>(() => {
     const indices = Array.from({ length: 12 }, (_, i) => i);
     return indices.sort(() => Math.random() - 0.5).slice(0, 4).sort((a, b) => a - b);
   });
 
   useEffect(() => {
-    // Only redirect if no mnemonic AND wallet not initialized
-    // This prevents redirect after clicking Skip/Complete
-    if (!temporaryMnemonic) {
-      if (!isInitialized) {
-        router.push('/welcome');
-      }
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (!isUnlocked) {
+      router.push('/welcome');
       return;
     }
-
-    const mnemonicWords = mnemonicToWords(temporaryMnemonic);
+    const mnemonic = getMnemonic();
+    if (!mnemonic) {
+      router.push('/welcome');
+      return;
+    }
+    const mnemonicWords = mnemonicToWords(mnemonic);
     setWords(mnemonicWords);
 
-    // Create shuffled array of words to verify
-    const verifyWords = wordsToVerify.map(index => ({
+    const verifyWords = wordsToVerify.map((index) => ({
       word: mnemonicWords[index],
       originalIndex: index,
     }));
-
-    // Shuffle the words
-    const shuffled = [...verifyWords].sort(() => Math.random() - 0.5);
-    setShuffledWords(shuffled);
-  }, [temporaryMnemonic, isInitialized, wordsToVerify, router]);
+    setShuffledWords([...verifyWords].sort(() => Math.random() - 0.5));
+  }, [mounted, isUnlocked, getMnemonic, wordsToVerify, router]);
 
   const handleWordSelect = (wordIndex: number) => {
     if (selectedWords.includes(wordIndex)) {
-      setSelectedWords(selectedWords.filter(i => i !== wordIndex));
+      setSelectedWords(selectedWords.filter((i) => i !== wordIndex));
     } else if (selectedWords.length < 4) {
       setSelectedWords([...selectedWords, wordIndex]);
     }
@@ -57,7 +60,6 @@ export default function WalletBackupPage() {
   };
 
   const handleVerify = () => {
-    // Check if selected words match the original order
     const correct = selectedWords.every((selectedIndex, i) => {
       const shuffledWord = shuffledWords[selectedIndex];
       return shuffledWord.originalIndex === wordsToVerify[i];
@@ -74,27 +76,21 @@ export default function WalletBackupPage() {
 
   const handleComplete = () => {
     setHasBackedUp(true);
-    setInitialized(true);
-    setTemporaryMnemonic(null); // Clear temporary mnemonic
     router.push('/wallet/home');
   };
 
   const handleSkip = () => {
-    // Allow skipping but mark as not backed up
     setHasBackedUp(false);
-    setInitialized(true);
-    setTemporaryMnemonic(null);
     router.push('/wallet/home');
   };
 
-  if (!temporaryMnemonic) {
+  if (!mounted || words.length === 0) {
     return null;
   }
 
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Verify Your Recovery Phrase</h1>
           <p className="text-gray-600 dark:text-gray-400">
@@ -104,10 +100,9 @@ export default function WalletBackupPage() {
 
         {!verificationComplete ? (
           <>
-            {/* Word Positions to Fill */}
             <Card className="mb-6">
               <CardHeader>
-                <h3 className="font-semibold">Select words #{wordsToVerify.map(i => i + 1).join(', ')}</h3>
+                <h3 className="font-semibold">Select words #{wordsToVerify.map((i) => i + 1).join(', ')}</h3>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-4 gap-3 mb-4">
@@ -127,7 +122,6 @@ export default function WalletBackupPage() {
                     </div>
                   ))}
                 </div>
-
                 {error && (
                   <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
                     <p className="text-sm text-red-800 dark:text-red-200">
@@ -138,7 +132,6 @@ export default function WalletBackupPage() {
               </CardContent>
             </Card>
 
-            {/* Word Selection */}
             <Card className="mb-6">
               <CardHeader>
                 <h3 className="font-semibold">Tap words in order</h3>
@@ -163,14 +156,8 @@ export default function WalletBackupPage() {
               </CardContent>
             </Card>
 
-            {/* Actions */}
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleSkip}
-                className="flex-1"
-              >
+              <Button variant="outline" size="lg" onClick={handleSkip} className="flex-1">
                 Skip for Now
               </Button>
               <Button

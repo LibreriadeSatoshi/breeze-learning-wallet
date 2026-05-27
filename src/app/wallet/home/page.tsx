@@ -23,7 +23,12 @@ export default function WalletHomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
-  const { isInitialized, hasBackedUp, clearWallet } = useWalletStore();
+  const isUnlocked = useWalletStore((s) => s.isUnlocked);
+  const hasBackedUp = useWalletStore((s) => s.hasBackedUp);
+  const lock = useWalletStore((s) => s.lock);
+  const bootstrap = useWalletStore((s) => s.bootstrap);
+  const isBootstrapped = useWalletStore((s) => s.isBootstrapped);
+
   const [isReady, setIsReady] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
@@ -37,16 +42,17 @@ export default function WalletHomePage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    bootstrap();
+  }, [bootstrap]);
 
   useEffect(() => {
-    if (mounted && !isInitialized) {
+    if (mounted && isBootstrapped && !isUnlocked) {
       router.push("/welcome");
     }
-  }, [mounted, isInitialized, router]);
+  }, [mounted, isBootstrapped, isUnlocked, router]);
 
   useEffect(() => {
-    if (!isInitialized || isReady || initializing) return;
+    if (!isUnlocked || isReady || initializing) return;
 
     const initialize = async () => {
       setInitializing(true);
@@ -67,7 +73,7 @@ export default function WalletHomePage() {
     };
 
     initialize();
-  }, [isInitialized, isReady, initializing, refresh]);
+  }, [isUnlocked, isReady, initializing, refresh]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -95,14 +101,12 @@ export default function WalletHomePage() {
     return onSdkEvent(handleEvent);
   }, [isReady, refresh]);
 
-  const handleLogout = () => {
-    if (confirm("Are you sure you want to log out?")) {
-      clearWallet();
-      router.push("/welcome");
-    }
+  const handleLock = () => {
+    lock();
+    router.push("/welcome");
   };
 
-  if (!mounted || !isInitialized) return null;
+  if (!mounted || !isUnlocked) return null;
 
   const isLoading = balanceLoading || paymentsLoading;
   const lastSyncText = lastSyncTime
@@ -155,10 +159,10 @@ export default function WalletHomePage() {
                 <span>{isReady ? "Connected" : "Offline"}</span>
               </div>
               <button
-                onClick={handleLogout}
+                onClick={handleLock}
                 className="text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
               >
-                Logout
+                Lock
               </button>
             </div>
           </div>

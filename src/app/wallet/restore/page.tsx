@@ -4,16 +4,23 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { validateMnemonic } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
 
+type Step = 'phrase' | 'password' | 'restoring';
+
 export default function RestoreWalletPage() {
   const router = useRouter();
+  const [step, setStep] = useState<Step>('phrase');
   const [mnemonic, setMnemonic] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [isRestoring, setIsRestoring] = useState(false);
-  
-  const { setTemporaryMnemonic, setEncryptedMnemonic, setInitialized } = useWalletStore();
+
+  const createVault = useWalletStore((s) => s.createVault);
+  const setHasBackedUp = useWalletStore((s) => s.setHasBackedUp);
 
   const wordCount = mnemonic.trim().split(/\s+/).filter(Boolean).length;
 
@@ -24,34 +31,40 @@ export default function RestoreWalletPage() {
         setMnemonic(text);
         setError('');
       }
-    } catch (err) {
-      console.error('Failed to read clipboard:', err);
+    } catch {
       setError('Failed to access clipboard. Please paste manually.');
     }
   };
 
+  const handlePhraseSubmit = () => {
+    setError('');
+    const cleaned = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!validateMnemonic(cleaned)) {
+      setError('Invalid recovery phrase. Please check the words and try again.');
+      return;
+    }
+    setMnemonic(cleaned);
+    setStep('password');
+  };
+
   const handleRestore = async () => {
     setError('');
-    setIsRestoring(true);
-
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    setStep('restoring');
     try {
-      const cleanedMnemonic = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
-
-      if (!validateMnemonic(cleanedMnemonic)) {
-        throw new Error('Invalid recovery phrase. Please check the words and try again.');
-      }
-
-      // Store mnemonic for use throughout the session and persist it
-      setTemporaryMnemonic(cleanedMnemonic);
-      setEncryptedMnemonic(cleanedMnemonic); // TODO: Encrypt this in production!
-      setInitialized(true);
-
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await createVault(mnemonic, password);
+      setHasBackedUp(true); // restored wallet already has its phrase, no verification needed
       router.push('/wallet/home');
-    } catch (err: any) {
-      console.error('Restore failed:', err);
-      setError(err.message || 'Failed to restore wallet. Please try again.');
-      setIsRestoring(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restore wallet');
+      setStep('password');
     }
   };
 
@@ -73,42 +86,26 @@ export default function RestoreWalletPage() {
               Restore Wallet
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Enter your 12-word recovery phrase
+              {step === 'phrase' ? 'Enter your 12-word recovery phrase' : 'Set a wallet password to encrypt this device'}
             </p>
           </div>
         </div>
 
-        <Card className="mb-6 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">🔑</span>
-              <div className="flex-1">
-                <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">
-                  Recovery Phrase Required
-                </h3>
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  Enter the 12 words you saved when creating your wallet. Make sure they are in the correct order and spelled correctly.
-                </p>
+        {step === 'phrase' && (
+          <Card className="mb-6 shadow-lg">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recovery Phrase</h2>
+                <span className={`text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
+                  wordCount === 12
+                    ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                }`}>
+                  {wordCount}/12 words
+                </span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-6 shadow-lg">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recovery Phrase</h2>
-              <span className={`text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
-                wordCount === 12
-                  ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-              }`}>
-                {wordCount}/12 words
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <textarea
                 value={mnemonic}
                 onChange={(e) => {
@@ -122,55 +119,87 @@ export default function RestoreWalletPage() {
                 spellCheck={false}
               />
               {error && (
-                <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                  <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
-                    <span>⚠️</span>
-                    <span>{error}</span>
-                  </p>
+                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
                 </div>
               )}
-            </div>
+              <Button
+                variant="outline"
+                onClick={handlePaste}
+                className="w-full flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                <span>📋</span>
+                <span>Paste from clipboard</span>
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handlePhraseSubmit}
+                disabled={wordCount !== 12}
+                className="w-full shadow-lg hover:shadow-xl transition-shadow"
+              >
+                Continue
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-            <Button
-              variant="outline"
-              onClick={handlePaste}
-              className="w-full flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              <span>📋</span>
-              <span>Paste from Clipboard</span>
-            </Button>
-
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleRestore}
-              disabled={wordCount !== 12 || isRestoring}
-              loading={isRestoring}
-              className="w-full shadow-lg hover:shadow-xl transition-shadow"
-            >
-              {isRestoring ? '⏳ Restoring...' : '✅ Restore Wallet'}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div className="flex-1">
-                <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
-                  Important Security Notice
-                </h3>
-                <ul className="text-sm text-orange-800 dark:text-orange-300 space-y-1 list-disc list-inside">
-                  <li>Never share your recovery phrase with anyone</li>
-                  <li>Make sure you are on the correct website</li>
-                  <li>Store your phrase in a safe place offline</li>
-                  <li>This phrase gives complete access to your funds</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {(step === 'password' || step === 'restoring') && (
+          <Card className="mb-6 shadow-lg">
+            <CardContent className="pt-6 space-y-4">
+              <Input
+                label="Wallet password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                disabled={step === 'restoring'}
+                autoFocus
+              />
+              <Input
+                label="Confirm password"
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                disabled={step === 'restoring'}
+              />
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showPassword}
+                  onChange={(e) => setShowPassword(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                <span className="text-sm">Show passwords</span>
+              </label>
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                </div>
+              )}
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleRestore}
+                loading={step === 'restoring'}
+                disabled={step === 'restoring'}
+                className="w-full shadow-lg hover:shadow-xl transition-shadow"
+              >
+                {step === 'restoring' ? 'Restoring…' : 'Restore wallet'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => setStep('phrase')}
+                disabled={step === 'restoring'}
+                className="w-full"
+              >
+                ← Back
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -20,13 +20,10 @@ export async function initializeBreezWallet(): Promise<InitResult> {
     console.log('🔌 Initializing Breez SDK...');
     console.log('📡 Network:', SELECTED_BITCOIN_NETWORK);
 
-    const { temporaryMnemonic, encryptedMnemonic } = useWalletStore.getState();
-
-    // Use temporary mnemonic if available (during setup), otherwise use persisted encrypted mnemonic
-    const mnemonic = temporaryMnemonic || encryptedMnemonic;
+    const mnemonic = useWalletStore.getState().getMnemonic();
 
     if (!mnemonic) {
-      throw new Error('Wallet not initialized. Please create or restore a wallet first.');
+      throw new Error('Wallet is locked. Unlock it before initializing.');
     }
 
     await initBreez({
