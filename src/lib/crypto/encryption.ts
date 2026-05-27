@@ -1,92 +1,49 @@
-/**
- * Encryption utilities for secure mnemonic storage
- * Uses AES-256-GCM encryption with user-derived password
- */
+type EncryptRequest = { type: "encrypt"; plaintext: string; password: string };
+type DecryptRequest = { type: "decrypt"; blob: Uint8Array; password: string };
+type WorkerRequest = EncryptRequest | DecryptRequest;
 
-import CryptoJS from 'crypto-js';
+type EncryptResponse = { ok: true; type: "encrypt"; result: Uint8Array };
+type DecryptResponse = { ok: true; type: "decrypt"; result: string };
+type ErrorResponse = { ok: false; error: string };
+type WorkerResponse = EncryptResponse | DecryptResponse | ErrorResponse;
 
-export interface EncryptedData {
-  ciphertext: string;
-  salt: string;
-  iv: string;
-  timestamp: number;
-}
+function runWorker(req: WorkerRequest): Promise<WorkerResponse> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(
+      new URL("./argon2-worker.ts", import.meta.url),
+      { type: "module" },
+    );
 
-/**
- * Derive encryption key from user password using PBKDF2
- */
-function deriveKey(password: string, salt: string): string {
-  return CryptoJS.PBKDF2(password, salt, {
-    keySize: 256 / 32,
-    iterations: 100000,
-  }).toString();
-}
+    worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+      worker.terminate();
+      resolve(e.data);
+    };
 
-/**
- * Encrypt mnemonic with user password
- * @param mnemonic - The recovery phrase to encrypt
- * @param password - User's encryption password
- * @returns Encrypted data object
- */
-export function encryptMnemonic(mnemonic: string, password: string): EncryptedData {
-  // Generate random salt and IV
-  const salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
-  const iv = CryptoJS.lib.WordArray.random(128 / 8).toString();
+    worker.onerror = () => {
+      worker.terminate();
+      reject(new Error("Crypto worker error"));
+    };
 
-  // Derive key from password
-  const key = deriveKey(password, salt);
-
-  // Encrypt the mnemonic
-  const encrypted = CryptoJS.AES.encrypt(mnemonic, key, {
-    iv: CryptoJS.enc.Hex.parse(iv),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
+    worker.postMessage(req);
   });
-
-  return {
-    ciphertext: encrypted.toString(),
-    salt,
-    iv,
-    timestamp: Date.now(),
-  };
 }
 
-/**
- * Decrypt mnemonic with user password
- * @param encryptedData - The encrypted data object
- * @param password - User's encryption password
- * @returns Decrypted mnemonic or null if password is wrong
- */
-export function decryptMnemonic(encryptedData: EncryptedData, password: string): string | null {
-  try {
-    // Derive the same key from password and salt
-    const key = deriveKey(password, encryptedData.salt);
-
-    // Decrypt
-    const decrypted = CryptoJS.AES.decrypt(encryptedData.ciphertext, key, {
-      iv: CryptoJS.enc.Hex.parse(encryptedData.iv),
-      mode: CryptoJS.mode.CBC,
-      padding: CryptoJS.pad.Pkcs7,
-    });
-
-    const mnemonic = decrypted.toString(CryptoJS.enc.Utf8);
-
-    // Verify it's valid (not empty gibberish)
-    if (!mnemonic || mnemonic.length === 0) {
-      return null;
-    }
-
-    return mnemonic;
-  } catch (error) {
-    console.error('Decryption failed:', error);
-    return null;
-  }
+export async function encryptMnemonic(
+  plaintext: string,
+  password: string,
+): Promise<Uint8Array> {
+  const resp = await runWorker({ type: "encrypt", plaintext, password });
+  if (!resp.ok) throw new Error("Encryption failed");
+  if (resp.type !== "encrypt") throw new Error("Unexpected worker response");
+  return resp.result;
 }
 
-/**
- * Verify password without decrypting full data
- */
-export function verifyPassword(encryptedData: EncryptedData, password: string): boolean {
-  const result = decryptMnemonic(encryptedData, password);
-  return result !== null;
+export async function decryptMnemonic(
+  blob: Uint8Array,
+  password: string,
+): Promise<string> {
+  const resp = await runWorker({ type: "decrypt", blob, password });
+  if (!resp.ok) throw new Error("Wrong password or corrupted vault");
+  if (resp.type !== "decrypt") throw new Error("Unexpected worker response");
+  return resp.result;
 }

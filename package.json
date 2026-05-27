@@ -10,11 +10,10 @@
   },
   "dependencies": {
     "@breeztech/breez-sdk-liquid": "^0.12.2",
-    "@google/generative-ai": "^0.24.1",
     "@tanstack/react-query": "^5.90.10",
     "bip39": "^3.1.0",
     "bitcoinjs-lib": "^7.0.0",
-    "crypto-js": "^4.2.0",
+    "hash-wasm": "^4.12.0",
     "next": "15.1.11",
     "qrcode.react": "^4.2.0",
     "react": "^18",
@@ -22,7 +21,6 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@types/crypto-js": "^4.2.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

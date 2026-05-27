@@ -25,11 +25,9 @@ export default function CreateWalletPage() {
   }, []);
 
   const handleContinue = () => {
-    // Store mnemonic for use throughout the session and persist it
     setTemporaryMnemonic(mnemonic);
-    setEncryptedMnemonic(mnemonic); // TODO: Encrypt this in production!
-    // Go to cloud backup first (user can choose manual if they prefer)
-    router.push('/wallet/cloud-backup');
+    setEncryptedMnemonic(mnemonic); // TODO: replaced in P1 vault rewrite
+    router.push('/wallet/backup');
   };
 
   const handleReveal = () => {
