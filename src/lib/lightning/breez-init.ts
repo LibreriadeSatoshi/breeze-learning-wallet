@@ -57,12 +57,10 @@ export async function initializeBreezWallet(): Promise<InitResult> {
       },
       payments,
     };
-  } catch (error: any) {
-    console.error('❌ Breez initialization failed:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to initialize Breez wallet',
-    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to initialize Breez wallet';
+    console.error('Breez initialization failed:', message);
+    return { success: false, error: message };
   }
 }
 
@@ -86,12 +84,10 @@ export async function syncBreezWallet(): Promise<InitResult> {
       },
       payments,
     };
-  } catch (error: any) {
-    console.error('❌ Breez sync failed:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to sync Breez wallet',
-    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to sync Breez wallet';
+    console.error('Breez sync failed:', message);
+    return { success: false, error: message };
   }
 }
 

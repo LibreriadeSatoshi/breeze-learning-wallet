@@ -12,6 +12,7 @@ import {
   useGetBitcoinAddress,
 } from "@/hooks/use-breez";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
+import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import { QRCodeSVG } from "qrcode.react";
 
 type ReceiveStep = "input" | "display" | "success";
@@ -26,10 +27,10 @@ interface PaymentInfo {
 
 interface ReceivedPaymentDetails {
   id: string;
-  amount: bigint;
-  fees: bigint;
+  amountSat: number;
+  feesSat: number;
   timestamp: number;
-  method: string;
+  method: "lightning" | "liquid" | "bitcoin";
   status: string;
 }
 
@@ -65,56 +66,34 @@ export default function ReceivePage() {
   useEffect(() => {
     if (step !== "display" || !paymentInfo) return;
 
-    const handleEvent = (event: any) => {
-      console.log("📥 Receive page event:", event);
+    const handleEvent = (event: SdkEvent) => {
+      if (event.type !== "paymentSucceeded") return;
 
-      if (event.type === "paymentSucceeded") {
-        console.log("✅ Payment succeeded:", event.payment);
+      const payment = event.details;
+      const ourDestination = paymentInfo.paymentRequest;
 
-        if (event.payment) {
-          setReceivedPaymentDetails({
-            id: event.payment.id,
-            amount: event.payment.amount,
-            fees: event.payment.fees || BigInt(0),
-            timestamp: event.payment.timestamp,
-            method: event.payment.method || "unknown",
-            status: event.payment.status,
-          });
-        }
+      const matchesLightning =
+        paymentMethod === "lightning" &&
+        payment.details.type === "lightning" &&
+        payment.details.invoice === ourDestination;
 
-        const matchesInvoice =
-          paymentInfo.paymentHash &&
-          event.payment?.id === paymentInfo.paymentHash;
+      const matchesBitcoin =
+        paymentMethod === "bitcoin" &&
+        payment.details.type === "bitcoin" &&
+        payment.details.bitcoinAddress === ourDestination;
 
-        if (matchesInvoice) {
-          console.log("✅ Matched our invoice!");
-          setPaymentReceived(true);
-          setStep("success");
-        } else if (paymentMethod === "bitcoin") {
-          console.log("✅ Bitcoin payment received!");
-          setPaymentReceived(true);
-          setStep("success");
-        }
-      } else if (event.type === "paymentPending") {
-        console.log("⏳ Payment pending:", event.payment);
-      } else if (event.type === "claimedDeposits") {
-        console.log("💰 Bitcoin deposits claimed:", event.claimedDeposits);
-        if (paymentMethod === "bitcoin" && event.claimedDeposits?.length > 0) {
-          const deposit = event.claimedDeposits[0];
-          setReceivedPaymentDetails({
-            id: deposit.txid || "claimed-deposit",
-            amount: BigInt(deposit.amountSats || 0),
-            fees: BigInt(0),
-            timestamp: Date.now() / 1000,
-            method: "bitcoin",
-            status: "completed",
-          });
-          setPaymentReceived(true);
-          setStep("success");
-        }
-      } else if (event.type === "unclaimedDeposits") {
-        console.log("⚠️ Unclaimed deposits detected:", event.unclaimedDeposits);
-      }
+      if (!matchesLightning && !matchesBitcoin) return;
+
+      setReceivedPaymentDetails({
+        id: payment.txId ?? "",
+        amountSat: payment.amountSat,
+        feesSat: payment.feesSat,
+        timestamp: payment.timestamp,
+        method: payment.details.type,
+        status: payment.status,
+      });
+      setPaymentReceived(true);
+      setStep("success");
     };
 
     const unsubscribe = onSdkEvent(handleEvent);
@@ -184,11 +163,9 @@ export default function ReceivePage() {
       }
 
       setStep("display");
-    } catch (err: any) {
-      console.error("Failed to generate payment request:", err);
-      setError(
-        err.message || "Failed to generate payment request. Please try again."
-      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to generate payment request";
+      setError(message);
     }
   };
 
@@ -198,8 +175,7 @@ export default function ReceivePage() {
         await navigator.clipboard.writeText(paymentInfo.paymentRequest);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        console.error("Failed to copy:", err);
+      } catch {
         setError("Failed to copy to clipboard");
       }
     }
@@ -215,8 +191,8 @@ export default function ReceivePage() {
               : "Bitcoin Address",
           text: paymentInfo.paymentRequest,
         });
-      } catch (err) {
-        console.error("Failed to share:", err);
+      } catch {
+        // user cancelled or share unavailable
       }
     }
   };
@@ -547,13 +523,8 @@ export default function ReceivePage() {
     );
   }
   if (step === "success") {
-    const receivedAmount = receivedPaymentDetails?.amount
-      ? Number(receivedPaymentDetails.amount)
-      : parseInt(amount, 10) || 0;
-
-    const receivedFees = receivedPaymentDetails?.fees
-      ? Number(receivedPaymentDetails.fees)
-      : 0;
+    const receivedAmount = receivedPaymentDetails?.amountSat ?? parseInt(amount, 10) ?? 0;
+    const receivedFees = receivedPaymentDetails?.feesSat ?? 0;
 
     const formattedDate = receivedPaymentDetails?.timestamp
       ? new Date(receivedPaymentDetails.timestamp * 1000).toLocaleString()
