@@ -1,61 +1,54 @@
-# Etta Wallet Web
+# Scholar Wallet
 
-A modern Bitcoin & Lightning wallet built with Next.js, TypeScript, and Tailwind CSS.
+A non-custodial Bitcoin/Lightning wallet, served as a Next.js web app at `wallet.libreriadesatoshi.com`.
 
-## Getting Started
+The mnemonic is generated in the browser, stored encrypted in the browser, and never sent to any server in plaintext. Lightning routing, swaps, and Liquid transactions are handled by Breez SDK Liquid.
 
-### Prerequisites
+See [`CLAUDE.md`](./CLAUDE.md) for the architectural rules — it is the source of truth for what does and does not belong in this repo.
 
-This project uses Nix for development environment management.
+## Getting started
 
-### Setup
+The project uses Nix for the development environment and yarn for packages.
 
-1. Enter the Nix development environment:
 ```bash
-nix develop
-```
-
-2. Install dependencies:
-```bash
+nix develop          # enter dev shell
 yarn install
-```
-
-3. Run the development server:
-```bash
+cp .env.example .env.local   # then fill in BREEZ_API_KEY
 yarn dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open <http://localhost:3000>.
 
-## Project Structure
+## Scripts
+
+- `yarn dev` — Next.js dev server
+- `yarn build` — production build
+- `yarn start` — serve production build
+- `yarn lint` — ESLint
+
+## Stack
+
+- Next.js 15 (App Router), TypeScript, Tailwind CSS
+- [`@breeztech/breez-sdk-liquid`](https://sdk-doc-liquid.breez.technology/) — Lightning + Liquid (WASM, browser)
+- `bip39` — mnemonic generation
+- WebCrypto (AES-256-GCM) + argon2-browser (KDF) — client-side encryption *(in progress)*
+- IndexedDB — encrypted mnemonic storage *(in progress)*
+- Zustand — UI state
+- TanStack Query — SDK data fetching
+
+## Project layout
 
 ```
-etta-wallet-web/
-├── src/
-│   ├── app/           # Next.js App Router pages
-│   ├── components/    # Reusable React components
-│   ├── lib/          # Utility functions and Bitcoin/Lightning logic
-│   └── types/        # TypeScript type definitions
-├── public/           # Static assets
-└── flake.nix        # Nix development environment
+src/
+├── app/            Next.js App Router pages and API routes
+├── components/     Reusable React components
+├── hooks/          React Query hooks over the Breez SDK
+├── lib/            SDK wrappers, crypto, config
+├── providers/      React providers (Query)
+├── store/          Zustand stores
+└── types/          Shared TypeScript types
 ```
 
-## Migration from React Native
+## Status
 
-This is a fresh web-native implementation migrated from the React Native version. Core wallet logic and business rules are being ported from the original codebase.
-
-## Tech Stack
-
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Bitcoin**: bitcoinjs-lib
-- **Lightning**: Breez SDK Liquid
-- **State Management**: Zustand (planned)
-
-## Development
-
-- `yarn dev` - Start development server
-- `yarn build` - Build for production
-- `yarn start` - Start production server
-- `yarn lint` - Run ESLint
+Phase 1 work is in progress. See `CLAUDE.md` for the phased roadmap (core wallet → Lightning address → recovery beyond the mnemonic).
