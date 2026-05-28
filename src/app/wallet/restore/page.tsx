@@ -18,7 +18,9 @@ export default function RestoreWalletPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [overwriteAcknowledged, setOverwriteAcknowledged] = useState(false);
 
+  const hasVault = useWalletStore((s) => s.hasVault);
   const createVault = useWalletStore((s) => s.createVault);
   const setHasBackedUp = useWalletStore((s) => s.setHasBackedUp);
 
@@ -38,6 +40,10 @@ export default function RestoreWalletPage() {
 
   const handlePhraseSubmit = () => {
     setError('');
+    if (hasVault && !overwriteAcknowledged) {
+      setError('Confirm that you understand this will replace the wallet on this device.');
+      return;
+    }
     const cleaned = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
     if (!validateMnemonic(cleaned)) {
       setError('Invalid recovery phrase. Please check the words and try again.');
@@ -92,56 +98,90 @@ export default function RestoreWalletPage() {
         </div>
 
         {step === 'phrase' && (
-          <Card className="mb-6 shadow-lg">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recovery Phrase</h2>
-                <span className={`text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
-                  wordCount === 12
-                    ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                }`}>
-                  {wordCount}/12 words
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <textarea
-                value={mnemonic}
-                onChange={(e) => {
-                  setMnemonic(e.target.value);
-                  setError('');
-                }}
-                placeholder="word1 word2 word3 ... word12"
-                className="w-full min-h-[140px] px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm transition-colors"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-              />
-              {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <>
+            {hasVault && (
+              <Card className="mb-6 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20">
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">⚠️</span>
+                    <div>
+                      <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                        This will replace the wallet on this device
+                      </h3>
+                      <p className="text-sm text-orange-800 dark:text-orange-300">
+                        Entering a recovery phrase erases the existing encrypted wallet from this browser.
+                        Funds in the existing wallet remain controlled by its recovery phrase — make sure
+                        you still have it before continuing.
+                      </p>
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-orange-900 dark:text-orange-200">
+                    <input
+                      type="checkbox"
+                      checked={overwriteAcknowledged}
+                      onChange={(e) => {
+                        setOverwriteAcknowledged(e.target.checked);
+                        setError('');
+                      }}
+                      className="w-4 h-4 rounded border-orange-300"
+                    />
+                    I understand the existing wallet on this device will be replaced
+                  </label>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="mb-6 shadow-lg">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recovery Phrase</h2>
+                  <span className={`text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
+                    wordCount === 12
+                      ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  }`}>
+                    {wordCount}/12 words
+                  </span>
                 </div>
-              )}
-              <Button
-                variant="outline"
-                onClick={handlePaste}
-                className="w-full flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                <span>📋</span>
-                <span>Paste from clipboard</span>
-              </Button>
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handlePhraseSubmit}
-                disabled={wordCount !== 12}
-                className="w-full shadow-lg hover:shadow-xl transition-shadow"
-              >
-                Continue
-              </Button>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <textarea
+                  value={mnemonic}
+                  onChange={(e) => {
+                    setMnemonic(e.target.value);
+                    setError('');
+                  }}
+                  placeholder="word1 word2 word3 ... word12"
+                  className="w-full min-h-[140px] px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm transition-colors"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+                {error && (
+                  <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={handlePaste}
+                  className="w-full flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  <span>📋</span>
+                  <span>Paste from clipboard</span>
+                </Button>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={handlePhraseSubmit}
+                  disabled={wordCount !== 12 || (hasVault === true && !overwriteAcknowledged)}
+                  className="w-full shadow-lg hover:shadow-xl transition-shadow"
+                >
+                  Continue
+                </Button>
+              </CardContent>
+            </Card>
+          </>
         )}
 
         {(step === 'password' || step === 'restoring') && (
