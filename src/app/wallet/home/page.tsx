@@ -20,6 +20,13 @@ import {
 } from "@/hooks/use-breez";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 
+const CONN_STYLES: Record<"offline" | "syncing" | "synced" | "failed", { dot: string; label: string }> = {
+  offline: { dot: "bg-gray-400", label: "Offline" },
+  syncing: { dot: "bg-yellow-400 animate-pulse", label: "Syncing…" },
+  synced: { dot: "bg-green-500", label: "Synced" },
+  failed: { dot: "bg-red-500", label: "Connection issue" },
+};
+
 export default function WalletHomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -32,6 +39,7 @@ export default function WalletHomePage() {
 
   const [isReady, setIsReady] = useState(false);
   const [initializing, setInitializing] = useState(false);
+  const [conn, setConn] = useState<"offline" | "syncing" | "synced" | "failed">("offline");
 
 
   const { data: balance, isLoading: balanceLoading } =
@@ -79,9 +87,16 @@ export default function WalletHomePage() {
   }, [isUnlocked, isReady, initializing, refresh]);
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady) {
+      setConn("offline");
+      return;
+    }
+    setConn("syncing");
 
     const handleEvent = async (event: SdkEvent) => {
+      if (event.type === "synced") setConn("synced");
+      else if (event.type === "syncFailed") setConn("failed");
+
       const shouldRefresh = [
         "paymentSucceeded",
         "paymentPending",
@@ -142,11 +157,8 @@ export default function WalletHomePage() {
                 </span>
               </button>
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-sm">
-                <div
-                  className={`w-2 h-2 rounded-full ${isReady ? "bg-green-500" : "bg-gray-400"
-                    }`}
-                />
-                <span>{isReady ? "Connected" : "Offline"}</span>
+                <div className={`w-2 h-2 rounded-full ${CONN_STYLES[conn].dot}`} />
+                <span>{CONN_STYLES[conn].label}</span>
               </div>
               <button
                 onClick={handleLock}
