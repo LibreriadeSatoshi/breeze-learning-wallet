@@ -15,11 +15,15 @@ export default function WelcomePage() {
   const isBootstrapped = useWalletStore((s) => s.isBootstrapped);
   const bootstrap = useWalletStore((s) => s.bootstrap);
   const unlock = useWalletStore((s) => s.unlock);
+  const destroyVault = useWalletStore((s) => s.destroyVault);
 
   const [creatingWallet, setCreatingWallet] = useState(false);
   const [password, setPassword] = useState("");
   const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState("");
+  const [showForget, setShowForget] = useState(false);
+  const [forgetConfirm, setForgetConfirm] = useState("");
+  const [forgetting, setForgetting] = useState(false);
 
   useEffect(() => {
     bootstrap();
@@ -53,6 +57,19 @@ export default function WelcomePage() {
     }
   };
 
+  const handleForget = async () => {
+    setForgetting(true);
+    try {
+      await destroyVault();
+      setShowForget(false);
+      setForgetConfirm("");
+      setPassword("");
+      setError("");
+    } finally {
+      setForgetting(false);
+    }
+  };
+
   if (!isBootstrapped) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -82,6 +99,7 @@ export default function WelcomePage() {
 
       <div className="flex-1 flex flex-col justify-center space-y-4 max-w-md mx-auto w-full px-6">
         {hasVault ? (
+          <>
           <Card className="shadow-lg">
             <CardContent className="pt-6 space-y-4">
               <div>
@@ -122,8 +140,63 @@ export default function WelcomePage() {
               >
                 Forgot password? Restore from recovery phrase
               </button>
+              <button
+                onClick={() => setShowForget(true)}
+                className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+              >
+                Forget this wallet on this device
+              </button>
             </CardContent>
           </Card>
+
+          {showForget && (
+            <Card className="mt-4 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 shadow-lg">
+              <CardContent className="pt-6 space-y-4">
+                <div>
+                  <h3 className="font-semibold text-red-900 dark:text-red-200 mb-1">
+                    Forget this wallet?
+                  </h3>
+                  <p className="text-sm text-red-800 dark:text-red-300">
+                    This erases the encrypted wallet from this browser. Funds remain
+                    controlled by your recovery phrase — without it, anything in this
+                    wallet is gone for good.
+                  </p>
+                </div>
+                <Input
+                  label='Type "forget" to confirm'
+                  value={forgetConfirm}
+                  onChange={(e) => setForgetConfirm(e.target.value)}
+                  placeholder="forget"
+                  disabled={forgetting}
+                />
+                <div className="flex gap-3">
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => {
+                      setShowForget(false);
+                      setForgetConfirm("");
+                    }}
+                    disabled={forgetting}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleForget}
+                    loading={forgetting}
+                    disabled={forgetting || forgetConfirm.trim().toLowerCase() !== "forget"}
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                  >
+                    Forget wallet
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          </>
         ) : (
           <>
             <Button
