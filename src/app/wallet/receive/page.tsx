@@ -8,14 +8,17 @@ import { Input } from "@/components/ui/input";
 import { useWalletStore } from "@/store/wallet-store";
 import {
   useLightningBalance,
-  useReceivePayment,
+  useLightningLimits,
+  usePrepareReceive,
+  useExecuteReceive,
   useGetBitcoinAddress,
 } from "@/hooks/use-breez";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
+import type { PrepareReceiveResult } from "@/lib/lightning/breez-service";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import { QRCodeSVG } from "qrcode.react";
 
-type ReceiveStep = "input" | "display" | "success";
+type ReceiveStep = "input" | "confirm" | "display" | "success";
 type PaymentMethod = "lightning" | "bitcoin";
 
 interface PaymentInfo {
@@ -44,18 +47,22 @@ export default function ReceivePage() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
+  const [prepared, setPrepared] = useState<PrepareReceiveResult | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [paymentReceived, setPaymentReceived] = useState(false);
+  const [, setPaymentReceived] = useState(false);
   const [receivedPaymentDetails, setReceivedPaymentDetails] =
     useState<ReceivedPaymentDetails | null>(null);
 
   const { data: balance } = useLightningBalance(true);
-  const receivePaymentMutation = useReceivePayment();
+  const { data: limits } = useLightningLimits(true);
+  const prepareMutation = usePrepareReceive();
+  const executeMutation = useExecuteReceive();
   const getBitcoinAddressMutation = useGetBitcoinAddress();
 
-  const maxReceivableMsat = balance?.maxReceivableMsat ?? 0;
+  const receiveMin = limits?.receive.minSat;
+  const receiveMax = limits?.receive.maxSat;
 
   useEffect(() => {
     if (!isUnlocked) {
@@ -129,7 +136,7 @@ export default function ReceivePage() {
     setError("");
   };
 
-  const handleGenerate = async () => {
+  const handleContinue = async () => {
     setError("");
 
     try {
@@ -139,32 +146,48 @@ export default function ReceivePage() {
           setError("Please enter a valid amount");
           return;
         }
-
-        const result = await receivePaymentMutation.mutateAsync({
-          amountSats,
-          description: description || "Lightning payment",
-        });
-
-        setPaymentInfo({
-          paymentRequest: result.paymentRequest,
-          paymentHash: result.paymentHash,
-          expiresAt: result.expiresAt,
-          fee: result.fee,
-        });
-
-        setTimeRemaining(3600);
+        if (receiveMin && amountSats < receiveMin) {
+          setError(`Amount must be at least ${receiveMin.toLocaleString()} sats`);
+          return;
+        }
+        if (receiveMax && amountSats > receiveMax) {
+          setError(`Amount must be at most ${receiveMax.toLocaleString()} sats`);
+          return;
+        }
+        const prep = await prepareMutation.mutateAsync(amountSats);
+        setPrepared(prep);
+        setStep("confirm");
       } else {
         const result = await getBitcoinAddressMutation.mutateAsync();
-
         setPaymentInfo({
           paymentRequest: result.address,
           fee: result.fee,
         });
+        setStep("display");
       }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to prepare receive";
+      setError(message);
+    }
+  };
 
+  const handleAcceptFees = async () => {
+    if (!prepared) return;
+    setError("");
+    try {
+      const result = await executeMutation.mutateAsync({
+        prepareResponse: prepared,
+        description: description || "Lightning payment",
+      });
+      setPaymentInfo({
+        paymentRequest: result.paymentRequest,
+        expiresAt: result.expiresAt,
+        fee: result.fee,
+      });
+      setTimeRemaining(3600);
       setStep("display");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to generate payment request";
+      const message = err instanceof Error ? err.message : "Failed to generate invoice";
       setError(message);
     }
   };
@@ -202,6 +225,7 @@ export default function ReceivePage() {
     setAmount("");
     setDescription("");
     setPaymentInfo(null);
+    setPrepared(null);
     setError("");
     setCopied(false);
     setTimeRemaining(0);
@@ -289,6 +313,11 @@ export default function ReceivePage() {
                     type="text"
                     inputMode="numeric"
                     error={error}
+                    helperText={
+                      receiveMin !== undefined && receiveMax !== undefined
+                        ? `Min ${receiveMin.toLocaleString()} sats · Max ${receiveMax.toLocaleString()} sats`
+                        : undefined
+                    }
                   />
                   {amount && !error && (
                     <p className="mt-2 text-sm text-gray-500">
@@ -326,23 +355,23 @@ export default function ReceivePage() {
           <Button
             variant="primary"
             size="lg"
-            onClick={handleGenerate}
+            onClick={handleContinue}
             disabled={
               (paymentMethod === "lightning" && !amount) ||
-              receivePaymentMutation.isPending ||
+              prepareMutation.isPending ||
               getBitcoinAddressMutation.isPending
             }
             loading={
-              receivePaymentMutation.isPending ||
+              prepareMutation.isPending ||
               getBitcoinAddressMutation.isPending
             }
             className="w-full mb-6"
           >
-            {receivePaymentMutation.isPending ||
+            {prepareMutation.isPending ||
             getBitcoinAddressMutation.isPending
-              ? "Generating..."
+              ? "Preparing..."
               : paymentMethod === "lightning"
-              ? "Generate Invoice"
+              ? "Continue"
               : "Show Bitcoin Address"}
           </Button>
 
@@ -354,6 +383,66 @@ export default function ReceivePage() {
                 : "Bitcoin address is static and can be reused. Payments are detected automatically."}
             </p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "confirm" && prepared) {
+    const payerAmount = parseInt(amount, 10) || 0;
+    const feesSat = prepared.feesSat ?? 0;
+    const receiverAmount = payerAmount - feesSat;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-2xl mx-auto px-6 py-6">
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={() => setStep("input")}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            >
+              ←
+            </button>
+            <h1 className="text-2xl font-bold">Confirm Invoice</h1>
+          </div>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Swap Fee Preview</h2>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Sender pays</span>
+                <span className="font-medium">{payerAmount.toLocaleString()} sats</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Swap fee</span>
+                <span className="font-medium">{feesSat.toLocaleString()} sats</span>
+              </div>
+              <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                <span className="font-semibold">You receive</span>
+                <span className="font-bold text-green-600 dark:text-green-400">
+                  {receiverAmount.toLocaleString()} sats
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
+              <p className="text-sm text-red-900 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleAcceptFees}
+            loading={executeMutation.isPending}
+            disabled={executeMutation.isPending}
+            className="w-full"
+          >
+            {executeMutation.isPending ? "Generating invoice…" : "Accept fees and generate invoice"}
+          </Button>
         </div>
       </div>
     );

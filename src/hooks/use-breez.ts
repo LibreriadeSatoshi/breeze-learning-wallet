@@ -5,9 +5,12 @@ import {
   listPayments,
   prepareSend,
   executeSend,
-  receivePayment,
+  prepareReceiveLightning,
+  executeReceive,
+  fetchLightningLimits,
   getBitcoinAddress,
   type PrepareSendResult,
+  type PrepareReceiveResult,
 } from "@/lib/lightning/breez-service";
 import type { LightningBalance, Payment } from "@/lib/lightning/types";
 
@@ -75,22 +78,39 @@ export function useExecuteSend() {
   });
 }
 
-export function useReceivePayment() {
+export function usePrepareReceive() {
+  return useMutation({
+    mutationFn: async (amountSats: number) => {
+      return await prepareReceiveLightning(amountSats);
+    },
+  });
+}
+
+export function useExecuteReceive() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      amountSats,
+      prepareResponse,
       description,
     }: {
-      amountSats: number;
+      prepareResponse: PrepareReceiveResult;
       description: string;
     }) => {
-      return await receivePayment(amountSats, description);
+      return await executeReceive(prepareResponse, description);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
     },
+  });
+}
+
+export function useLightningLimits(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [...breezKeys.all, "lightningLimits"] as const,
+    queryFn: fetchLightningLimits,
+    enabled,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

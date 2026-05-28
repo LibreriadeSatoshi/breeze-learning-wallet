@@ -1,5 +1,9 @@
 import type { SdkEvent } from "./sdk-events";
-import type { PrepareSendResponse } from "@breeztech/breez-sdk-liquid";
+import type {
+  PrepareSendResponse,
+  PrepareReceiveResponse,
+  LightningPaymentLimitsResponse,
+} from "@breeztech/breez-sdk-liquid";
 
 type LiquidSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-liquid").connect>>;
 
@@ -144,56 +148,35 @@ export async function getNodeState(): Promise<{ id?: string } | null> {
   }
 }
 
-export async function receivePayment(
-  amountSats: number,
-  description: string
-): Promise<{
-  bolt11: string;
-  paymentRequest: string;
-  paymentHash: string | undefined;
-  amountMsat: number;
-  fee: number;
-  description: string;
-  expiresAt: number;
-}> {
-  if (!sdk) {
-    throw new Error("Wallet not ready.");
-  }
+export type PrepareReceiveResult = PrepareReceiveResponse;
 
-  try {
-    const prepareResponse = await sdk.prepareReceivePayment({
-      paymentMethod: "bolt11Invoice",
-      amount: {
-        type: "bitcoin",
-        payerAmountSat: amountSats,
-      },
-    });
+export async function prepareReceiveLightning(amountSats: number): Promise<PrepareReceiveResult> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.prepareReceivePayment({
+    paymentMethod: "bolt11Invoice",
+    amount: { type: "bitcoin", payerAmountSat: amountSats },
+  });
+}
 
-    const response = await sdk.receivePayment({
-      prepareResponse,
-      description: description || "Lightning payment",
-    });
+export async function executeReceive(
+  prepareResponse: PrepareReceiveResult,
+  description: string,
+): Promise<{ paymentRequest: string; expiresAt: number; fee: number }> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const response = await sdk.receivePayment({
+    prepareResponse,
+    description: description || "Lightning payment",
+  });
+  return {
+    paymentRequest: response.destination,
+    expiresAt: Date.now() + 3600 * 1000,
+    fee: prepareResponse.feesSat ?? 0,
+  };
+}
 
-    return {
-      bolt11: response.destination,
-      paymentRequest: response.destination,
-      paymentHash: undefined,
-      amountMsat: amountSats * 1000,
-      fee: prepareResponse.feesSat ?? 0,
-      description,
-      expiresAt: Date.now() + 3600 * 1000,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Receive failed";
-
-    if (message.includes("amount")) {
-      throw new Error("Invalid amount specified");
-    } else if (message.includes("capacity")) {
-      throw new Error("Insufficient receiving capacity.");
-    }
-
-    throw new Error(message);
-  }
+export async function fetchLightningLimits(): Promise<LightningPaymentLimitsResponse> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.fetchLightningLimits();
 }
 
 export async function getBitcoinAddress(): Promise<{
