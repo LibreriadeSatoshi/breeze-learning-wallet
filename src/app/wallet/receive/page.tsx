@@ -342,10 +342,11 @@ export default function ReceivePage() {
               <CardContent className="pt-6">
                 <div className="text-center space-y-3">
                   <div className="text-5xl">₿</div>
-                  <h3 className="text-lg font-semibold">Bitcoin Address</h3>
+                  <h3 className="text-lg font-semibold">Bitcoin Address (one-time swap)</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Get your static Bitcoin address for receiving on-chain
-                    payments. The address is monitored automatically.
+                    Generates a fresh Bitcoin address for this payment. Funds
+                    sent to it are swapped into your Liquid balance automatically.
+                    Use a new address for each payment.
                   </p>
                 </div>
               </CardContent>
@@ -380,7 +381,7 @@ export default function ReceivePage() {
               💡 <strong>Tip:</strong>{" "}
               {paymentMethod === "lightning"
                 ? "Lightning invoices expire after 1 hour. Make sure the sender pays before then."
-                : "Bitcoin address is static and can be reused. Payments are detected automatically."}
+                : "Each Bitcoin address is single-use. Generate a new one for each payment."}
             </p>
           </div>
         </div>
@@ -525,11 +526,12 @@ export default function ReceivePage() {
                 <div className="text-center">
                   <div className="text-5xl mb-3">₿</div>
                   <h3 className="text-lg font-semibold mb-2">
-                    Static Bitcoin Address
+                    One-Time Bitcoin Address
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    This address can be reused. Funds are automatically detected
-                    and claimed.
+                    Pay this address from any Bitcoin wallet. The funds will be
+                    swapped to Liquid and claimed automatically. Generate a new
+                    address for the next payment.
                   </p>
                 </div>
               </CardContent>
