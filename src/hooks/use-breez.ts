@@ -10,9 +10,17 @@ import {
   fetchLightningLimits,
   parseInput,
   getBitcoinAddress,
+  listRefundables,
+  listPaymentsWaitingFeeAcceptance,
+  recommendedFees,
+  prepareRefund,
+  executeRefund,
+  fetchProposedFees,
+  acceptProposedFees,
   type PrepareSendResult,
   type PrepareReceiveResult,
 } from "@/lib/lightning/breez-service";
+import type { FetchPaymentProposedFeesResponse } from "@breeztech/breez-sdk-liquid";
 import type { LightningBalance, Payment } from "@/lib/lightning/types";
 
 export const breezKeys = {
@@ -118,6 +126,76 @@ export function useLightningLimits(enabled: boolean = true) {
 export function useParseInput() {
   return useMutation({
     mutationFn: async (input: string) => parseInput(input),
+  });
+}
+
+export function useRefundables(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [...breezKeys.all, "refundables"] as const,
+    queryFn: listRefundables,
+    enabled,
+    refetchInterval: 60000,
+  });
+}
+
+export function usePaymentsWaitingFeeAcceptance(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [...breezKeys.all, "waitingFeeAcceptance"] as const,
+    queryFn: listPaymentsWaitingFeeAcceptance,
+    enabled,
+    refetchInterval: 60000,
+  });
+}
+
+export function useRecommendedFees(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [...breezKeys.all, "recommendedFees"] as const,
+    queryFn: recommendedFees,
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function usePrepareRefund() {
+  return useMutation({
+    mutationFn: async (req: {
+      swapAddress: string;
+      refundAddress: string;
+      feeRateSatPerVbyte: number;
+    }) => prepareRefund(req.swapAddress, req.refundAddress, req.feeRateSatPerVbyte),
+  });
+}
+
+export function useExecuteRefund() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (req: {
+      swapAddress: string;
+      refundAddress: string;
+      feeRateSatPerVbyte: number;
+    }) => executeRefund(req.swapAddress, req.refundAddress, req.feeRateSatPerVbyte),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...breezKeys.all, "refundables"] as const });
+      queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
+    },
+  });
+}
+
+export function useFetchProposedFees() {
+  return useMutation({
+    mutationFn: async (swapId: string) => fetchProposedFees(swapId),
+  });
+}
+
+export function useAcceptProposedFees() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (response: FetchPaymentProposedFeesResponse) =>
+      acceptProposedFees(response),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...breezKeys.all, "waitingFeeAcceptance"] as const });
+      queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
+    },
   });
 }
 

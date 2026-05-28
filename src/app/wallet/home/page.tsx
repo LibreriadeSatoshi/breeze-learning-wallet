@@ -14,7 +14,9 @@ import { onSdkEvent } from "@/lib/lightning/breez-service";
 import {
   useLightningBalance,
   usePayments,
+  usePaymentsWaitingFeeAcceptance,
   useRefreshLightning,
+  useRefundables,
 } from "@/hooks/use-breez";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 
@@ -36,7 +38,11 @@ export default function WalletHomePage() {
     useLightningBalance(isReady);
   const { data: payments = [], isLoading: paymentsLoading } =
     usePayments(isReady);
+  const { data: refundables = [] } = useRefundables(isReady);
+  const { data: waitingFee = [] } = usePaymentsWaitingFeeAcceptance(isReady);
   const { refresh, isRefetching } = useRefreshLightning();
+
+  const needsAttention = refundables.length + waitingFee.length;
 
   useEffect(() => {
     setMounted(true);
@@ -155,6 +161,36 @@ export default function WalletHomePage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 -mt-12">
+        {needsAttention > 0 && (
+          <Card className="mb-6 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">⚠️</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                    {needsAttention} swap{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} your attention
+                  </h3>
+                  <p className="text-sm text-orange-800 dark:text-orange-300 mb-3">
+                    {waitingFee.length > 0 && refundables.length > 0
+                      ? "Some payments are waiting for fee acceptance and some swaps are refundable."
+                      : waitingFee.length > 0
+                      ? "On-chain fees rose for a pending payment. Accept the new fee or refund."
+                      : "One or more swaps failed and the funds are refundable."}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push("/wallet/recovery")}
+                    className="border-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/20"
+                  >
+                    Resolve
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {!hasBackedUp && (
           <Card className="mb-6 border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950/20">
             <CardContent className="pt-6">

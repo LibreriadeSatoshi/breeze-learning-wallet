@@ -4,6 +4,12 @@ import type {
   PrepareReceiveResponse,
   LightningPaymentLimitsResponse,
   InputType,
+  RefundableSwap,
+  PrepareRefundResponse,
+  RefundResponse,
+  FetchPaymentProposedFeesResponse,
+  RecommendedFees,
+  Payment,
 } from "@breeztech/breez-sdk-liquid";
 
 type LiquidSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-liquid").connect>>;
@@ -183,6 +189,53 @@ export async function fetchLightningLimits(): Promise<LightningPaymentLimitsResp
 export async function parseInput(input: string): Promise<InputType> {
   if (!sdk) throw new Error("Wallet not ready.");
   return sdk.parse(input);
+}
+
+// --- Recovery: refundable swaps + payments waiting for fee acceptance ---
+
+export async function listRefundables(): Promise<RefundableSwap[]> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.listRefundables();
+}
+
+export async function listPaymentsWaitingFeeAcceptance(): Promise<Payment[]> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.listPayments({ states: ["waitingFeeAcceptance"] });
+}
+
+export async function recommendedFees(): Promise<RecommendedFees> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.recommendedFees();
+}
+
+export async function prepareRefund(
+  swapAddress: string,
+  refundAddress: string,
+  feeRateSatPerVbyte: number,
+): Promise<PrepareRefundResponse> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.prepareRefund({ swapAddress, refundAddress, feeRateSatPerVbyte });
+}
+
+export async function executeRefund(
+  swapAddress: string,
+  refundAddress: string,
+  feeRateSatPerVbyte: number,
+): Promise<RefundResponse> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.refund({ swapAddress, refundAddress, feeRateSatPerVbyte });
+}
+
+export async function fetchProposedFees(swapId: string): Promise<FetchPaymentProposedFeesResponse> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.fetchPaymentProposedFees({ swapId });
+}
+
+export async function acceptProposedFees(
+  response: FetchPaymentProposedFeesResponse,
+): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.acceptPaymentProposedFees({ response });
 }
 
 export async function getBitcoinAddress(): Promise<{
