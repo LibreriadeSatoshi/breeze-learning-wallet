@@ -8,6 +8,7 @@ import {
   prepareReceiveLightning,
   executeReceive,
   fetchLightningLimits,
+  parseInput,
   getBitcoinAddress,
   type PrepareSendResult,
   type PrepareReceiveResult,
@@ -111,6 +112,12 @@ export function useLightningLimits(enabled: boolean = true) {
     queryFn: fetchLightningLimits,
     enabled,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useParseInput() {
+  return useMutation({
+    mutationFn: async (input: string) => parseInput(input),
   });
 }
 

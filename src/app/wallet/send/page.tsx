@@ -6,8 +6,15 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWalletStore } from "@/store/wallet-store";
-import { useLightningBalance, usePrepareSend, useExecuteSend } from "@/hooks/use-breez";
+import {
+  useLightningBalance,
+  useLightningLimits,
+  useParseInput,
+  usePrepareSend,
+  useExecuteSend,
+} from "@/hooks/use-breez";
 import type { PrepareSendResult } from "@/lib/lightning/breez-service";
+import type { InputType } from "@breeztech/breez-sdk-liquid";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -21,10 +28,14 @@ export default function SendPage() {
   const [error, setError] = useState("");
 
   const { data: balance } = useLightningBalance(true);
+  const { data: limits } = useLightningLimits(true);
+  const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
   const executeMutation = useExecuteSend();
 
   const maxPayableMsat = balance?.maxPayableMsat ?? 0;
+  const sendMin = limits?.send.minSat;
+  const sendMax = limits?.send.maxSat;
 
   useEffect(() => {
     if (!isUnlocked) {
@@ -52,6 +63,15 @@ export default function SendPage() {
       return;
     }
     try {
+      // First parse: gives a clear error early for unsupported types
+      // (LNURL-auth, LNURL-withdraw, NWC URIs, etc.).
+      const parsed = await parseMutation.mutateAsync(dest);
+      const unsupported = describeUnsupported(parsed);
+      if (unsupported) {
+        setError(unsupported);
+        return;
+      }
+
       const amountSat = amountSatInput ? parseInt(amountSatInput, 10) : undefined;
       const prep = await prepareMutation.mutateAsync({ destination: dest, amountSat });
       setPrepareResult(prep);
@@ -103,7 +123,10 @@ export default function SendPage() {
   if (!isUnlocked) return null;
 
   if (step === "input") {
-    const needsAmount = destinationNeedsAmount(destination);
+    const limitsHelp =
+      sendMin !== undefined && sendMax !== undefined
+        ? `Min ${sendMin.toLocaleString()} sats · Max ${sendMax.toLocaleString()} sats (Lightning)`
+        : "Optional for BOLT11 invoices that already encode an amount";
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -148,16 +171,14 @@ export default function SendPage() {
                 helperText="The wallet will figure out the payment type"
               />
 
-              {needsAmount && (
-                <Input
-                  label="Amount (sats)"
-                  placeholder="0"
-                  value={amountSatInput}
-                  onChange={(e) => setAmountSatInput(e.target.value.replace(/[^0-9]/g, ""))}
-                  inputMode="numeric"
-                  helperText="Lightning addresses and zero-amount invoices need an amount"
-                />
-              )}
+              <Input
+                label="Amount (sats)"
+                placeholder="0"
+                value={amountSatInput}
+                onChange={(e) => setAmountSatInput(e.target.value.replace(/[^0-9]/g, ""))}
+                inputMode="numeric"
+                helperText={limitsHelp}
+              />
 
               <div className="grid grid-cols-1 gap-3">
                 <Button
@@ -339,9 +360,25 @@ function describeDestination(prep: PrepareSendResult): string {
   }
 }
 
-// Lightning addresses and zero-amount invoices need an explicit amount.
-// Lightning addresses contain `@`; everything else can be detected by the SDK
-// after a Prepare call (and a "amount required" error will surface there).
-function destinationNeedsAmount(dest: string): boolean {
-  return /@/.test(dest.trim());
+// Surface a clean error for input types the wallet can't pay. The SDK's
+// parse() recognises these, but prepareSendPayment would still error
+// later — this gives the user a useful message up front instead of a
+// generic "destination not valid".
+function describeUnsupported(parsed: InputType): string | null {
+  switch (parsed.type) {
+    case "lnUrlAuth":
+      return "LNURL-auth is for logging in, not paying. Use it elsewhere.";
+    case "lnUrlWithdraw":
+      return "LNURL-withdraw is for receiving, not sending.";
+    case "lnUrlError":
+      return parsed.data.reason || "The LNURL endpoint returned an error.";
+    case "url":
+      return "That looks like a web link, not a payment destination.";
+    case "nodeId":
+      return "Bare node IDs aren't payable — use a BOLT11 invoice instead.";
+    case "nostrWalletConnectUri":
+      return "Nostr Wallet Connect isn't supported in this wallet.";
+    default:
+      return null;
+  }
 }

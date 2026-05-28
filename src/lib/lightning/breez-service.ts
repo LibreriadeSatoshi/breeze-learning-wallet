@@ -3,6 +3,7 @@ import type {
   PrepareSendResponse,
   PrepareReceiveResponse,
   LightningPaymentLimitsResponse,
+  InputType,
 } from "@breeztech/breez-sdk-liquid";
 
 type LiquidSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-liquid").connect>>;
@@ -177,6 +178,11 @@ export async function executeReceive(
 export async function fetchLightningLimits(): Promise<LightningPaymentLimitsResponse> {
   if (!sdk) throw new Error("Wallet not ready.");
   return sdk.fetchLightningLimits();
+}
+
+export async function parseInput(input: string): Promise<InputType> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.parse(input);
 }
 
 export async function getBitcoinAddress(): Promise<{
