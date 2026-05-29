@@ -51,7 +51,7 @@ export default function WalletHomePage() {
     usePayments(isReady);
   const { data: refundables = [] } = useRefundables(isReady);
   const { data: waitingFee = [] } = usePaymentsWaitingFeeAcceptance(isReady);
-  const { refresh, isRefetching } = useRefreshLightning();
+  const { refresh } = useRefreshLightning();
 
   const needsAttention = refundables.length + waitingFee.length;
 
@@ -145,24 +145,6 @@ export default function WalletHomePage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => refresh()}
-                disabled={isRefetching || !isReady}
-                className="p-2 rounded-full hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={
-                  !isReady
-                    ? "Wallet initializing..."
-                    : isRefetching
-                      ? "Refreshing..."
-                      : "Refresh balance"
-                }
-              >
-                <span
-                  className={isRefetching ? "inline-block animate-spin" : ""}
-                >
-                  ⟳
-                </span>
-              </button>
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-sm">
                 <div className={`w-2 h-2 rounded-full ${CONN_STYLES[conn].dot}`} />
                 <span>{CONN_STYLES[conn].label}</span>
