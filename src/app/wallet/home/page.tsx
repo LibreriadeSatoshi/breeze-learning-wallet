@@ -9,6 +9,7 @@ import {
   BalanceDisplay,
 } from "@/components/wallet/balance-display";
 import { TransactionList } from "@/components/wallet/transaction-list";
+import { PaymentDetailModal } from "@/components/wallet/payment-detail-modal";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
 import {
@@ -19,6 +20,7 @@ import {
   useRefundables,
 } from "@/hooks/use-breez";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
+import type { Payment } from "@/lib/lightning/types";
 
 const CONN_STYLES: Record<"offline" | "syncing" | "synced" | "failed", { dot: string; label: string }> = {
   offline: { dot: "bg-gray-400", label: "Offline" },
@@ -40,6 +42,7 @@ export default function WalletHomePage() {
   const [isReady, setIsReady] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [conn, setConn] = useState<"offline" | "syncing" | "synced" | "failed">("offline");
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
 
   const { data: balance, isLoading: balanceLoading } =
@@ -266,7 +269,7 @@ export default function WalletHomePage() {
             ) : payments.length > 0 ? (
               <TransactionList
                 payments={payments}
-                onPaymentClick={(payment) => console.log(payment)}
+                onPaymentClick={(payment) => setSelectedPayment(payment)}
               />
             ) : (
               <div className="text-center py-8 text-gray-500">
@@ -292,6 +295,11 @@ export default function WalletHomePage() {
 
         <div className="mt-8 pb-6"></div>
       </div>
+
+      <PaymentDetailModal
+        payment={selectedPayment}
+        onClose={() => setSelectedPayment(null)}
+      />
     </div>
   );
 }
