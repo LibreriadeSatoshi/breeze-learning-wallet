@@ -248,9 +248,6 @@ export default function ReceivePage() {
   }
 
   if (step === "input") {
-    const amountSats = parseInt(amount, 10) || 0;
-    const amountUsd = (amountSats * 0.0004).toFixed(2);
-
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-2xl mx-auto px-6 py-6">
@@ -319,11 +316,6 @@ export default function ReceivePage() {
                         : undefined
                     }
                   />
-                  {amount && !error && (
-                    <p className="mt-2 text-sm text-gray-500">
-                      ≈ ${amountUsd} USD
-                    </p>
-                  )}
                 </div>
 
                 <Input
@@ -640,9 +632,6 @@ export default function ReceivePage() {
                 </p>
                 <p className="text-4xl font-bold text-green-600 dark:text-green-400 mb-1">
                   {receivedAmount.toLocaleString()} sats
-                </p>
-                <p className="text-sm text-gray-500">
-                  ≈ ${(receivedAmount * 0.0004).toFixed(2)} USD
                 </p>
               </div>
 

@@ -1,30 +1,11 @@
-/**
- * Balance Display Component
- * Shows Lightning balance in sats and fiat currency
- */
-
 'use client';
-
-import { useState, useEffect } from 'react';
 
 interface BalanceDisplayProps {
   balanceMsat: number;
-  showFiat?: boolean;
 }
 
-export function BalanceDisplay({ balanceMsat, showFiat = true }: BalanceDisplayProps) {
-  const [usdRate, setUsdRate] = useState<number>(0);
-
-  // Convert millisats to sats
+export function BalanceDisplay({ balanceMsat }: BalanceDisplayProps) {
   const sats = Math.floor(balanceMsat / 1000);
-
-  // Fetch USD rate (simplified - in production, use a real API)
-  useEffect(() => {
-    // Mock rate - replace with actual API call
-    setUsdRate(0.00042); // Example: 1 sat = $0.00042
-  }, []);
-
-  const usdValue = (sats * usdRate).toFixed(2);
 
   return (
     <div className="text-center py-8">
@@ -32,11 +13,6 @@ export function BalanceDisplay({ balanceMsat, showFiat = true }: BalanceDisplayP
         <span className="text-5xl font-bold">{sats.toLocaleString()}</span>
         <span className="text-2xl text-gray-600 dark:text-gray-400 ml-2">sats</span>
       </div>
-      {showFiat && (
-        <div className="text-lg text-gray-500 dark:text-gray-400">
-          ≈ ${usdValue} USD
-        </div>
-      )}
     </div>
   );
 }
