@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { APP_NAME } from "@/lib/config";
 import { useWalletStore } from "@/store/wallet-store";
 
@@ -99,7 +100,6 @@ export default function WelcomePage() {
 
       <div className="flex-1 flex flex-col justify-center space-y-4 max-w-md mx-auto w-full px-6">
         {hasVault ? (
-          <>
           <Card className="shadow-lg">
             <CardContent className="pt-6 space-y-4">
               <div>
@@ -148,55 +148,6 @@ export default function WelcomePage() {
               </button>
             </CardContent>
           </Card>
-
-          {showForget && (
-            <Card className="mt-4 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 shadow-lg">
-              <CardContent className="pt-6 space-y-4">
-                <div>
-                  <h3 className="font-semibold text-red-900 dark:text-red-200 mb-1">
-                    Forget this wallet?
-                  </h3>
-                  <p className="text-sm text-red-800 dark:text-red-300">
-                    This erases the encrypted wallet from this browser. Funds remain
-                    controlled by your recovery phrase — without it, anything in this
-                    wallet is gone for good.
-                  </p>
-                </div>
-                <Input
-                  label='Type "forget" to confirm'
-                  value={forgetConfirm}
-                  onChange={(e) => setForgetConfirm(e.target.value)}
-                  placeholder="forget"
-                  disabled={forgetting}
-                />
-                <div className="flex gap-3">
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    onClick={() => {
-                      setShowForget(false);
-                      setForgetConfirm("");
-                    }}
-                    disabled={forgetting}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={handleForget}
-                    loading={forgetting}
-                    disabled={forgetting || forgetConfirm.trim().toLowerCase() !== "forget"}
-                    className="flex-1 bg-red-600 hover:bg-red-700"
-                  >
-                    Forget wallet
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          </>
         ) : (
           <>
             <Button
@@ -236,6 +187,55 @@ export default function WelcomePage() {
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>
+
+      <Modal
+        open={showForget}
+        onClose={() => {
+          if (forgetting) return;
+          setShowForget(false);
+          setForgetConfirm("");
+        }}
+        dismissable={!forgetting}
+        title="Forget this wallet?"
+        description="This erases the encrypted wallet from this browser. Funds remain controlled by your recovery phrase — without it, anything in this wallet is gone for good."
+      >
+        <div className="space-y-4">
+          <Input
+            label='Type "forget" to confirm'
+            value={forgetConfirm}
+            onChange={(e) => setForgetConfirm(e.target.value)}
+            placeholder="forget"
+            disabled={forgetting}
+            autoFocus
+          />
+          <div className="flex gap-3">
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => {
+                setShowForget(false);
+                setForgetConfirm("");
+              }}
+              disabled={forgetting}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleForget}
+              loading={forgetting}
+              disabled={
+                forgetting || forgetConfirm.trim().toLowerCase() !== "forget"
+              }
+              className="flex-1 bg-red-600 hover:bg-red-700"
+            >
+              Forget wallet
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { validateMnemonic } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
 
@@ -19,10 +20,17 @@ export default function RestoreWalletPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [overwriteAcknowledged, setOverwriteAcknowledged] = useState(false);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
 
   const hasVault = useWalletStore((s) => s.hasVault);
   const createVault = useWalletStore((s) => s.createVault);
   const setHasBackedUp = useWalletStore((s) => s.setHasBackedUp);
+
+  useEffect(() => {
+    if (hasVault === true && !overwriteAcknowledged) {
+      setShowOverwriteModal(true);
+    }
+  }, [hasVault, overwriteAcknowledged]);
 
   const wordCount = mnemonic.trim().split(/\s+/).filter(Boolean).length;
 
@@ -41,7 +49,7 @@ export default function RestoreWalletPage() {
   const handlePhraseSubmit = () => {
     setError('');
     if (hasVault && !overwriteAcknowledged) {
-      setError('Confirm that you understand this will replace the wallet on this device.');
+      setShowOverwriteModal(true);
       return;
     }
     const cleaned = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -99,36 +107,14 @@ export default function RestoreWalletPage() {
 
         {step === 'phrase' && (
           <>
-            {hasVault && (
-              <Card className="mb-6 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20">
-                <CardContent className="pt-6 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">⚠️</span>
-                    <div>
-                      <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
-                        This will replace the wallet on this device
-                      </h3>
-                      <p className="text-sm text-orange-800 dark:text-orange-300">
-                        Entering a recovery phrase erases the existing encrypted wallet from this browser.
-                        Funds in the existing wallet remain controlled by its recovery phrase — make sure
-                        you still have it before continuing.
-                      </p>
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2 cursor-pointer text-sm text-orange-900 dark:text-orange-200">
-                    <input
-                      type="checkbox"
-                      checked={overwriteAcknowledged}
-                      onChange={(e) => {
-                        setOverwriteAcknowledged(e.target.checked);
-                        setError('');
-                      }}
-                      className="w-4 h-4 rounded border-orange-300"
-                    />
-                    I understand the existing wallet on this device will be replaced
-                  </label>
-                </CardContent>
-              </Card>
+            {hasVault && overwriteAcknowledged && (
+              <div className="mb-6 p-4 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20 text-sm text-orange-800 dark:text-orange-300 flex items-start gap-3">
+                <span className="text-lg leading-none">⚠️</span>
+                <span>
+                  Restoring will replace the existing wallet on this device. Make sure
+                  you still have its recovery phrase before continuing.
+                </span>
+              </div>
             )}
 
             <Card className="mb-6 shadow-lg">
@@ -174,7 +160,7 @@ export default function RestoreWalletPage() {
                   variant="primary"
                   size="lg"
                   onClick={handlePhraseSubmit}
-                  disabled={wordCount !== 12 || (hasVault === true && !overwriteAcknowledged)}
+                  disabled={wordCount !== 12}
                   className="w-full shadow-lg hover:shadow-xl transition-shadow"
                 >
                   Continue
@@ -241,6 +227,41 @@ export default function RestoreWalletPage() {
           </Card>
         )}
       </div>
+
+      <Modal
+        open={showOverwriteModal}
+        onClose={() => {
+          setShowOverwriteModal(false);
+          if (!overwriteAcknowledged) router.back();
+        }}
+        title="Replace the wallet on this device?"
+        description="Entering a recovery phrase erases the existing encrypted wallet from this browser. Funds in the existing wallet remain controlled by its recovery phrase — make sure you still have it before continuing."
+      >
+        <div className="flex gap-3">
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={() => {
+              setShowOverwriteModal(false);
+              router.back();
+            }}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => {
+              setOverwriteAcknowledged(true);
+              setShowOverwriteModal(false);
+            }}
+            className="flex-1 bg-orange-600 hover:bg-orange-700"
+          >
+            Replace wallet
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
