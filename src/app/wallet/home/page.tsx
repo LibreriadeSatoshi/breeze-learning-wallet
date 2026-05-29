@@ -34,7 +34,6 @@ export default function WalletHomePage() {
   const [mounted, setMounted] = useState(false);
 
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
-  const hasBackedUp = useWalletStore((s) => s.hasBackedUp);
   const lock = useWalletStore((s) => s.lock);
   const bootstrap = useWalletStore((s) => s.bootstrap);
   const isBootstrapped = useWalletStore((s) => s.isBootstrapped);
@@ -185,32 +184,6 @@ export default function WalletHomePage() {
                     className="border-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/20"
                   >
                     Resolve
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {!hasBackedUp && (
-          <Card className="mb-6 border-yellow-200 dark:border-yellow-900 bg-yellow-50 dark:bg-yellow-950/20">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">⚠️</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-1">
-                    Backup Your Wallet
-                  </h3>
-                  <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-3">
-                    Secure your funds by backing up your recovery phrase.
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push("/wallet/backup")}
-                    className="border-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/20"
-                  >
-                    Backup Now
                   </Button>
                 </div>
               </div>

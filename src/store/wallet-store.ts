@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 
@@ -12,11 +11,10 @@ let mnemonicInMemory: string | null = null;
 const LEGACY_STORAGE_KEYS = [
   "etta-wallet-storage",
   "etta-auth-storage",
+  "scholar-wallet-prefs",
 ];
 
 interface WalletStore {
-  hasBackedUp: boolean;
-
   hasVault: boolean | null;
   isUnlocked: boolean;
   isBootstrapped: boolean;
@@ -27,62 +25,49 @@ interface WalletStore {
   lock: () => void;
   destroyVault: () => Promise<void>;
   getMnemonic: () => string | null;
-  setHasBackedUp: (v: boolean) => void;
 }
 
-export const useWalletStore = create<WalletStore>()(
-  persist(
-    (set, get) => ({
-      hasBackedUp: false,
-      hasVault: null,
-      isUnlocked: false,
-      isBootstrapped: false,
+export const useWalletStore = create<WalletStore>()((set, get) => ({
+  hasVault: null,
+  isUnlocked: false,
+  isBootstrapped: false,
 
-      bootstrap: async () => {
-        if (get().isBootstrapped) return;
-        if (typeof window !== "undefined") {
-          for (const key of LEGACY_STORAGE_KEYS) {
-            window.localStorage.removeItem(key);
-          }
-        }
-        const blob = await loadVault();
-        set({ hasVault: blob !== null, isBootstrapped: true });
-      },
+  bootstrap: async () => {
+    if (get().isBootstrapped) return;
+    if (typeof window !== "undefined") {
+      for (const key of LEGACY_STORAGE_KEYS) {
+        window.localStorage.removeItem(key);
+      }
+    }
+    const blob = await loadVault();
+    set({ hasVault: blob !== null, isBootstrapped: true });
+  },
 
-      createVault: async (mnemonic, password) => {
-        const blob = await encryptMnemonic(mnemonic, password);
-        await saveVault(blob);
-        mnemonicInMemory = mnemonic;
-        set({ hasVault: true, isUnlocked: true });
-      },
+  createVault: async (mnemonic, password) => {
+    const blob = await encryptMnemonic(mnemonic, password);
+    await saveVault(blob);
+    mnemonicInMemory = mnemonic;
+    set({ hasVault: true, isUnlocked: true });
+  },
 
-      unlock: async (password) => {
-        const blob = await loadVault();
-        if (!blob) throw new Error("No vault found");
-        const plaintext = await decryptMnemonic(blob, password);
-        mnemonicInMemory = plaintext;
-        set({ isUnlocked: true });
-      },
+  unlock: async (password) => {
+    const blob = await loadVault();
+    if (!blob) throw new Error("No vault found");
+    const plaintext = await decryptMnemonic(blob, password);
+    mnemonicInMemory = plaintext;
+    set({ isUnlocked: true });
+  },
 
-      lock: () => {
-        mnemonicInMemory = null;
-        set({ isUnlocked: false });
-      },
+  lock: () => {
+    mnemonicInMemory = null;
+    set({ isUnlocked: false });
+  },
 
-      destroyVault: async () => {
-        await clearVault();
-        mnemonicInMemory = null;
-        set({ hasVault: false, isUnlocked: false, hasBackedUp: false });
-      },
+  destroyVault: async () => {
+    await clearVault();
+    mnemonicInMemory = null;
+    set({ hasVault: false, isUnlocked: false });
+  },
 
-      getMnemonic: () => mnemonicInMemory,
-
-      setHasBackedUp: (v) => set({ hasBackedUp: v }),
-    }),
-    {
-      name: "scholar-wallet-prefs",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ hasBackedUp: state.hasBackedUp }),
-    },
-  ),
-);
+  getMnemonic: () => mnemonicInMemory,
+}));

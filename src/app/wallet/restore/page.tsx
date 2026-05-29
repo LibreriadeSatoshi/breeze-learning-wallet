@@ -24,7 +24,6 @@ export default function RestoreWalletPage() {
 
   const hasVault = useWalletStore((s) => s.hasVault);
   const createVault = useWalletStore((s) => s.createVault);
-  const setHasBackedUp = useWalletStore((s) => s.setHasBackedUp);
 
   useEffect(() => {
     if (hasVault === true && !overwriteAcknowledged) {
@@ -74,7 +73,6 @@ export default function RestoreWalletPage() {
     setStep('restoring');
     try {
       await createVault(mnemonic, password);
-      setHasBackedUp(true); // restored wallet already has its phrase, no verification needed
       router.push('/wallet/home');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to restore wallet');
