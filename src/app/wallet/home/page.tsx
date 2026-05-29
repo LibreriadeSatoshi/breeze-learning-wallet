@@ -90,11 +90,15 @@ export default function WalletHomePage() {
   }, [isUnlocked, isReady, initializing, refresh]);
 
   useEffect(() => {
+    if (initializing) {
+      setConn("syncing");
+      return;
+    }
     if (!isReady) {
       setConn("offline");
       return;
     }
-    setConn("syncing");
+    setConn("synced");
 
     const handleEvent = async (event: SdkEvent) => {
       if (event.type === "synced") setConn("synced");
@@ -115,7 +119,7 @@ export default function WalletHomePage() {
     };
 
     return onSdkEvent(handleEvent);
-  }, [isReady, refresh]);
+  }, [isReady, initializing, refresh]);
 
   const handleLock = () => {
     lock();
