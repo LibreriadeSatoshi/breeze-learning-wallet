@@ -47,7 +47,6 @@ export default function RecoveryPage() {
         {nothingToDo && (
           <Card>
             <CardContent className="pt-6 text-center">
-              <div className="text-5xl mb-3">✅</div>
               <p className="text-gray-600 dark:text-gray-400">
                 Nothing needs your attention. All swaps are settled.
               </p>

@@ -275,7 +275,6 @@ export default function ReceivePage() {
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <div className="text-3xl mb-2">⚡</div>
                   <div className="font-medium">Lightning</div>
                   <div className="text-xs text-gray-500">Instant</div>
                 </button>
@@ -287,7 +286,6 @@ export default function ReceivePage() {
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <div className="text-3xl mb-2">₿</div>
                   <div className="font-medium">Bitcoin</div>
                   <div className="text-xs text-gray-500">On-chain</div>
                 </button>
@@ -370,7 +368,7 @@ export default function ReceivePage() {
 
           <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
             <p className="text-sm text-blue-900 dark:text-blue-200">
-              💡 <strong>Tip:</strong>{" "}
+              <strong>Tip:</strong>{" "}
               {paymentMethod === "lightning"
                 ? "Lightning invoices expire after 1 hour. Make sure the sender pays before then."
                 : "Each Bitcoin address is single-use. Generate a new one for each payment."}
@@ -462,10 +460,9 @@ export default function ReceivePage() {
               </h1>
             </div>
             {isLightning && timeRemaining > 0 && (
-              <div className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/20 px-3 py-1.5 rounded-full text-sm">
-                <span className="text-amber-600 dark:text-amber-400">⏱</span>
+              <div className="bg-amber-100 dark:bg-amber-900/20 px-3 py-1.5 rounded-full text-sm">
                 <span className="font-medium text-amber-700 dark:text-amber-300">
-                  {formatTime(timeRemaining)}
+                  {formatTime(timeRemaining)} left
                 </span>
               </div>
             )}
@@ -514,18 +511,15 @@ export default function ReceivePage() {
 
           {!isLightning && (
             <Card className="mb-6">
-              <CardContent className="pt-6 pb-6">
-                <div className="text-center">
-                  <div className="text-5xl mb-3">₿</div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    One-Time Bitcoin Address
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Pay this address from any Bitcoin wallet. The funds will be
-                    swapped to Liquid and claimed automatically. Generate a new
-                    address for the next payment.
-                  </p>
-                </div>
+              <CardContent className="pt-6 pb-6 text-center">
+                <h3 className="text-lg font-semibold mb-2">
+                  One-time Bitcoin address
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Pay this address from any Bitcoin wallet. The funds will be
+                  swapped to Liquid and claimed automatically. Generate a new
+                  address for the next payment.
+                </p>
               </CardContent>
             </Card>
           )}
@@ -568,22 +562,12 @@ export default function ReceivePage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="primary"
-                  onClick={handleCopy}
-                  className="flex items-center justify-center gap-2"
-                >
-                  <span>{copied ? "✓" : "📋"}</span>
-                  <span>{copied ? "Copied!" : "Copy"}</span>
+                <Button variant="primary" onClick={handleCopy}>
+                  {copied ? "Copied" : "Copy"}
                 </Button>
                 {canShare && (
-                  <Button
-                    variant="outline"
-                    onClick={handleShare}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <span>↗</span>
-                    <span>Share</span>
+                  <Button variant="outline" onClick={handleShare}>
+                    Share
                   </Button>
                 )}
               </div>
@@ -618,8 +602,12 @@ export default function ReceivePage() {
         <div className="max-w-2xl mx-auto px-6 py-6">
           <Card className="mb-6">
             <CardContent className="pt-8 pb-6 text-center">
-              <div className="text-6xl mb-4">✅</div>
-              <h2 className="text-2xl font-bold mb-2">Payment Received!</h2>
+              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <svg className="w-9 h-9 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Payment received</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 {paymentMethod === "lightning"
                   ? "Successfully received via Lightning"

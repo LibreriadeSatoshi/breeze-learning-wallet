@@ -82,13 +82,8 @@ export default function WelcomePage() {
   return (
     <div className="min-h-screen flex flex-col justify-between px-6 py-10">
       <div className="flex-1 flex flex-col items-center justify-end pb-20">
-        <div className="relative mb-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl transform transition-transform hover:scale-105">
-            <span className="text-5xl">🎓</span>
-          </div>
-          <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-            <span className="text-2xl">₿</span>
-          </div>
+        <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl mb-8">
+          <span className="text-5xl font-bold text-white">₿</span>
         </div>
         <h1 className="text-5xl font-bold mb-3 text-center bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
           {APP_NAME}
@@ -157,7 +152,7 @@ export default function WelcomePage() {
               loading={creatingWallet}
               className="w-full shadow-lg hover:shadow-xl transition-shadow"
             >
-              {creatingWallet ? "Creating wallet..." : "🚀 Create new wallet"}
+              {creatingWallet ? "Creating wallet..." : "Create new wallet"}
             </Button>
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center">
@@ -176,7 +171,7 @@ export default function WelcomePage() {
               disabled={creatingWallet}
               className="w-full hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              🔑 Restore wallet
+              Restore wallet
             </Button>
           </>
         )}

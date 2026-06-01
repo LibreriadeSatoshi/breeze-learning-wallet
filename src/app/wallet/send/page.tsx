@@ -227,13 +227,8 @@ export default function SendPage() {
               />
 
               <div className="grid grid-cols-1 gap-3">
-                <Button
-                  variant="outline"
-                  onClick={handlePaste}
-                  className="flex items-center justify-center gap-2"
-                >
-                  <span>📋</span>
-                  <span>Paste</span>
+                <Button variant="outline" onClick={handlePaste}>
+                  Paste from clipboard
                 </Button>
               </div>
 
@@ -348,10 +343,8 @@ export default function SendPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-            <div className="animate-spin text-4xl">⚡</div>
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Sending Payment...</h2>
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
+          <h2 className="text-2xl font-bold mb-2">Sending payment…</h2>
         </div>
       </div>
     );
@@ -363,14 +356,16 @@ export default function SendPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center px-6">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-            <span className="text-5xl">✓</span>
+            <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
           </div>
-          <h2 className="text-3xl font-bold mb-3 text-green-600">Payment Sent!</h2>
+          <h2 className="text-3xl font-bold mb-3 text-green-600">Payment sent</h2>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">
             {amountSat.toLocaleString()} sats
           </p>
           <Button variant="primary" onClick={() => router.push("/wallet/home")}>
-            Back to Wallet
+            Back to wallet
           </Button>
         </div>
       </div>
@@ -382,9 +377,11 @@ export default function SendPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center px-6">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-            <span className="text-5xl">✕</span>
+            <svg className="w-10 h-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </div>
-          <h2 className="text-3xl font-bold mb-3 text-red-600">Payment Failed</h2>
+          <h2 className="text-3xl font-bold mb-3 text-red-600">Payment failed</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
             {error || "Something went wrong. Please try again."}
           </p>

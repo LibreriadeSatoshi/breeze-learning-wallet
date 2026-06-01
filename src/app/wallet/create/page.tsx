@@ -156,7 +156,7 @@ export default function CreateWalletPage() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl mb-4 shadow-lg">
-            <span className="text-3xl">🔐</span>
+            <span className="text-3xl font-bold text-white">₿</span>
           </div>
           <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
             {heading}
@@ -170,19 +170,14 @@ export default function CreateWalletPage() {
           <>
             <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
               <CardHeader>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">⚠️</span>
-                  <div>
-                    <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                      Important Security Information
-                    </h3>
-                    <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
-                      <li>• Never share your recovery phrase with anyone</li>
-                      <li>• Store it offline in a secure location</li>
-                      <li>• Anyone with these words can access your funds</li>
-                    </ul>
-                  </div>
-                </div>
+                <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
+                  Important security information
+                </h3>
+                <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
+                  <li>Never share your recovery phrase with anyone.</li>
+                  <li>Store it offline in a secure location.</li>
+                  <li>Anyone with these words can access your funds.</li>
+                </ul>
               </CardHeader>
             </Card>
 
@@ -190,15 +185,12 @@ export default function CreateWalletPage() {
               <CardContent className="pt-6">
                 {step === 'reveal' ? (
                   <div className="text-center py-12">
-                    <div className="mb-6">
-                      <span className="text-6xl">🔒</span>
-                    </div>
                     <h3 className="text-xl font-semibold mb-2">Tap to reveal your recovery phrase</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      Make sure no one is looking at your screen
+                      Make sure no one is looking at your screen.
                     </p>
                     <Button onClick={handleReveal} variant="primary" size="lg">
-                      Reveal Recovery Phrase
+                      Reveal recovery phrase
                     </Button>
                   </div>
                 ) : (
@@ -206,7 +198,7 @@ export default function CreateWalletPage() {
                     <MnemonicDisplay words={words} revealed />
                     <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
                       <p className="text-sm text-blue-900 dark:text-blue-200">
-                        💡 <strong>Tip:</strong> Write these words on paper in the exact order shown.
+                        <strong>Tip:</strong> Write these words on paper in the exact order shown.
                         Do not take a screenshot or store digitally.
                       </p>
                     </div>
@@ -223,7 +215,7 @@ export default function CreateWalletPage() {
                   onClick={handleProceedToVerify}
                   className="w-full shadow-lg hover:shadow-xl transition-shadow"
                 >
-                  I&apos;ve Written It Down — Verify
+                  I&apos;ve written it down — verify
                 </Button>
                 <Button variant="ghost" size="lg" onClick={() => router.back()} className="w-full">
                   ← Back

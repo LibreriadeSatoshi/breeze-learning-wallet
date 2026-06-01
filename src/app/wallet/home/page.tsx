@@ -136,7 +136,7 @@ export default function WalletHomePage() {
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <span className="text-2xl">🎓</span>
+                <span className="text-xl font-bold">₿</span>
               </div>
               <div>
                 <h1 className="text-2xl font-bold">My Wallet</h1>
@@ -164,29 +164,24 @@ export default function WalletHomePage() {
         {needsAttention > 0 && (
           <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
             <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">⚠️</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                    {needsAttention} swap{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} your attention
-                  </h3>
-                  <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
-                    {waitingFee.length > 0 && refundables.length > 0
-                      ? "Some payments are waiting for fee acceptance and some swaps are refundable."
-                      : waitingFee.length > 0
-                      ? "On-chain fees rose for a pending payment. Accept the new fee or refund."
-                      : "One or more swaps failed and the funds are refundable."}
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push("/wallet/recovery")}
-                    className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/20"
-                  >
-                    Resolve
-                  </Button>
-                </div>
-              </div>
+              <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
+                {needsAttention} swap{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} your attention
+              </h3>
+              <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
+                {waitingFee.length > 0 && refundables.length > 0
+                  ? "Some payments are waiting for fee acceptance and some swaps are refundable."
+                  : waitingFee.length > 0
+                  ? "On-chain fees rose for a pending payment. Accept the new fee or refund."
+                  : "One or more swaps failed and the funds are refundable."}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/wallet/recovery")}
+                className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/20"
+              >
+                Resolve
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -197,22 +192,20 @@ export default function WalletHomePage() {
             size="lg"
             onClick={() => router.push("/wallet/send")}
             disabled={!isReady}
-            className="h-28 flex flex-col gap-2 shadow-lg hover:shadow-xl transition-all"
+            className="h-20 flex flex-col gap-1 shadow-lg hover:shadow-xl transition-all"
           >
-            <span className="text-4xl">⚡</span>
-            <span className="font-semibold">Send</span>
-            <span className="text-xs opacity-80">Pay Lightning Invoice</span>
+            <span className="font-semibold text-lg">Send</span>
+            <span className="text-xs opacity-80">Pay Lightning invoice</span>
           </Button>
           <Button
             variant="outline"
             size="lg"
             onClick={() => router.push("/wallet/receive")}
             disabled={!isReady}
-            className="h-28 flex flex-col gap-2 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
+            className="h-20 flex flex-col gap-1 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
           >
-            <span className="text-4xl">📥</span>
-            <span className="font-semibold">Receive</span>
-            <span className="text-xs opacity-70">Get Paid</span>
+            <span className="font-semibold text-lg">Receive</span>
+            <span className="text-xs opacity-70">Get paid</span>
           </Button>
         </div>
 
@@ -239,16 +232,11 @@ export default function WalletHomePage() {
         </Card>
 
         {!isReady && (
-          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-900 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="animate-pulse">
-                <span className="text-2xl">⚡</span>
-              </div>
-              <p className="text-sm text-blue-900 dark:text-blue-200">
-                <strong>Lightning Node:</strong>{" "}
-                {initializing ? "Initializing..." : "Connecting..."}
-              </p>
-            </div>
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900 shadow-sm">
+            <p className="text-sm text-blue-900 dark:text-blue-200">
+              <strong>Lightning node:</strong>{" "}
+              {initializing ? "Initializing…" : "Connecting…"}
+            </p>
           </div>
         )}
 

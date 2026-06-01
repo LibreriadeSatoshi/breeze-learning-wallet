@@ -16,14 +16,13 @@ export function TransactionList({
     return (
       <Card>
         <CardHeader>
-          <h3 className="font-semibold">Recent Activity</h3>
+          <h3 className="font-semibold">Recent activity</h3>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <span className="text-4xl mb-2 block">⚡</span>
             <p>No transactions yet</p>
             <p className="text-sm mt-1">
-              Your Lightning payments will appear here
+              Your Lightning payments will appear here.
             </p>
           </div>
         </CardContent>
@@ -67,11 +66,11 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
     failed: "text-red-600 dark:text-red-400",
   };
 
-  const statusIcons = {
-    pending: "⏳",
-    complete: "✓",
-    failed: "✗",
-  };
+  const statusLabels = {
+    pending: "Pending",
+    complete: "",
+    failed: "Failed",
+  } as const;
 
   return (
     <div
@@ -95,9 +94,11 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
                 {payment.description ||
                   (isReceived ? "Received payment" : "Sent payment")}
               </div>
-              <span className={`text-xs ${statusColors[payment.status]}`}>
-                {statusIcons[payment.status]}
-              </span>
+              {statusLabels[payment.status] && (
+                <span className={`text-xs font-medium ${statusColors[payment.status]}`}>
+                  {statusLabels[payment.status]}
+                </span>
+              )}
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
               {date.toLocaleDateString()}{" "}

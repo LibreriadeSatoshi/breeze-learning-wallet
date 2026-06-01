@@ -92,7 +92,7 @@ export default function RestoreWalletPage() {
           </button>
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl mb-4 shadow-lg">
-              <span className="text-3xl">🔑</span>
+              <span className="text-3xl font-bold text-white">₿</span>
             </div>
             <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Restore Wallet
@@ -106,12 +106,9 @@ export default function RestoreWalletPage() {
         {step === 'phrase' && (
           <>
             {hasVault && overwriteAcknowledged && (
-              <div className="mb-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-3">
-                <span className="text-lg leading-none">⚠️</span>
-                <span>
-                  Restoring will replace the existing wallet on this device. Make sure
-                  you still have its recovery phrase before continuing.
-                </span>
+              <div className="mb-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300">
+                Restoring will replace the existing wallet on this device. Make sure
+                you still have its recovery phrase before continuing.
               </div>
             )}
 
@@ -149,10 +146,9 @@ export default function RestoreWalletPage() {
                 <Button
                   variant="outline"
                   onClick={handlePaste}
-                  className="w-full flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="w-full border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                  <span>📋</span>
-                  <span>Paste from clipboard</span>
+                  Paste from clipboard
                 </Button>
                 <Button
                   variant="primary"

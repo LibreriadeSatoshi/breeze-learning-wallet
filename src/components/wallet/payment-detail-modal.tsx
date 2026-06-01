@@ -137,7 +137,9 @@ function CopyRow({ label, value }: { label: string; value: string }) {
         aria-label={`Copy ${label.toLowerCase()}`}
       >
         <span>{truncated}</span>
-        <span className="text-gray-400">{copied ? "✓" : "⎘"}</span>
+        <span className="text-[10px] uppercase tracking-wide text-gray-400">
+          {copied ? "Copied" : "Copy"}
+        </span>
       </button>
     </div>
   );
