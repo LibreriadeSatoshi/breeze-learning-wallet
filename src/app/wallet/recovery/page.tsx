@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,8 +39,9 @@ export default function RecoveryPage() {
           <button
             onClick={() => router.back()}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Back"
           >
-            ←
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <h1 className="text-2xl font-bold">Swap Recovery</h1>
         </div>

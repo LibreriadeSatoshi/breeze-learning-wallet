@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Check, ChevronLeft, Clipboard, X } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,8 +182,9 @@ export default function SendPage() {
             <button
               onClick={handleBack}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Back"
             >
-              ←
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Send Payment</h1>
           </div>
@@ -227,7 +229,12 @@ export default function SendPage() {
               />
 
               <div className="grid grid-cols-1 gap-3">
-                <Button variant="outline" onClick={handlePaste}>
+                <Button
+                  variant="outline"
+                  onClick={handlePaste}
+                  className="inline-flex items-center justify-center gap-2"
+                >
+                  <Clipboard className="w-4 h-4" />
                   Paste from clipboard
                 </Button>
               </div>
@@ -274,8 +281,9 @@ export default function SendPage() {
             <button
               onClick={handleBack}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Back"
             >
-              ←
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Confirm Payment</h1>
           </div>
@@ -356,9 +364,7 @@ export default function SendPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center px-6">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-            <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+            <Check className="w-10 h-10 text-green-600 dark:text-green-400" strokeWidth={3} />
           </div>
           <h2 className="text-3xl font-bold mb-3 text-green-600">Payment sent</h2>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">
@@ -377,9 +383,7 @@ export default function SendPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center px-6">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-            <svg className="w-10 h-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-10 h-10 text-red-600 dark:text-red-400" strokeWidth={3} />
           </div>
           <h2 className="text-3xl font-bold mb-3 text-red-600">Payment failed</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">

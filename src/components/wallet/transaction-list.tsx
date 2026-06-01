@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Payment } from "@/lib/lightning/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -86,7 +87,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
                 : "bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
             }`}
           >
-            {isReceived ? "↓" : "↑"}
+            {isReceived ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">

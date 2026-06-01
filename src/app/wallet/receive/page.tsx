@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Check, ChevronLeft, Copy, Share2, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -255,8 +256,9 @@ export default function ReceivePage() {
             <button
               onClick={() => router.back()}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Back"
             >
-              ←
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Receive Payment</h1>
           </div>
@@ -269,25 +271,31 @@ export default function ReceivePage() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setPaymentMethod("lightning")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
                     paymentMethod === "lightning"
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <div className="font-medium">Lightning</div>
-                  <div className="text-xs text-gray-500">Instant</div>
+                  <Zap className="w-6 h-6" />
+                  <div>
+                    <div className="font-medium">Lightning</div>
+                    <div className="text-xs text-gray-500">Instant</div>
+                  </div>
                 </button>
                 <button
                   onClick={() => setPaymentMethod("bitcoin")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
                     paymentMethod === "bitcoin"
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <div className="font-medium">Bitcoin</div>
-                  <div className="text-xs text-gray-500">On-chain</div>
+                  <span className="text-2xl font-bold leading-none">₿</span>
+                  <div>
+                    <div className="font-medium">Bitcoin</div>
+                    <div className="text-xs text-gray-500">On-chain</div>
+                  </div>
                 </button>
               </div>
             </CardContent>
@@ -390,8 +398,9 @@ export default function ReceivePage() {
             <button
               onClick={() => setStep("input")}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Back"
             >
-              ←
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Confirm Invoice</h1>
           </div>
@@ -452,8 +461,9 @@ export default function ReceivePage() {
               <button
                 onClick={handleNew}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Back"
               >
-                ←
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <h1 className="text-2xl font-bold">
                 {isLightning ? "Lightning Invoice" : "Bitcoin Address"}
@@ -562,11 +572,21 @@ export default function ReceivePage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Button variant="primary" onClick={handleCopy}>
+                <Button
+                  variant="primary"
+                  onClick={handleCopy}
+                  className="inline-flex items-center justify-center gap-2"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   {copied ? "Copied" : "Copy"}
                 </Button>
                 {canShare && (
-                  <Button variant="outline" onClick={handleShare}>
+                  <Button
+                    variant="outline"
+                    onClick={handleShare}
+                    className="inline-flex items-center justify-center gap-2"
+                  >
+                    <Share2 className="w-4 h-4" />
                     Share
                   </Button>
                 )}
@@ -603,9 +623,7 @@ export default function ReceivePage() {
           <Card className="mb-6">
             <CardContent className="pt-8 pb-6 text-center">
               <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <svg className="w-9 h-9 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <Check className="w-9 h-9 text-green-600 dark:text-green-400" strokeWidth={3} />
               </div>
               <h2 className="text-2xl font-bold mb-2">Payment received</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-6">

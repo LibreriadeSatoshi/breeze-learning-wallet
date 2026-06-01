@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, Check, Copy } from "lucide-react";
 import type { Payment } from "@/lib/lightning/types";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,7 @@ function PaymentDetailContent({
               : "bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
           }`}
         >
-          {isReceived ? "↓" : "↑"}
+          {isReceived ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
         </div>
         <div
           className={`text-3xl font-bold ${
@@ -137,9 +138,11 @@ function CopyRow({ label, value }: { label: string; value: string }) {
         aria-label={`Copy ${label.toLowerCase()}`}
       >
         <span>{truncated}</span>
-        <span className="text-[10px] uppercase tracking-wide text-gray-400">
-          {copied ? "Copied" : "Copy"}
-        </span>
+        {copied ? (
+          <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+        ) : (
+          <Copy className="w-3.5 h-3.5 text-gray-400" />
+        )}
       </button>
     </div>
   );

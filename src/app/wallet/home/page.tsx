@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowDownLeft, ArrowUpRight, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWalletStore } from "@/store/wallet-store";
@@ -150,8 +151,9 @@ export default function WalletHomePage() {
               </div>
               <button
                 onClick={handleLock}
-                className="text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
               >
+                <Lock className="w-3.5 h-3.5" />
                 Lock
               </button>
             </div>
@@ -192,20 +194,26 @@ export default function WalletHomePage() {
             size="lg"
             onClick={() => router.push("/wallet/send")}
             disabled={!isReady}
-            className="h-20 flex flex-col gap-1 shadow-lg hover:shadow-xl transition-all"
+            className="h-20 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
           >
-            <span className="font-semibold text-lg">Send</span>
-            <span className="text-xs opacity-80">Pay Lightning invoice</span>
+            <ArrowUpRight className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold text-lg leading-none">Send</span>
+              <span className="text-xs opacity-80 mt-0.5">Pay Lightning invoice</span>
+            </div>
           </Button>
           <Button
             variant="outline"
             size="lg"
             onClick={() => router.push("/wallet/receive")}
             disabled={!isReady}
-            className="h-20 flex flex-col gap-1 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
+            className="h-20 flex items-center justify-center gap-3 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
           >
-            <span className="font-semibold text-lg">Receive</span>
-            <span className="text-xs opacity-70">Get paid</span>
+            <ArrowDownLeft className="w-6 h-6" />
+            <div className="flex flex-col items-start">
+              <span className="font-semibold text-lg leading-none">Receive</span>
+              <span className="text-xs opacity-70 mt-0.5">Get paid</span>
+            </div>
           </Button>
         </div>
 

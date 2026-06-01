@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -217,8 +218,14 @@ export default function CreateWalletPage() {
                 >
                   I&apos;ve written it down — verify
                 </Button>
-                <Button variant="ghost" size="lg" onClick={() => router.back()} className="w-full">
-                  ← Back
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => router.back()}
+                  className="w-full inline-flex items-center justify-center gap-2"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Back
                 </Button>
               </div>
             )}
@@ -290,9 +297,10 @@ export default function CreateWalletPage() {
                 variant="ghost"
                 size="lg"
                 onClick={handleBackToPhrase}
-                className="flex-1"
+                className="flex-1 inline-flex items-center justify-center gap-2"
               >
-                ← View phrase again
+                <ChevronLeft className="w-5 h-5" />
+                View phrase again
               </Button>
               <Button
                 variant="primary"
