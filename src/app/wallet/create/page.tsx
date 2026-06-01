@@ -152,13 +152,13 @@ export default function CreateWalletPage() {
   }, [step]);
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-b from-orange-50 to-white dark:from-gray-900 dark:to-gray-900">
+    <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl mb-4 shadow-lg">
             <span className="text-3xl">🔐</span>
           </div>
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
             {heading}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
@@ -168,15 +168,15 @@ export default function CreateWalletPage() {
 
         {(step === 'reveal' || step === 'shown') && (
           <>
-            <Card className="mb-6 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20">
+            <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
               <CardHeader>
                 <div className="flex items-start gap-3">
                   <span className="text-2xl">⚠️</span>
                   <div>
-                    <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                    <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
                       Important Security Information
                     </h3>
-                    <ul className="text-sm text-orange-800 dark:text-orange-300 space-y-1">
+                    <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
                       <li>• Never share your recovery phrase with anyone</li>
                       <li>• Store it offline in a secure location</li>
                       <li>• Anyone with these words can access your funds</li>
@@ -283,7 +283,7 @@ export default function CreateWalletPage() {
                       className={`p-4 rounded-lg border-2 font-mono font-medium transition-all ${
                         picks.includes(index)
                           ? 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 opacity-50'
-                          : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20'
+                          : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20'
                       }`}
                     >
                       {item.word}

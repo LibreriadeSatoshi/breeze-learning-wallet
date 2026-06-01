@@ -86,7 +86,7 @@ export default function WelcomePage() {
           <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl transform transition-transform hover:scale-105">
             <span className="text-5xl">🎓</span>
           </div>
-          <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-br from-cyan-400 to-sky-500 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
             <span className="text-2xl">₿</span>
           </div>
         </div>

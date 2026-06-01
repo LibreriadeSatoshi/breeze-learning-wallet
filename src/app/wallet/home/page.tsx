@@ -162,15 +162,15 @@ export default function WalletHomePage() {
 
       <div className="max-w-4xl mx-auto px-6 -mt-12">
         {needsAttention > 0 && (
-          <Card className="mb-6 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20">
+          <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">⚠️</span>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                  <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
                     {needsAttention} swap{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} your attention
                   </h3>
-                  <p className="text-sm text-orange-800 dark:text-orange-300 mb-3">
+                  <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
                     {waitingFee.length > 0 && refundables.length > 0
                       ? "Some payments are waiting for fee acceptance and some swaps are refundable."
                       : waitingFee.length > 0
@@ -181,7 +181,7 @@ export default function WalletHomePage() {
                     variant="outline"
                     size="sm"
                     onClick={() => router.push("/wallet/recovery")}
-                    className="border-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/20"
+                    className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/20"
                   >
                     Resolve
                   </Button>

@@ -271,7 +271,7 @@ export default function ReceivePage() {
                   onClick={() => setPaymentMethod("lightning")}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     paymentMethod === "lightning"
-                      ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -283,7 +283,7 @@ export default function ReceivePage() {
                   onClick={() => setPaymentMethod("bitcoin")}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     paymentMethod === "bitcoin"
-                      ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -462,9 +462,9 @@ export default function ReceivePage() {
               </h1>
             </div>
             {isLightning && timeRemaining > 0 && (
-              <div className="flex items-center gap-2 bg-orange-100 dark:bg-orange-900/20 px-3 py-1.5 rounded-full text-sm">
-                <span className="text-orange-600 dark:text-orange-400">⏱</span>
-                <span className="font-medium text-orange-700 dark:text-orange-300">
+              <div className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/20 px-3 py-1.5 rounded-full text-sm">
+                <span className="text-amber-600 dark:text-amber-400">⏱</span>
+                <span className="font-medium text-amber-700 dark:text-amber-300">
                   {formatTime(timeRemaining)}
                 </span>
               </div>
@@ -496,7 +496,7 @@ export default function ReceivePage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                     Request for
                   </p>
-                  <p className="text-5xl font-bold text-green-500 mb-2">
+                  <p className="text-5xl font-bold text-orange-500 mb-2">
                     {amountSats.toLocaleString()}
                   </p>
                   <p className="text-lg text-gray-600 dark:text-gray-400">

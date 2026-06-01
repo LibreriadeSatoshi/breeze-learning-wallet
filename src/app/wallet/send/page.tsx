@@ -348,7 +348,7 @@ export default function SendPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
             <div className="animate-spin text-4xl">⚡</div>
           </div>
           <h2 className="text-2xl font-bold mb-2">Sending Payment...</h2>

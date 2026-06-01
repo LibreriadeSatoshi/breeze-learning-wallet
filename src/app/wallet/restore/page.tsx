@@ -106,7 +106,7 @@ export default function RestoreWalletPage() {
         {step === 'phrase' && (
           <>
             {hasVault && overwriteAcknowledged && (
-              <div className="mb-6 p-4 rounded-lg border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/20 text-sm text-orange-800 dark:text-orange-300 flex items-start gap-3">
+              <div className="mb-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-3">
                 <span className="text-lg leading-none">⚠️</span>
                 <span>
                   Restoring will replace the existing wallet on this device. Make sure
@@ -254,7 +254,7 @@ export default function RestoreWalletPage() {
               setOverwriteAcknowledged(true);
               setShowOverwriteModal(false);
             }}
-            className="flex-1 bg-orange-600 hover:bg-orange-700"
+            className="flex-1 bg-amber-600 hover:bg-amber-700"
           >
             Replace wallet
           </Button>
