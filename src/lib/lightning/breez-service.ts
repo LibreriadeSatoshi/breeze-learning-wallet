@@ -10,6 +10,9 @@ import type {
   FetchPaymentProposedFeesResponse,
   RecommendedFees,
   Payment,
+  LnUrlPayRequestData,
+  PrepareLnUrlPayResponse,
+  LnUrlPayResult,
 } from "@breeztech/breez-sdk-liquid";
 
 type LiquidSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-liquid").connect>>;
@@ -275,6 +278,28 @@ export async function prepareSend(
     : { destination };
 
   return sdk.prepareSendPayment(request);
+}
+
+export type PrepareLnurlPayResult = PrepareLnUrlPayResponse;
+
+export async function prepareLnurlPay(
+  data: LnUrlPayRequestData,
+  amountSat: number,
+  comment?: string,
+): Promise<PrepareLnurlPayResult> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.prepareLnurlPay({
+    data,
+    amount: { type: "bitcoin", receiverAmountSat: amountSat },
+    comment,
+  });
+}
+
+export async function executeLnurlPay(
+  prepareResponse: PrepareLnurlPayResult,
+): Promise<LnUrlPayResult> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.lnurlPay({ prepareResponse });
 }
 
 export async function executeSend(prepareResponse: PrepareSendResult): Promise<unknown> {

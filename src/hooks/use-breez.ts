@@ -17,10 +17,16 @@ import {
   executeRefund,
   fetchProposedFees,
   acceptProposedFees,
+  prepareLnurlPay,
+  executeLnurlPay,
   type PrepareSendResult,
   type PrepareReceiveResult,
+  type PrepareLnurlPayResult,
 } from "@/lib/lightning/breez-service";
-import type { FetchPaymentProposedFeesResponse } from "@breeztech/breez-sdk-liquid";
+import type {
+  FetchPaymentProposedFeesResponse,
+  LnUrlPayRequestData,
+} from "@breeztech/breez-sdk-liquid";
 import type { LightningBalance, Payment } from "@/lib/lightning/types";
 
 export const breezKeys = {
@@ -126,6 +132,32 @@ export function useLightningLimits(enabled: boolean = true) {
 export function useParseInput() {
   return useMutation({
     mutationFn: async (input: string) => parseInput(input),
+  });
+}
+
+export function usePrepareLnurlPay() {
+  return useMutation({
+    mutationFn: async ({
+      data,
+      amountSat,
+      comment,
+    }: {
+      data: LnUrlPayRequestData;
+      amountSat: number;
+      comment?: string;
+    }) => prepareLnurlPay(data, amountSat, comment),
+  });
+}
+
+export function useExecuteLnurlPay() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (prepareResponse: PrepareLnurlPayResult) =>
+      executeLnurlPay(prepareResponse),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: breezKeys.balance() });
+      queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
+    },
   });
 }
 
