@@ -12,11 +12,20 @@ import {
   useParseInput,
   usePrepareSend,
   useExecuteSend,
+  usePrepareLnurlPay,
+  useExecuteLnurlPay,
 } from "@/hooks/use-breez";
-import type { PrepareSendResult } from "@/lib/lightning/breez-service";
+import type {
+  PrepareSendResult,
+  PrepareLnurlPayResult,
+} from "@/lib/lightning/breez-service";
 import type { InputType } from "@breeztech/breez-sdk-liquid";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
+
+type PrepareResult =
+  | { kind: "send"; data: PrepareSendResult }
+  | { kind: "lnurlPay"; data: PrepareLnurlPayResult };
 
 export default function SendPage() {
   const router = useRouter();
@@ -24,7 +33,7 @@ export default function SendPage() {
   const [step, setStep] = useState<SendStep>("input");
   const [destination, setDestination] = useState("");
   const [amountSatInput, setAmountSatInput] = useState("");
-  const [prepareResult, setPrepareResult] = useState<PrepareSendResult | null>(null);
+  const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
 
   const { data: balance } = useLightningBalance(true);
@@ -32,6 +41,8 @@ export default function SendPage() {
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
   const executeMutation = useExecuteSend();
+  const prepareLnurlMutation = usePrepareLnurlPay();
+  const executeLnurlMutation = useExecuteLnurlPay();
 
   const maxPayableMsat = balance?.maxPayableMsat ?? 0;
   const sendMin = limits?.send.minSat;
@@ -63,8 +74,8 @@ export default function SendPage() {
       return;
     }
     try {
-      // First parse: gives a clear error early for unsupported types
-      // (LNURL-auth, LNURL-withdraw, NWC URIs, etc.).
+      // Parse first so we can route LNURL-pay through the right SDK call
+      // and give clean errors for input types we can't pay.
       const parsed = await parseMutation.mutateAsync(dest);
       const unsupported = describeUnsupported(parsed);
       if (unsupported) {
@@ -73,8 +84,30 @@ export default function SendPage() {
       }
 
       const amountSat = amountSatInput ? parseInt(amountSatInput, 10) : undefined;
-      const prep = await prepareMutation.mutateAsync({ destination: dest, amountSat });
-      setPrepareResult(prep);
+
+      let prep: PrepareResult;
+      if (parsed.type === "lnUrlPay") {
+        if (!amountSat || amountSat <= 0) {
+          setError("Enter an amount to send to this Lightning address");
+          return;
+        }
+        const minSat = Math.ceil(parsed.data.minSendable / 1000);
+        const maxSat = Math.floor(parsed.data.maxSendable / 1000);
+        if (amountSat < minSat || amountSat > maxSat) {
+          setError(
+            `This Lightning address accepts ${minSat.toLocaleString()}–${maxSat.toLocaleString()} sats`,
+          );
+          return;
+        }
+        const lnurlPrep = await prepareLnurlMutation.mutateAsync({
+          data: parsed.data,
+          amountSat,
+        });
+        prep = { kind: "lnurlPay", data: lnurlPrep };
+      } else {
+        const sendPrep = await prepareMutation.mutateAsync({ destination: dest, amountSat });
+        prep = { kind: "send", data: sendPrep };
+      }
 
       const sendAmountSat = readAmountSat(prep);
       if (sendAmountSat !== null && sendAmountSat * 1000 > maxPayableMsat) {
@@ -83,6 +116,7 @@ export default function SendPage() {
         );
         return;
       }
+      setPrepareResult(prep);
       setStep("confirm");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not parse destination";
@@ -95,7 +129,19 @@ export default function SendPage() {
     setStep("processing");
     setError("");
     try {
-      await executeMutation.mutateAsync(prepareResult);
+      if (prepareResult.kind === "send") {
+        await executeMutation.mutateAsync(prepareResult.data);
+      } else {
+        const result = await executeLnurlMutation.mutateAsync(prepareResult.data);
+        if (result.type === "endpointError") {
+          throw new Error(
+            result.data.reason || "The Lightning address endpoint returned an error.",
+          );
+        }
+        if (result.type === "payError") {
+          throw new Error(result.data.reason || "Payment to Lightning address failed.");
+        }
+      }
       setStep("success");
       setTimeout(() => router.push("/wallet/home"), 2000);
     } catch (err) {
@@ -195,11 +241,24 @@ export default function SendPage() {
                 variant="primary"
                 size="lg"
                 onClick={handleContinue}
-                disabled={!destination || prepareMutation.isPending}
-                loading={prepareMutation.isPending}
+                disabled={
+                  !destination ||
+                  prepareMutation.isPending ||
+                  prepareLnurlMutation.isPending ||
+                  parseMutation.isPending
+                }
+                loading={
+                  prepareMutation.isPending ||
+                  prepareLnurlMutation.isPending ||
+                  parseMutation.isPending
+                }
                 className="w-full"
               >
-                {prepareMutation.isPending ? "Checking…" : "Continue"}
+                {prepareMutation.isPending ||
+                prepareLnurlMutation.isPending ||
+                parseMutation.isPending
+                  ? "Checking…"
+                  : "Continue"}
               </Button>
             </CardContent>
           </Card>
@@ -210,7 +269,7 @@ export default function SendPage() {
 
   if (step === "confirm" && prepareResult) {
     const amountSat = readAmountSat(prepareResult) ?? 0;
-    const feesSat = prepareResult.feesSat ?? 0;
+    const feesSat = prepareResult.data.feesSat ?? 0;
     const destLabel = describeDestination(prepareResult);
 
     return (
@@ -272,11 +331,13 @@ export default function SendPage() {
             variant="primary"
             size="lg"
             onClick={handleConfirmPayment}
-            disabled={executeMutation.isPending}
-            loading={executeMutation.isPending}
+            disabled={executeMutation.isPending || executeLnurlMutation.isPending}
+            loading={executeMutation.isPending || executeLnurlMutation.isPending}
             className="w-full"
           >
-            {executeMutation.isPending ? "Processing..." : "Confirm & Send Payment"}
+            {executeMutation.isPending || executeLnurlMutation.isPending
+              ? "Processing..."
+              : "Confirm & Send Payment"}
           </Button>
         </div>
       </div>
@@ -343,14 +404,21 @@ export default function SendPage() {
   return null;
 }
 
-function readAmountSat(prep: PrepareSendResult): number | null {
-  if (!prep.amount) return null;
-  if (prep.amount.type === "bitcoin") return prep.amount.receiverAmountSat;
+function readAmountSat(prep: PrepareResult): number | null {
+  if (prep.kind === "lnurlPay") {
+    if (prep.data.amount.type === "bitcoin") return prep.data.amount.receiverAmountSat;
+    return null;
+  }
+  if (!prep.data.amount) return null;
+  if (prep.data.amount.type === "bitcoin") return prep.data.amount.receiverAmountSat;
   return null;
 }
 
-function describeDestination(prep: PrepareSendResult): string {
-  switch (prep.destination.type) {
+function describeDestination(prep: PrepareResult): string {
+  if (prep.kind === "lnurlPay") {
+    return `Lightning address (${prep.data.data.domain})`;
+  }
+  switch (prep.data.destination.type) {
     case "bolt11":
       return "Lightning invoice";
     case "bolt12":
