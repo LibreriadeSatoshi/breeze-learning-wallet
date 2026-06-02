@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Clipboard } from 'lucide-react';
+import { ArrowLeft, Clipboard, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -89,8 +89,8 @@ export default function RestoreWalletPage() {
             onClick={() => router.back()}
             className="mb-4 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors inline-flex items-center gap-2 text-gray-600 dark:text-gray-400"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Back
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
           </button>
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl mb-4 shadow-lg">
@@ -108,9 +108,12 @@ export default function RestoreWalletPage() {
         {step === 'phrase' && (
           <>
             {hasVault && overwriteAcknowledged && (
-              <div className="mb-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300">
-                Restoring will replace the existing wallet on this device. Make sure
-                you still have its recovery phrase before continuing.
+              <div className="mb-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>
+                  Restoring will replace the existing wallet on this device. Make sure
+                  you still have its recovery phrase before continuing.
+                </span>
               </div>
             )}
 
@@ -148,10 +151,10 @@ export default function RestoreWalletPage() {
                 <Button
                   variant="outline"
                   onClick={handlePaste}
-                  className="w-full border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors inline-flex items-center justify-center gap-2"
+                  className="w-full inline-flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   <Clipboard className="w-4 h-4" />
-                  Paste from clipboard
+                  <span>Paste from clipboard</span>
                 </Button>
                 <Button
                   variant="primary"
@@ -218,8 +221,8 @@ export default function RestoreWalletPage() {
                 disabled={step === 'restoring'}
                 className="w-full inline-flex items-center justify-center gap-2"
               >
-                <ChevronLeft className="w-5 h-5" />
-                Back
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
               </Button>
             </CardContent>
           </Card>

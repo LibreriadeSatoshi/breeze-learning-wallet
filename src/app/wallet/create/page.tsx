@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { Eye, Lightbulb, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -171,10 +171,13 @@ export default function CreateWalletPage() {
           <>
             <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
               <CardHeader>
-                <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                  Important security information
-                </h3>
-                <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <h3 className="font-semibold text-amber-900 dark:text-amber-200">
+                    Important security information
+                  </h3>
+                </div>
+                <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1 list-disc pl-5">
                   <li>Never share your recovery phrase with anyone.</li>
                   <li>Store it offline in a secure location.</li>
                   <li>Anyone with these words can access your funds.</li>
@@ -186,22 +189,31 @@ export default function CreateWalletPage() {
               <CardContent className="pt-6">
                 {step === 'reveal' ? (
                   <div className="text-center py-12">
-                    <h3 className="text-xl font-semibold mb-2">Tap to reveal your recovery phrase</h3>
+                    <h3 className="text-xl font-semibold mb-2">Reveal your recovery phrase</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
                       Make sure no one is looking at your screen.
                     </p>
-                    <Button onClick={handleReveal} variant="primary" size="lg">
-                      Reveal recovery phrase
+                    <Button
+                      onClick={handleReveal}
+                      variant="primary"
+                      size="lg"
+                      className="inline-flex items-center gap-2"
+                    >
+                      <Eye className="w-5 h-5" />
+                      <span>Reveal recovery phrase</span>
                     </Button>
                   </div>
                 ) : (
                   <div>
                     <MnemonicDisplay words={words} revealed />
                     <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-                      <p className="text-sm text-blue-900 dark:text-blue-200">
-                        <strong>Tip:</strong> Write these words on paper in the exact order shown.
-                        Do not take a screenshot or store digitally.
-                      </p>
+                      <div className="flex items-start gap-2">
+                        <Lightbulb className="w-4 h-4 mt-0.5 text-blue-700 dark:text-blue-300 shrink-0" />
+                        <p className="text-sm text-blue-900 dark:text-blue-200">
+                          <strong>Tip:</strong> Write these words on paper in the exact order shown.
+                          Do not take a screenshot or store digitally.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -218,14 +230,8 @@ export default function CreateWalletPage() {
                 >
                   I&apos;ve written it down — verify
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={() => router.back()}
-                  className="w-full inline-flex items-center justify-center gap-2"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                  Back
+                <Button variant="ghost" size="lg" onClick={() => router.back()} className="w-full">
+                  ← Back
                 </Button>
               </div>
             )}
@@ -297,10 +303,9 @@ export default function CreateWalletPage() {
                 variant="ghost"
                 size="lg"
                 onClick={handleBackToPhrase}
-                className="flex-1 inline-flex items-center justify-center gap-2"
+                className="flex-1"
               >
-                <ChevronLeft className="w-5 h-5" />
-                View phrase again
+                ← View phrase again
               </Button>
               <Button
                 variant="primary"

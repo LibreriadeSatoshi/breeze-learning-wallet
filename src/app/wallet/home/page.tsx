@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDownLeft, ArrowUpRight, Lock } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Lock, TriangleAlert } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWalletStore } from "@/store/wallet-store";
@@ -154,7 +154,7 @@ export default function WalletHomePage() {
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
               >
                 <Lock className="w-3.5 h-3.5" />
-                Lock
+                <span>Lock</span>
               </button>
             </div>
           </div>
@@ -166,9 +166,12 @@ export default function WalletHomePage() {
         {needsAttention > 0 && (
           <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
             <CardContent className="pt-6">
-              <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
-                {needsAttention} swap{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} your attention
-              </h3>
+              <div className="flex items-center gap-2 mb-1">
+                <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                <h3 className="font-semibold text-amber-900 dark:text-amber-200">
+                  {needsAttention} swap{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} your attention
+                </h3>
+              </div>
               <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
                 {waitingFee.length > 0 && refundables.length > 0
                   ? "Some payments are waiting for fee acceptance and some swaps are refundable."
@@ -194,26 +197,20 @@ export default function WalletHomePage() {
             size="lg"
             onClick={() => router.push("/wallet/send")}
             disabled={!isReady}
-            className="h-20 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
+            className="h-20 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
           >
-            <ArrowUpRight className="w-6 h-6" />
-            <div className="flex flex-col items-start">
-              <span className="font-semibold text-lg leading-none">Send</span>
-              <span className="text-xs opacity-80 mt-0.5">Pay Lightning invoice</span>
-            </div>
+            <ArrowUpFromLine className="w-5 h-5" />
+            <span className="font-semibold text-lg">Send</span>
           </Button>
           <Button
             variant="outline"
             size="lg"
             onClick={() => router.push("/wallet/receive")}
             disabled={!isReady}
-            className="h-20 flex items-center justify-center gap-3 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
+            className="h-20 flex flex-row items-center justify-center gap-3 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
           >
-            <ArrowDownLeft className="w-6 h-6" />
-            <div className="flex flex-col items-start">
-              <span className="font-semibold text-lg leading-none">Receive</span>
-              <span className="text-xs opacity-70 mt-0.5">Get paid</span>
-            </div>
+            <ArrowDownToLine className="w-5 h-5" />
+            <span className="font-semibold text-lg">Receive</span>
           </Button>
         </div>
 

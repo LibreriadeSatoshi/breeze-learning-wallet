@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, Clipboard, X } from "lucide-react";
+import { ArrowLeft, Check, Clipboard, X } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,10 +181,10 @@ export default function SendPage() {
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={handleBack}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               aria-label="Back"
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Send Payment</h1>
           </div>
@@ -235,7 +235,7 @@ export default function SendPage() {
                   className="inline-flex items-center justify-center gap-2"
                 >
                   <Clipboard className="w-4 h-4" />
-                  Paste from clipboard
+                  <span>Paste from clipboard</span>
                 </Button>
               </div>
 
@@ -280,10 +280,10 @@ export default function SendPage() {
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={handleBack}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               aria-label="Back"
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Confirm Payment</h1>
           </div>

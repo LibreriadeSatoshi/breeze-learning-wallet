@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Check, Copy } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Copy as CopyIcon, Check } from "lucide-react";
 import type { Payment } from "@/lib/lightning/types";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -141,7 +141,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
         {copied ? (
           <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
         ) : (
-          <Copy className="w-3.5 h-3.5 text-gray-400" />
+          <CopyIcon className="w-3.5 h-3.5 text-gray-400" />
         )}
       </button>
     </div>

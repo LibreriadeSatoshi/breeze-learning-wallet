@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, Copy, Share2, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  Bitcoin,
+  Check,
+  Clock,
+  Copy as CopyIcon,
+  Share2,
+  Zap,
+} from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -255,10 +263,10 @@ export default function ReceivePage() {
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => router.back()}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               aria-label="Back"
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Receive Payment</h1>
           </div>
@@ -277,11 +285,9 @@ export default function ReceivePage() {
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <Zap className="w-6 h-6" />
-                  <div>
-                    <div className="font-medium">Lightning</div>
-                    <div className="text-xs text-gray-500">Instant</div>
-                  </div>
+                  <Zap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <div className="font-medium">Lightning</div>
+                  <div className="text-xs text-gray-500">Instant</div>
                 </button>
                 <button
                   onClick={() => setPaymentMethod("bitcoin")}
@@ -291,11 +297,9 @@ export default function ReceivePage() {
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                   }`}
                 >
-                  <span className="text-2xl font-bold leading-none">₿</span>
-                  <div>
-                    <div className="font-medium">Bitcoin</div>
-                    <div className="text-xs text-gray-500">On-chain</div>
-                  </div>
+                  <Bitcoin className="w-6 h-6 text-orange-500" />
+                  <div className="font-medium">Bitcoin</div>
+                  <div className="text-xs text-gray-500">On-chain</div>
                 </button>
               </div>
             </CardContent>
@@ -397,10 +401,10 @@ export default function ReceivePage() {
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={() => setStep("input")}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               aria-label="Back"
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <h1 className="text-2xl font-bold">Confirm Invoice</h1>
           </div>
@@ -460,17 +464,18 @@ export default function ReceivePage() {
             <div className="flex items-center gap-4">
               <button
                 onClick={handleNew}
-                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Back"
+                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5" />
               </button>
               <h1 className="text-2xl font-bold">
                 {isLightning ? "Lightning Invoice" : "Bitcoin Address"}
               </h1>
             </div>
             {isLightning && timeRemaining > 0 && (
-              <div className="bg-amber-100 dark:bg-amber-900/20 px-3 py-1.5 rounded-full text-sm">
+              <div className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/20 px-3 py-1.5 rounded-full text-sm">
+                <Clock className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
                 <span className="font-medium text-amber-700 dark:text-amber-300">
                   {formatTime(timeRemaining)} left
                 </span>
@@ -577,8 +582,8 @@ export default function ReceivePage() {
                   onClick={handleCopy}
                   className="inline-flex items-center justify-center gap-2"
                 >
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? "Copied" : "Copy"}
+                  {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+                  <span>{copied ? "Copied" : "Copy"}</span>
                 </Button>
                 {canShare && (
                   <Button
@@ -587,7 +592,7 @@ export default function ReceivePage() {
                     className="inline-flex items-center justify-center gap-2"
                   >
                     <Share2 className="w-4 h-4" />
-                    Share
+                    <span>Share</span>
                   </Button>
                 )}
               </div>
