@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWalletStore } from "@/store/wallet-store";
 import {
-  useLightningBalance,
-  useLightningLimits,
+  useBalance,
   useParseInput,
   usePrepareSend,
   useExecuteSend,
@@ -20,13 +19,21 @@ import type {
   PrepareSendResult,
   PrepareLnurlPayResult,
 } from "@/lib/lightning/breez-service";
-import type { InputType } from "@breeztech/breez-sdk-liquid";
+import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
 type PrepareResult =
-  | { kind: "send"; data: PrepareSendResult }
-  | { kind: "lnurlPay"; data: PrepareLnurlPayResult };
+  | { kind: "send"; data: PrepareSendResult; destinationKind: SendDestinationKind }
+  | { kind: "lnurlPay"; data: PrepareLnurlPayResult; domain: string };
+
+type SendDestinationKind =
+  | "bolt11"
+  | "bolt12"
+  | "bitcoinAddress"
+  | "sparkAddress"
+  | "sparkInvoice"
+  | "bip21";
 
 export default function SendPage() {
   const router = useRouter();
@@ -37,22 +44,17 @@ export default function SendPage() {
   const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
 
-  const { data: balance } = useLightningBalance(true);
-  const { data: limits } = useLightningLimits(true);
+  const { data: balance } = useBalance(true);
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
   const executeMutation = useExecuteSend();
   const prepareLnurlMutation = usePrepareLnurlPay();
   const executeLnurlMutation = useExecuteLnurlPay();
 
-  const maxPayableMsat = balance?.maxPayableMsat ?? 0;
-  const sendMin = limits?.send.minSat;
-  const sendMax = limits?.send.maxSat;
+  const balanceSat = balance?.totalSats ?? 0;
 
   useEffect(() => {
-    if (!isUnlocked) {
-      router.push("/welcome");
-    }
+    if (!isUnlocked) router.push("/welcome");
   }, [isUnlocked, router]);
 
   const handlePaste = async () => {
@@ -75,8 +77,6 @@ export default function SendPage() {
       return;
     }
     try {
-      // Parse first so we can route LNURL-pay through the right SDK call
-      // and give clean errors for input types we can't pay.
       const parsed = await parseMutation.mutateAsync(dest);
       const unsupported = describeUnsupported(parsed);
       if (unsupported) {
@@ -87,13 +87,18 @@ export default function SendPage() {
       const amountSat = amountSatInput ? parseInt(amountSatInput, 10) : undefined;
 
       let prep: PrepareResult;
-      if (parsed.type === "lnUrlPay") {
+      if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
+        // Both flow through LNURL pay. lightningAddress wraps payRequest.
+        const payRequest: LnurlPayRequestDetails =
+          parsed.type === "lightningAddress"
+            ? parsed.payRequest
+            : pickLnurlPayDetails(parsed);
         if (!amountSat || amountSat <= 0) {
           setError("Enter an amount to send to this Lightning address");
           return;
         }
-        const minSat = Math.ceil(parsed.data.minSendable / 1000);
-        const maxSat = Math.floor(parsed.data.maxSendable / 1000);
+        const minSat = Math.ceil(payRequest.minSendable / 1000);
+        const maxSat = Math.floor(payRequest.maxSendable / 1000);
         if (amountSat < minSat || amountSat > maxSat) {
           setError(
             `This Lightning address accepts ${minSat.toLocaleString()}–${maxSat.toLocaleString()} sats`,
@@ -101,19 +106,26 @@ export default function SendPage() {
           return;
         }
         const lnurlPrep = await prepareLnurlMutation.mutateAsync({
-          data: parsed.data,
+          payRequest,
           amountSat,
         });
-        prep = { kind: "lnurlPay", data: lnurlPrep };
+        prep = { kind: "lnurlPay", data: lnurlPrep, domain: payRequest.domain };
       } else {
-        const sendPrep = await prepareMutation.mutateAsync({ destination: dest, amountSat });
-        prep = { kind: "send", data: sendPrep };
+        const sendPrep = await prepareMutation.mutateAsync({
+          destination: dest,
+          amountSat,
+        });
+        prep = {
+          kind: "send",
+          data: sendPrep,
+          destinationKind: destinationKindForParsed(parsed),
+        };
       }
 
       const sendAmountSat = readAmountSat(prep);
-      if (sendAmountSat !== null && sendAmountSat * 1000 > maxPayableMsat) {
+      if (sendAmountSat !== null && sendAmountSat > balanceSat) {
         setError(
-          `Insufficient balance. You can send up to ${(maxPayableMsat / 1000).toLocaleString()} sats`,
+          `Insufficient balance. You can send up to ${balanceSat.toLocaleString()} sats`,
         );
         return;
       }
@@ -133,15 +145,7 @@ export default function SendPage() {
       if (prepareResult.kind === "send") {
         await executeMutation.mutateAsync(prepareResult.data);
       } else {
-        const result = await executeLnurlMutation.mutateAsync(prepareResult.data);
-        if (result.type === "endpointError") {
-          throw new Error(
-            result.data.reason || "The Lightning address endpoint returned an error.",
-          );
-        }
-        if (result.type === "payError") {
-          throw new Error(result.data.reason || "Payment to Lightning address failed.");
-        }
+        await executeLnurlMutation.mutateAsync(prepareResult.data);
       }
       setStep("success");
       setTimeout(() => router.push("/wallet/home"), 2000);
@@ -152,11 +156,8 @@ export default function SendPage() {
   };
 
   const handleBack = () => {
-    if (step === "confirm") {
-      setStep("input");
-    } else {
-      router.back();
-    }
+    if (step === "confirm") setStep("input");
+    else router.back();
   };
 
   const handleRetry = () => {
@@ -170,11 +171,6 @@ export default function SendPage() {
   if (!isUnlocked) return null;
 
   if (step === "input") {
-    const limitsHelp =
-      sendMin !== undefined && sendMax !== undefined
-        ? `Min ${sendMin.toLocaleString()} sats · Max ${sendMax.toLocaleString()} sats (Lightning)`
-        : "Optional for BOLT11 invoices that already encode an amount";
-
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-2xl mx-auto px-6 py-6">
@@ -196,7 +192,7 @@ export default function SendPage() {
                   Available to Send
                 </p>
                 <p className="text-3xl font-bold text-orange-500">
-                  {(maxPayableMsat / 1000).toLocaleString()} sats
+                  {balanceSat.toLocaleString()} sats
                 </p>
               </div>
             </CardContent>
@@ -208,8 +204,8 @@ export default function SendPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
-                label="BOLT11 invoice, Lightning address, or Liquid address"
-                placeholder="lnbc... | alice@example.com | lq1..."
+                label="Invoice, Lightning address, Bitcoin address, or Spark address"
+                placeholder="lnbc... | alice@example.com | bc1... | sprt1..."
                 value={destination}
                 onChange={(e) => {
                   setDestination(e.target.value);
@@ -223,9 +219,11 @@ export default function SendPage() {
                 label="Amount (sats)"
                 placeholder="0"
                 value={amountSatInput}
-                onChange={(e) => setAmountSatInput(e.target.value.replace(/[^0-9]/g, ""))}
+                onChange={(e) =>
+                  setAmountSatInput(e.target.value.replace(/[^0-9]/g, ""))
+                }
                 inputMode="numeric"
-                helperText={limitsHelp}
+                helperText="Optional for invoices that already encode an amount"
               />
 
               <div className="grid grid-cols-1 gap-3">
@@ -271,7 +269,7 @@ export default function SendPage() {
 
   if (step === "confirm" && prepareResult) {
     const amountSat = readAmountSat(prepareResult) ?? 0;
-    const feesSat = prepareResult.data.feesSat ?? 0;
+    const feesSat = readFeeSat(prepareResult);
     const destLabel = describeDestination(prepareResult);
 
     return (
@@ -309,7 +307,7 @@ export default function SendPage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Type</span>
-                <span className="font-medium capitalize">{destLabel}</span>
+                <span className="font-medium">{destLabel}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Network Fee</span>
@@ -405,48 +403,92 @@ export default function SendPage() {
   return null;
 }
 
+function pickLnurlPayDetails(
+  parsed: Extract<InputType, { type: "lnurlPay" }>,
+): LnurlPayRequestDetails {
+  return {
+    callback: parsed.callback,
+    minSendable: parsed.minSendable,
+    maxSendable: parsed.maxSendable,
+    metadataStr: parsed.metadataStr,
+    commentAllowed: parsed.commentAllowed,
+    domain: parsed.domain,
+    url: parsed.url,
+    address: parsed.address,
+    allowsNostr: parsed.allowsNostr,
+    nostrPubkey: parsed.nostrPubkey,
+  };
+}
+
 function readAmountSat(prep: PrepareResult): number | null {
-  if (prep.kind === "lnurlPay") {
-    if (prep.data.amount.type === "bitcoin") return prep.data.amount.receiverAmountSat;
-    return null;
+  if (prep.kind === "lnurlPay") return prep.data.amountSats;
+  return Number(prep.data.amount);
+}
+
+function readFeeSat(prep: PrepareResult): number {
+  if (prep.kind === "lnurlPay") return prep.data.feeSats;
+  const m = prep.data.paymentMethod;
+  switch (m.type) {
+    case "bolt11Invoice":
+      return m.lightningFeeSats + (m.sparkTransferFeeSats ?? 0);
+    case "bitcoinAddress":
+      return m.feeQuote.speedMedium.userFeeSat + m.feeQuote.speedMedium.l1BroadcastFeeSat;
+    case "sparkAddress":
+    case "sparkInvoice":
+      return Number(m.fee);
   }
-  if (!prep.data.amount) return null;
-  if (prep.data.amount.type === "bitcoin") return prep.data.amount.receiverAmountSat;
-  return null;
+}
+
+function destinationKindForParsed(parsed: InputType): SendDestinationKind {
+  switch (parsed.type) {
+    case "bolt11Invoice":
+      return "bolt11";
+    case "bolt12Offer":
+    case "bolt12Invoice":
+    case "bolt12InvoiceRequest":
+      return "bolt12";
+    case "bitcoinAddress":
+      return "bitcoinAddress";
+    case "sparkAddress":
+      return "sparkAddress";
+    case "sparkInvoice":
+      return "sparkInvoice";
+    case "bip21":
+      return "bip21";
+    default:
+      return "bolt11";
+  }
 }
 
 function describeDestination(prep: PrepareResult): string {
-  if (prep.kind === "lnurlPay") {
-    return `Lightning address (${prep.data.data.domain})`;
-  }
-  switch (prep.data.destination.type) {
+  if (prep.kind === "lnurlPay") return `Lightning address (${prep.domain})`;
+  switch (prep.destinationKind) {
     case "bolt11":
       return "Lightning invoice";
     case "bolt12":
-      return "Lightning offer";
-    case "liquidAddress":
-      return "Liquid address";
+      return "BOLT12 offer";
+    case "bitcoinAddress":
+      return "Bitcoin address";
+    case "sparkAddress":
+      return "Spark address";
+    case "sparkInvoice":
+      return "Spark invoice";
+    case "bip21":
+      return "BIP21 payment request";
   }
 }
 
-// Surface a clean error for input types the wallet can't pay. The SDK's
-// parse() recognises these, but prepareSendPayment would still error
-// later — this gives the user a useful message up front instead of a
-// generic "destination not valid".
+// Surface clean errors for input types we can't pay.
 function describeUnsupported(parsed: InputType): string | null {
   switch (parsed.type) {
-    case "lnUrlAuth":
+    case "lnurlAuth":
       return "LNURL-auth is for logging in, not paying. Use it elsewhere.";
-    case "lnUrlWithdraw":
+    case "lnurlWithdraw":
       return "LNURL-withdraw is for receiving, not sending.";
-    case "lnUrlError":
-      return parsed.data.reason || "The LNURL endpoint returned an error.";
     case "url":
       return "That looks like a web link, not a payment destination.";
-    case "nodeId":
-      return "Bare node IDs aren't payable — use a BOLT11 invoice instead.";
-    case "nostrWalletConnectUri":
-      return "Nostr Wallet Connect isn't supported in this wallet.";
+    case "silentPaymentAddress":
+      return "Silent payment addresses aren't supported yet.";
     default:
       return null;
   }

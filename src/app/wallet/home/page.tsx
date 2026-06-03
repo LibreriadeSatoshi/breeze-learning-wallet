@@ -14,11 +14,10 @@ import { PaymentDetailModal } from "@/components/wallet/payment-detail-modal";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
 import {
-  useLightningBalance,
+  useBalance,
   usePayments,
-  usePaymentsWaitingFeeAcceptance,
-  useRefreshLightning,
-  useRefundables,
+  useUnclaimedDeposits,
+  useRefreshBreez,
 } from "@/hooks/use-breez";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Payment } from "@/lib/lightning/types";
@@ -45,15 +44,13 @@ export default function WalletHomePage() {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
 
-  const { data: balance, isLoading: balanceLoading } =
-    useLightningBalance(isReady);
+  const { data: balance, isLoading: balanceLoading } = useBalance(isReady);
   const { data: payments = [], isLoading: paymentsLoading } =
     usePayments(isReady);
-  const { data: refundables = [] } = useRefundables(isReady);
-  const { data: waitingFee = [] } = usePaymentsWaitingFeeAcceptance(isReady);
-  const { refresh } = useRefreshLightning();
+  const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
+  const { refresh } = useRefreshBreez();
 
-  const needsAttention = refundables.length + waitingFee.length;
+  const needsAttention = unclaimedDeposits.length;
 
   useEffect(() => {
     setMounted(true);
@@ -102,20 +99,18 @@ export default function WalletHomePage() {
 
     const handleEvent = async (event: SdkEvent) => {
       if (event.type === "synced") setConn("synced");
-      else if (event.type === "syncFailed") setConn("failed");
 
       const shouldRefresh = [
+        "synced",
         "paymentSucceeded",
         "paymentPending",
         "paymentFailed",
-        "synced",
+        "claimedDeposits",
+        "newDeposits",
+        "unclaimedDeposits",
       ].includes(event.type);
 
-      if (event.type === "dataSynced" && event.didPullNewRecords) {
-        await refresh();
-      } else if (shouldRefresh) {
-        await refresh();
-      }
+      if (shouldRefresh) await refresh();
     };
 
     return onSdkEvent(handleEvent);
@@ -158,7 +153,7 @@ export default function WalletHomePage() {
               </button>
             </div>
           </div>
-          <BalanceDisplay balanceMsat={balance?.channelsBalanceMsat ?? 0} />
+          <BalanceDisplay balanceSat={balance?.totalSats ?? 0} />
         </div>
       </div>
 
@@ -173,11 +168,7 @@ export default function WalletHomePage() {
                 </h3>
               </div>
               <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
-                {waitingFee.length > 0 && refundables.length > 0
-                  ? "Some payments are waiting for fee acceptance and some swaps are refundable."
-                  : waitingFee.length > 0
-                  ? "On-chain fees rose for a pending payment. Accept the new fee or refund."
-                  : "One or more swaps failed and the funds are refundable."}
+                On-chain deposits are waiting to be claimed onto Spark. Claim now or refund.
               </p>
               <Button
                 variant="outline"

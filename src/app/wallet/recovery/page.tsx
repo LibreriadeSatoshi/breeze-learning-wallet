@@ -8,20 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWalletStore } from "@/store/wallet-store";
 import {
-  useRefundables,
-  usePaymentsWaitingFeeAcceptance,
+  useUnclaimedDeposits,
+  useClaimDeposit,
+  useRefundDeposit,
   useRecommendedFees,
-  useExecuteRefund,
-  useFetchProposedFees,
-  useAcceptProposedFees,
 } from "@/hooks/use-breez";
+import type { DepositInfo } from "@breeztech/breez-sdk-spark";
 
 export default function RecoveryPage() {
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
 
-  const { data: refundables = [], refetch: refetchRefundables } = useRefundables(isUnlocked);
-  const { data: waiting = [], refetch: refetchWaiting } = usePaymentsWaitingFeeAcceptance(isUnlocked);
+  const { data: deposits = [], refetch } = useUnclaimedDeposits(isUnlocked);
   const { data: fees } = useRecommendedFees(isUnlocked);
 
   useEffect(() => {
@@ -29,8 +27,6 @@ export default function RecoveryPage() {
   }, [isUnlocked, router]);
 
   if (!isUnlocked) return null;
-
-  const nothingToDo = refundables.length === 0 && waiting.length === 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -43,181 +39,69 @@ export default function RecoveryPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold">Swap Recovery</h1>
+          <h1 className="text-2xl font-bold">Unclaimed deposits</h1>
         </div>
 
-        {nothingToDo && (
+        {deposits.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center">
               <p className="text-gray-600 dark:text-gray-400">
-                Nothing needs your attention. All swaps are settled.
+                No unclaimed deposits. Everything is settled.
               </p>
             </CardContent>
           </Card>
-        )}
-
-        {waiting.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold mb-3">
-              Awaiting fee acceptance ({waiting.length})
-            </h2>
+        ) : (
+          <>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              On-chain fees rose between when these payments were prepared and now.
-              Accept the new fee to complete the payment, or refund.
+              These on-chain deposits haven&apos;t been claimed onto Spark yet.
+              Claim them to receive the funds, or refund them back to a Bitcoin
+              address you control.
             </p>
             <div className="space-y-3">
-              {waiting.map((p) => (
-                <WaitingFeeItem
-                  key={p.txId ?? p.timestamp}
-                  payment={p}
-                  onAfterAction={() => {
-                    refetchWaiting();
-                    refetchRefundables();
-                  }}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {refundables.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3">
-              Refundable swaps ({refundables.length})
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              These on-chain payments failed to complete the swap. Refund the
-              funds to a Bitcoin address you control.
-            </p>
-            <div className="space-y-3">
-              {refundables.map((swap) => (
-                <RefundableItem
-                  key={swap.swapAddress}
-                  swap={swap}
+              {deposits.map((deposit) => (
+                <DepositItem
+                  key={`${deposit.txid}:${deposit.vout}`}
+                  deposit={deposit}
                   defaultFeeRate={fees?.halfHourFee ?? 5}
-                  onAfterAction={() => refetchRefundables()}
+                  onAfterAction={() => refetch()}
                 />
               ))}
             </div>
-          </section>
+          </>
         )}
       </div>
     </div>
   );
 }
 
-function WaitingFeeItem({
-  payment,
-  onAfterAction,
-}: {
-  payment: { txId?: string; amountSat: number; details: unknown };
-  onAfterAction: () => void;
-}) {
-  const fetchProposedMutation = useFetchProposedFees();
-  const acceptMutation = useAcceptProposedFees();
-  const [proposed, setProposed] = useState<Awaited<ReturnType<typeof fetchProposedMutation.mutateAsync>> | null>(null);
-  const [error, setError] = useState("");
-
-  // PaymentDetails for a bitcoin-type swap has swapId
-  const details = payment.details as { type?: string; swapId?: string };
-  const swapId = details?.type === "bitcoin" ? details.swapId : undefined;
-
-  const loadProposed = async () => {
-    setError("");
-    if (!swapId) {
-      setError("Missing swap ID");
-      return;
-    }
-    try {
-      const r = await fetchProposedMutation.mutateAsync(swapId);
-      setProposed(r);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to fetch proposed fees");
-    }
-  };
-
-  const accept = async () => {
-    if (!proposed) return;
-    setError("");
-    try {
-      await acceptMutation.mutateAsync(proposed);
-      onAfterAction();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to accept fees");
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <p className="font-mono text-xs text-gray-500 dark:text-gray-400 break-all">
-          {payment.txId ?? "(no tx id)"}
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Original amount</span>
-          <span className="font-medium">{payment.amountSat.toLocaleString()} sats</span>
-        </div>
-
-        {!proposed && (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={loadProposed}
-            loading={fetchProposedMutation.isPending}
-            disabled={fetchProposedMutation.isPending || !swapId}
-            className="w-full"
-          >
-            See new fee
-          </Button>
-        )}
-
-        {proposed && (
-          <>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">New fee</span>
-              <span className="font-medium">{proposed.feesSat.toLocaleString()} sats</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">You&apos;d receive</span>
-              <span className="font-medium">{proposed.receiverAmountSat.toLocaleString()} sats</span>
-            </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={accept}
-              loading={acceptMutation.isPending}
-              disabled={acceptMutation.isPending}
-              className="w-full"
-            >
-              Accept new fee
-            </Button>
-          </>
-        )}
-
-        {error && (
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function RefundableItem({
-  swap,
+function DepositItem({
+  deposit,
   defaultFeeRate,
   onAfterAction,
 }: {
-  swap: { swapAddress: string; amountSat: number; timestamp: number; lastRefundTxId?: string };
+  deposit: DepositInfo;
   defaultFeeRate: number;
   onAfterAction: () => void;
 }) {
-  const refundMutation = useExecuteRefund();
+  const claimMutation = useClaimDeposit();
+  const refundMutation = useRefundDeposit();
+  const [mode, setMode] = useState<"none" | "claim" | "refund">("none");
   const [refundAddress, setRefundAddress] = useState("");
   const [feeRate, setFeeRate] = useState(String(defaultFeeRate));
   const [error, setError] = useState("");
-  const [txId, setTxId] = useState<string | null>(null);
+
+  const claim = async () => {
+    setError("");
+    try {
+      await claimMutation.mutateAsync({
+        txid: deposit.txid,
+        vout: deposit.vout,
+      });
+      onAfterAction();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to claim deposit");
+    }
+  };
 
   const refund = async () => {
     setError("");
@@ -225,21 +109,21 @@ function RefundableItem({
       setError("Enter a Bitcoin refund address");
       return;
     }
-    const feeRateSatPerVbyte = parseInt(feeRate, 10);
-    if (isNaN(feeRateSatPerVbyte) || feeRateSatPerVbyte <= 0) {
-      setError("Fee rate must be a positive number");
+    const satPerVbyte = parseInt(feeRate, 10);
+    if (isNaN(satPerVbyte) || satPerVbyte <= 0) {
+      setError("Enter a valid fee rate");
       return;
     }
     try {
-      const r = await refundMutation.mutateAsync({
-        swapAddress: swap.swapAddress,
-        refundAddress: refundAddress.trim(),
-        feeRateSatPerVbyte,
+      await refundMutation.mutateAsync({
+        txid: deposit.txid,
+        vout: deposit.vout,
+        destinationAddress: refundAddress.trim(),
+        fee: { type: "rate", satPerVbyte },
       });
-      setTxId(r.refundTxId);
       onAfterAction();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Refund failed");
+      setError(e instanceof Error ? e.message : "Failed to refund deposit");
     }
   };
 
@@ -247,52 +131,122 @@ function RefundableItem({
     <Card>
       <CardHeader>
         <p className="font-mono text-xs text-gray-500 dark:text-gray-400 break-all">
-          {swap.swapAddress}
+          {deposit.txid}:{deposit.vout}
         </p>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="flex justify-between">
           <span className="text-gray-600 dark:text-gray-400">Amount</span>
-          <span className="font-medium">{swap.amountSat.toLocaleString()} sats</span>
+          <span className="font-medium">
+            {deposit.amountSats.toLocaleString()} sats
+          </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Locked since</span>
+          <span className="text-gray-600 dark:text-gray-400">Status</span>
           <span className="font-medium">
-            {new Date(swap.timestamp * 1000).toLocaleString()}
+            {deposit.isMature ? "Mature" : "Pending maturity"}
           </span>
         </div>
 
-        {txId ? (
-          <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-900">
-            <p className="text-sm text-green-800 dark:text-green-300">
-              Refund broadcast — tx <span className="font-mono">{txId.slice(0, 16)}…</span>
+        {deposit.claimError && (
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg">
+            <p className="text-xs text-amber-800 dark:text-amber-200">
+              Previous claim attempt failed.
             </p>
           </div>
-        ) : (
-          <>
+        )}
+
+        {mode === "none" && (
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setMode("claim")}
+              disabled={!deposit.isMature}
+              className="flex-1"
+            >
+              Claim
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMode("refund")}
+              className="flex-1"
+            >
+              Refund
+            </Button>
+          </div>
+        )}
+
+        {mode === "claim" && (
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Claim this deposit onto Spark. Fees are taken from the deposited
+              amount at the SDK&apos;s recommended rate.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMode("none")}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={claim}
+                loading={claimMutation.isPending}
+                disabled={claimMutation.isPending}
+                className="flex-1"
+              >
+                Confirm claim
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {mode === "refund" && (
+          <div className="space-y-2">
             <Input
-              label="Refund to Bitcoin address"
+              label="Bitcoin refund address"
               placeholder="bc1..."
               value={refundAddress}
               onChange={(e) => setRefundAddress(e.target.value)}
+              disabled={refundMutation.isPending}
             />
             <Input
               label="Fee rate (sat/vB)"
               value={feeRate}
-              onChange={(e) => setFeeRate(e.target.value.replace(/[^0-9]/g, ""))}
+              onChange={(e) =>
+                setFeeRate(e.target.value.replace(/[^0-9]/g, ""))
+              }
               inputMode="numeric"
-            />
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={refund}
-              loading={refundMutation.isPending}
               disabled={refundMutation.isPending}
-              className="w-full"
-            >
-              Refund
-            </Button>
-          </>
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMode("none")}
+                disabled={refundMutation.isPending}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={refund}
+                loading={refundMutation.isPending}
+                disabled={refundMutation.isPending}
+                className="flex-1"
+              >
+                Confirm refund
+              </Button>
+            </div>
+          </div>
         )}
 
         {error && (
