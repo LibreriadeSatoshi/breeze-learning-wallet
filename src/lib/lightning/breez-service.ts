@@ -1,23 +1,21 @@
 import type { SdkEvent } from "./sdk-events";
 import type {
-  PrepareSendResponse,
-  PrepareReceiveResponse,
-  LightningPaymentLimitsResponse,
   InputType,
-  RefundableSwap,
-  PrepareRefundResponse,
-  RefundResponse,
-  FetchPaymentProposedFeesResponse,
+  DepositInfo,
   RecommendedFees,
-  Payment,
-  LnUrlPayRequestData,
-  PrepareLnUrlPayResponse,
-  LnUrlPayResult,
-} from "@breeztech/breez-sdk-liquid";
+  PrepareSendPaymentResponse,
+  PrepareLnurlPayResponse,
+  LnurlPayResponse,
+  LnurlPayRequestDetails,
+  SendPaymentResponse,
+  Fee,
+  Payment as SdkPayment,
+} from "@breeztech/breez-sdk-spark";
+import type { Payment } from "./types";
 
-type LiquidSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-liquid").connect>>;
+type SparkSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-spark").connect>>;
 
-let sdk: LiquidSdk | null = null;
+let sdk: SparkSdk | null = null;
 let eventListenerId: string | null = null;
 let isInitializing: boolean = false;
 let cachedApiKey: string | null = null;
@@ -26,51 +24,40 @@ type EventCallback = (event: SdkEvent) => void;
 const eventCallbacks: EventCallback[] = [];
 
 async function getBreezApiKey(): Promise<string> {
-  if (cachedApiKey) {
-    return cachedApiKey;
-  }
+  if (cachedApiKey) return cachedApiKey;
 
-  const response = await fetch('/api/breez/config');
+  const response = await fetch("/api/breez/config");
   if (!response.ok) {
-    throw new Error('Failed to fetch Breez API configuration');
+    throw new Error("Failed to fetch Breez API configuration");
   }
 
   const data = await response.json();
   if (!data.apiKey) {
-    throw new Error('BREEZ_API_KEY is not configured. Please add it to your environment variables.');
+    throw new Error(
+      "BREEZ_API_KEY is not configured. Please add it to your environment variables.",
+    );
   }
 
   cachedApiKey = data.apiKey;
   return data.apiKey;
 }
 
-export interface BreezLiquidConfig {
-  network: "mainnet" | "testnet" | "regtest";
-  workingDir?: string;
+export interface BreezSparkConfig {
+  network: "mainnet" | "regtest";
+  storageDir?: string;
   mnemonic: string;
 }
 
-export async function initBreez(config: BreezLiquidConfig): Promise<void> {
-  if (isInitializing) {
-    console.log("⏳ SDK initialization already in progress...");
-    return;
-  }
-
-  if (sdk) {
-    console.log("✅ SDK already initialized");
-    return;
-  }
+export async function initBreez(config: BreezSparkConfig): Promise<void> {
+  if (isInitializing) return;
+  if (sdk) return;
 
   isInitializing = true;
 
   try {
     const apiKey = await getBreezApiKey();
 
-    console.log("⚡ Initializing Breez SDK Liquid...");
-    console.log("📡 Network:", config.network);
-
-    const breezSdkModule = await import("@breeztech/breez-sdk-liquid");
-
+    const breezSdkModule = await import("@breeztech/breez-sdk-spark");
     if (
       breezSdkModule.default &&
       typeof breezSdkModule.default === "function"
@@ -80,37 +67,27 @@ export async function initBreez(config: BreezLiquidConfig): Promise<void> {
 
     const { defaultConfig, connect } = breezSdkModule;
 
-    const sdkConfig = defaultConfig(config.network, apiKey);
-    if (config.workingDir) {
-      sdkConfig.workingDir = config.workingDir;
-    }
+    const sdkConfig = defaultConfig(config.network);
+    sdkConfig.apiKey = apiKey;
 
     if (!config.mnemonic) {
       throw new Error("Mnemonic is required to initialize the wallet");
     }
 
     sdk = await connect({
-      mnemonic: config.mnemonic,
       config: sdkConfig,
+      seed: { type: "mnemonic", mnemonic: config.mnemonic },
+      storageDir: config.storageDir ?? "scholar-wallet-data",
     });
 
-    console.log("✅ Breez SDK Liquid initialized");
-
     await setupEventListener();
-
+  } finally {
     isInitializing = false;
-  } catch (error) {
-    isInitializing = false;
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ Failed to initialize Breez SDK Liquid:", message);
-    throw error;
   }
 }
 
 async function setupEventListener(): Promise<void> {
-  if (!sdk || eventListenerId) {
-    return;
-  }
+  if (!sdk || eventListenerId) return;
 
   try {
     const listener = {
@@ -135,58 +112,32 @@ async function setupEventListener(): Promise<void> {
 
 export function onSdkEvent(callback: EventCallback): () => void {
   eventCallbacks.push(callback);
-
   return () => {
     const index = eventCallbacks.indexOf(callback);
-    if (index > -1) {
-      eventCallbacks.splice(index, 1);
-    }
+    if (index > -1) eventCallbacks.splice(index, 1);
   };
 }
 
 export async function getNodeState(): Promise<{ id?: string } | null> {
-  if (!sdk) {
-    return null;
-  }
-
+  if (!sdk) return null;
   try {
-    const info = await sdk.getInfo();
-    return { id: info.walletInfo?.pubkey };
+    const info = await sdk.getInfo({});
+    return { id: info.identityPubkey };
   } catch (error) {
     console.error("Failed to get node state:", error);
     return null;
   }
 }
 
-export type PrepareReceiveResult = PrepareReceiveResponse;
-
-export async function prepareReceiveLightning(amountSats: number): Promise<PrepareReceiveResult> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.prepareReceivePayment({
-    paymentMethod: "bolt11Invoice",
-    amount: { type: "bitcoin", payerAmountSat: amountSats },
-  });
-}
-
-export async function executeReceive(
-  prepareResponse: PrepareReceiveResult,
-  description: string,
-): Promise<{ paymentRequest: string; expiresAt: number; fee: number }> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  const response = await sdk.receivePayment({
-    prepareResponse,
-    description: description || "Lightning payment",
-  });
-  return {
-    paymentRequest: response.destination,
-    expiresAt: Date.now() + 3600 * 1000,
-    fee: prepareResponse.feesSat ?? 0,
-  };
-}
-
-export async function fetchLightningLimits(): Promise<LightningPaymentLimitsResponse> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.fetchLightningLimits();
+export async function getBalance(): Promise<{ totalSats: number }> {
+  if (!sdk) return { totalSats: 0 };
+  try {
+    const info = await sdk.getInfo({});
+    return { totalSats: info.balanceSats };
+  } catch (error) {
+    console.error("Failed to get balance:", error);
+    return { totalSats: 0 };
+  }
 }
 
 export async function parseInput(input: string): Promise<InputType> {
@@ -194,51 +145,26 @@ export async function parseInput(input: string): Promise<InputType> {
   return sdk.parse(input);
 }
 
-// --- Recovery: refundable swaps + payments waiting for fee acceptance ---
+// --- Receive --------------------------------------------------------------
 
-export async function listRefundables(): Promise<RefundableSwap[]> {
+export async function receiveLightning(
+  amountSats: number,
+  description: string,
+): Promise<{ paymentRequest: string; expiresAt: number; fee: number }> {
   if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.listRefundables();
-}
-
-export async function listPaymentsWaitingFeeAcceptance(): Promise<Payment[]> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.listPayments({ states: ["waitingFeeAcceptance"] });
-}
-
-export async function recommendedFees(): Promise<RecommendedFees> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.recommendedFees();
-}
-
-export async function prepareRefund(
-  swapAddress: string,
-  refundAddress: string,
-  feeRateSatPerVbyte: number,
-): Promise<PrepareRefundResponse> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.prepareRefund({ swapAddress, refundAddress, feeRateSatPerVbyte });
-}
-
-export async function executeRefund(
-  swapAddress: string,
-  refundAddress: string,
-  feeRateSatPerVbyte: number,
-): Promise<RefundResponse> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.refund({ swapAddress, refundAddress, feeRateSatPerVbyte });
-}
-
-export async function fetchProposedFees(swapId: string): Promise<FetchPaymentProposedFeesResponse> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.fetchPaymentProposedFees({ swapId });
-}
-
-export async function acceptProposedFees(
-  response: FetchPaymentProposedFeesResponse,
-): Promise<void> {
-  if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.acceptPaymentProposedFees({ response });
+  const result = await sdk.receivePayment({
+    paymentMethod: {
+      type: "bolt11Invoice",
+      amountSats,
+      description: description || "Lightning payment",
+      expirySecs: 3600,
+    },
+  });
+  return {
+    paymentRequest: result.paymentRequest,
+    expiresAt: Date.now() + 3600 * 1000,
+    fee: Number(result.fee),
+  };
 }
 
 export async function getBitcoinAddress(): Promise<{
@@ -246,72 +172,40 @@ export async function getBitcoinAddress(): Promise<{
   paymentRequest: string;
   fee: number;
 }> {
-  if (!sdk) {
-    throw new Error("Wallet not ready.");
-  }
-
-  const prepareResponse = await sdk.prepareReceivePayment({
-    paymentMethod: "bitcoinAddress",
+  if (!sdk) throw new Error("Wallet not ready.");
+  const result = await sdk.receivePayment({
+    paymentMethod: { type: "bitcoinAddress", newAddress: true },
   });
-
-  const response = await sdk.receivePayment({ prepareResponse });
-
   return {
-    address: response.destination,
-    paymentRequest: response.destination,
-    fee: prepareResponse.feesSat ?? 0,
+    address: result.paymentRequest,
+    paymentRequest: result.paymentRequest,
+    fee: Number(result.fee),
   };
 }
 
-export type PrepareSendResult = PrepareSendResponse;
+// --- Send -----------------------------------------------------------------
+
+export type PrepareSendResult = PrepareSendPaymentResponse;
 
 export async function prepareSend(
   destination: string,
   amountSat?: number,
 ): Promise<PrepareSendResult> {
-  if (!sdk) {
-    throw new Error("Wallet not ready.");
-  }
-
-  const request = amountSat
-    ? { destination, amount: { type: "bitcoin" as const, receiverAmountSat: amountSat } }
-    : { destination };
-
-  return sdk.prepareSendPayment(request);
-}
-
-export type PrepareLnurlPayResult = PrepareLnUrlPayResponse;
-
-export async function prepareLnurlPay(
-  data: LnUrlPayRequestData,
-  amountSat: number,
-  comment?: string,
-): Promise<PrepareLnurlPayResult> {
   if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.prepareLnurlPay({
-    data,
-    amount: { type: "bitcoin", receiverAmountSat: amountSat },
-    comment,
+  return sdk.prepareSendPayment({
+    paymentRequest: destination,
+    amount: amountSat ? BigInt(amountSat) : undefined,
   });
 }
 
-export async function executeLnurlPay(
-  prepareResponse: PrepareLnurlPayResult,
-): Promise<LnUrlPayResult> {
+export async function executeSend(
+  prepareResponse: PrepareSendResult,
+): Promise<SendPaymentResponse> {
   if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.lnurlPay({ prepareResponse });
-}
-
-export async function executeSend(prepareResponse: PrepareSendResult): Promise<unknown> {
-  if (!sdk) {
-    throw new Error("Wallet not ready.");
-  }
-
   try {
     return await sdk.sendPayment({ prepareResponse });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Send failed";
-
     if (message.includes("insufficient")) {
       throw new Error("Insufficient balance to complete payment");
     } else if (message.includes("route")) {
@@ -319,82 +213,111 @@ export async function executeSend(prepareResponse: PrepareSendResult): Promise<u
     } else if (message.includes("timeout")) {
       throw new Error("Payment timed out. Please try again.");
     }
-
     throw new Error(message);
   }
 }
 
-export async function listPayments(): Promise<Array<{
-  id: string;
-  paymentType: "sent" | "received";
-  paymentTime: number;
-  amountMsat: number;
-  feeMsat: number;
-  status: "pending" | "complete" | "failed";
-  description: string;
-  bolt11: string | undefined;
-  preimage: string | undefined;
-}>> {
-  if (!sdk) {
-    return [];
-  }
+export type PrepareLnurlPayResult = PrepareLnurlPayResponse;
 
+export async function prepareLnurlPay(
+  payRequest: LnurlPayRequestDetails,
+  amountSat: number,
+  comment?: string,
+): Promise<PrepareLnurlPayResult> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.prepareLnurlPay({
+    amount: BigInt(amountSat),
+    payRequest,
+    comment,
+  });
+}
+
+export async function executeLnurlPay(
+  prepareResponse: PrepareLnurlPayResult,
+): Promise<LnurlPayResponse> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.lnurlPay({ prepareResponse });
+}
+
+// --- Recovery: unclaimed deposits ----------------------------------------
+
+export async function listUnclaimedDeposits(): Promise<DepositInfo[]> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const response = await sdk.listUnclaimedDeposits({});
+  return response.deposits;
+}
+
+export async function claimDeposit(
+  txid: string,
+  vout: number,
+  maxFee?: Fee,
+): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  await sdk.claimDeposit({ txid, vout, maxFee });
+}
+
+export async function refundDeposit(
+  txid: string,
+  vout: number,
+  destinationAddress: string,
+  fee: Fee,
+): Promise<{ txId: string; txHex: string }> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const response = await sdk.refundDeposit({
+    txid,
+    vout,
+    destinationAddress,
+    fee,
+  });
+  return { txId: response.txId, txHex: response.txHex };
+}
+
+export async function recommendedFees(): Promise<RecommendedFees> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.recommendedFees();
+}
+
+// --- Payments list --------------------------------------------------------
+
+function mapPayment(p: SdkPayment): Payment {
+  const lightning = p.details?.type === "lightning" ? p.details : null;
+  return {
+    id: p.id,
+    paymentType: p.paymentType === "send" ? "sent" : "received",
+    paymentTime: p.timestamp,
+    amountSat: Number(p.amount),
+    feeSat: Number(p.fees),
+    status:
+      p.status === "completed"
+        ? "complete"
+        : p.status === "failed"
+          ? "failed"
+          : "pending",
+    description: lightning?.description,
+    bolt11: lightning?.invoice,
+    method: p.method,
+  };
+}
+
+export async function listPayments(): Promise<Payment[]> {
+  if (!sdk) return [];
   try {
-    const payments = await sdk.listPayments({});
-
-    return payments.map((p) => {
-      const lightning = p.details.type === "lightning" ? p.details : null;
-      return {
-        id: p.txId ?? "",
-        paymentType: p.paymentType === "send" ? ("sent" as const) : ("received" as const),
-        paymentTime: p.timestamp,
-        amountMsat: Number(p.amountSat) * 1000,
-        feeMsat: Number(p.feesSat) * 1000,
-        status:
-          p.status === "complete"
-            ? ("complete" as const)
-            : p.status === "failed" || p.status === "timedOut"
-            ? ("failed" as const)
-            : ("pending" as const),
-        description: p.details.description,
-        bolt11: lightning?.invoice,
-        preimage: lightning?.preimage,
-      };
-    });
+    const response = await sdk.listPayments({});
+    return response.payments.map(mapPayment);
   } catch (error) {
     console.error("Failed to list payments:", error);
     return [];
   }
 }
 
-export async function getBalance(): Promise<{
-  totalSats: number;
-  spendableSats: number;
-  receivableSats: number;
-}> {
-  if (!sdk) {
-    return { totalSats: 0, spendableSats: 0, receivableSats: 0 };
-  }
-
-  try {
-    const info = await sdk.getInfo();
-    const balanceSat = info.walletInfo?.balanceSat ?? 0;
-    return {
-      totalSats: balanceSat,
-      spendableSats: balanceSat,
-      receivableSats: 0,
-    };
-  } catch (error) {
-    console.error("Failed to get balance:", error);
-    return { totalSats: 0, spendableSats: 0, receivableSats: 0 };
-  }
-}
+// --- Lifecycle ------------------------------------------------------------
 
 export async function disconnectBreez(): Promise<void> {
   if (sdk) {
     try {
       await sdk.disconnect();
       sdk = null;
+      eventListenerId = null;
     } catch (error) {
       console.error("Failed to disconnect Breez SDK:", error);
     }
