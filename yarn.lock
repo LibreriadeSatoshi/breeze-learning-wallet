@@ -7,11 +7,6 @@
   resolved "https://registry.npmjs.org/@alloc/quick-lru/-/quick-lru-5.2.0.tgz"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
-"@breeztech/breez-sdk-liquid@^0.12.2":
-  version "0.12.2"
-  resolved "https://registry.yarnpkg.com/@breeztech/breez-sdk-liquid/-/breez-sdk-liquid-0.12.2.tgz#e9a7b90af678d866117e2aea3edbb085fcde60c9"
-  integrity sha512-wAQKWPZjCY9gAQlMTJLXs7jY8tEiUos7L2UG0NlUum06XGOZZ7ibKoEKup+nJ50dIgRf238YQDy3nN1UfjAT2A==
-
 "@breeztech/breez-sdk-spark@0.15.0":
   version "0.15.0"
   resolved "https://registry.yarnpkg.com/@breeztech/breez-sdk-spark/-/breez-sdk-spark-0.15.0.tgz#9f44ee833f0ae4deccb0985b6ecd58c737d54b0d"
@@ -387,10 +382,10 @@
   resolved "https://registry.npmjs.org/@types/json5/-/json5-0.0.29.tgz"
   integrity sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==
 
-"@types/node@^20":
-  version "20.19.25"
-  resolved "https://registry.npmjs.org/@types/node/-/node-20.19.25.tgz"
-  integrity sha512-ZsJzA5thDQMSQO788d7IocwwQbI8B5OPzmqNvpf3NY/+MHDAS759Wo0gd2WQeXYt5AAAQjzcrTVC6SKCuYgoCQ==
+"@types/node@^22":
+  version "22.19.19"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.19.19.tgz#3124bf26ded54168b768138321fef99b420c6112"
+  integrity sha512-dyh/xO2Fh5bYrfWaaqGrRQQGkNdmYw6AmaAUvYeUMNTWQtvb796ikLdmTchRmOlOiIJ1TDXfWgVx1QkUlQ6Hew==
   dependencies:
     undici-types "~6.21.0"
 
