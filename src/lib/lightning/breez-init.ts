@@ -19,7 +19,7 @@ export async function initializeBreezWallet(): Promise<InitResult> {
     }
 
     await initBreez({
-      network: SELECTED_BITCOIN_NETWORK as "mainnet" | "regtest",
+      network: SELECTED_BITCOIN_NETWORK,
       storageDir: "scholar-wallet-data",
       mnemonic,
     });
