@@ -57,7 +57,7 @@ interface TransactionItemProps {
 }
 
 function TransactionItem({ payment, onClick }: TransactionItemProps) {
-  const sats = Math.floor(payment.amountMsat / 1000);
+  const sats = payment.amountSat;
   const date = new Date(payment.paymentTime * 1000);
   const isReceived = payment.paymentType === "received";
 

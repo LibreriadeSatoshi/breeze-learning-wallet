@@ -26,8 +26,8 @@ function PaymentDetailContent({
   payment: Payment;
   onClose: () => void;
 }) {
-  const sats = Math.floor(payment.amountMsat / 1000);
-  const feeSats = Math.floor(payment.feeMsat / 1000);
+  const sats = payment.amountSat;
+  const feeSats = payment.feeSat;
   const isReceived = payment.paymentType === "received";
   const date = new Date(payment.paymentTime * 1000);
 

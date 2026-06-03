@@ -1,16 +1,14 @@
 'use client';
 
 interface BalanceDisplayProps {
-  balanceMsat: number;
+  balanceSat: number;
 }
 
-export function BalanceDisplay({ balanceMsat }: BalanceDisplayProps) {
-  const sats = Math.floor(balanceMsat / 1000);
-
+export function BalanceDisplay({ balanceSat }: BalanceDisplayProps) {
   return (
     <div className="text-center py-8">
       <div className="mb-2">
-        <span className="text-5xl font-bold">{sats.toLocaleString()}</span>
+        <span className="text-5xl font-bold">{balanceSat.toLocaleString()}</span>
         <span className="text-2xl text-gray-600 dark:text-gray-400 ml-2">sats</span>
       </div>
     </div>
@@ -19,12 +17,12 @@ export function BalanceDisplay({ balanceMsat }: BalanceDisplayProps) {
 
 interface BalanceCardProps {
   label: string;
-  amountMsat: number;
+  amountSat: number;
   variant?: 'default' | 'primary' | 'success';
 }
 
-export function BalanceCard({ label, amountMsat, variant = 'default' }: BalanceCardProps) {
-  const sats = Math.floor(amountMsat / 1000);
+export function BalanceCard({ label, amountSat, variant = 'default' }: BalanceCardProps) {
+  const sats = amountSat;
 
   const variants = {
     default: 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700',
