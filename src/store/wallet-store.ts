@@ -25,6 +25,10 @@ interface WalletStore {
   lock: () => void;
   destroyVault: () => Promise<void>;
   getMnemonic: () => string | null;
+  // Re-verifies the wallet password without changing unlock state. Returns
+  // the decrypted mnemonic on success, throws on wrong password. Used for
+  // sensitive in-app reveals (e.g., "show recovery phrase").
+  verifyPasswordAndReveal: (password: string) => Promise<string>;
 }
 
 export const useWalletStore = create<WalletStore>()((set, get) => ({
@@ -70,4 +74,10 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   },
 
   getMnemonic: () => mnemonicInMemory,
+
+  verifyPasswordAndReveal: async (password) => {
+    const blob = await loadVault();
+    if (!blob) throw new Error("No vault found");
+    return decryptMnemonic(blob, password);
+  },
 }));
