@@ -1,6 +1,4 @@
-// Internal payment shape exposed to the React layer. We keep amounts as
-// plain `number` (sats) because the SDK ships `bigint` and React renders
-// don't need that precision.
+// Amounts as `number` (sats); SDK ships `bigint` we don't need in UI.
 export interface Payment {
   id: string;
   paymentType: "sent" | "received";

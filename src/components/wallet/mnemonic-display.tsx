@@ -1,8 +1,3 @@
-/**
- * Mnemonic Display Component
- * Shows the 12-word recovery phrase in a grid
- */
-
 import React from 'react';
 
 interface MnemonicDisplayProps {

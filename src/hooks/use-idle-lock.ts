@@ -12,12 +12,6 @@ const ACTIVITY_EVENTS: Array<keyof WindowEventMap> = [
   "wheel",
 ];
 
-/**
- * Locks the wallet and routes to /welcome after `timeoutMs` of no
- * user interaction. Active only while unlocked. Cleans up its timer
- * and listeners on unmount or when the wallet locks for any other
- * reason.
- */
 export function useIdleLock(timeoutMs: number) {
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);

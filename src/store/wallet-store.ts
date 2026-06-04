@@ -25,9 +25,7 @@ interface WalletStore {
   lock: () => void;
   destroyVault: () => Promise<void>;
   getMnemonic: () => string | null;
-  // Re-verifies the wallet password without changing unlock state. Returns
-  // the decrypted mnemonic on success, throws on wrong password. Used for
-  // sensitive in-app reveals (e.g., "show recovery phrase").
+  // Decrypts the vault with the given password without changing unlock state.
   verifyPasswordAndReveal: (password: string) => Promise<string>;
 }
 

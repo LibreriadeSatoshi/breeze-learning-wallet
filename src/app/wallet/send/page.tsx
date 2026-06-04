@@ -478,7 +478,6 @@ function describeDestination(prep: PrepareResult): string {
   }
 }
 
-// Surface clean errors for input types we can't pay.
 function describeUnsupported(parsed: InputType): string | null {
   switch (parsed.type) {
     case "lnurlAuth":

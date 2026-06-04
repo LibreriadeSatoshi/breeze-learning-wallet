@@ -145,8 +145,6 @@ export async function parseInput(input: string): Promise<InputType> {
   return sdk.parse(input);
 }
 
-// --- Receive --------------------------------------------------------------
-
 export async function receiveLightning(
   amountSats: number,
   description: string,
@@ -182,8 +180,6 @@ export async function getBitcoinAddress(): Promise<{
     fee: Number(result.fee),
   };
 }
-
-// --- Send -----------------------------------------------------------------
 
 export type PrepareSendResult = PrepareSendPaymentResponse;
 
@@ -239,8 +235,6 @@ export async function executeLnurlPay(
   return sdk.lnurlPay({ prepareResponse });
 }
 
-// --- Recovery: unclaimed deposits ----------------------------------------
-
 export async function listUnclaimedDeposits(): Promise<DepositInfo[]> {
   if (!sdk) throw new Error("Wallet not ready.");
   const response = await sdk.listUnclaimedDeposits({});
@@ -277,8 +271,6 @@ export async function recommendedFees(): Promise<RecommendedFees> {
   return sdk.recommendedFees();
 }
 
-// --- Payments list --------------------------------------------------------
-
 function mapPayment(p: SdkPayment): Payment {
   const lightning = p.details?.type === "lightning" ? p.details : null;
   return {
@@ -309,8 +301,6 @@ export async function listPayments(): Promise<Payment[]> {
     return [];
   }
 }
-
-// --- Lifecycle ------------------------------------------------------------
 
 export async function disconnectBreez(): Promise<void> {
   if (sdk) {
