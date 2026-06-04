@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, Lightbulb, TriangleAlert } from 'lucide-react';
+import { Check, Copy as CopyIcon, Eye, Lightbulb, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,7 @@ export default function CreateWalletPage() {
   >([]);
   const [picks, setPicks] = useState<number[]>([]);
   const [verifyError, setVerifyError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const createVault = useWalletStore((s) => s.createVault);
 
@@ -71,6 +72,16 @@ export default function CreateWalletPage() {
 
   const handleReveal = () => {
     setStep('shown');
+  };
+
+  const handleCopySeed = async () => {
+    try {
+      await navigator.clipboard.writeText(mnemonic);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard blocked, ignore
+    }
   };
 
   const handleProceedToVerify = () => {
@@ -206,12 +217,21 @@ export default function CreateWalletPage() {
                 ) : (
                   <div>
                     <MnemonicDisplay words={words} revealed />
+                    <Button
+                      variant="outline"
+                      onClick={handleCopySeed}
+                      className="mt-4 w-full inline-flex items-center justify-center gap-2"
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+                      <span>{copied ? 'Copied' : 'Copy to clipboard'}</span>
+                    </Button>
                     <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
                       <div className="flex items-start gap-2">
                         <Lightbulb className="w-4 h-4 mt-0.5 text-blue-700 dark:text-blue-300 shrink-0" />
                         <p className="text-sm text-blue-900 dark:text-blue-200">
-                          <strong>Tip:</strong> Write these words on paper in the exact order shown.
-                          Do not take a screenshot or store digitally.
+                          <strong>Tip:</strong> Write these words on paper in the exact order shown,
+                          or paste them into a password manager you trust. Avoid screenshots and
+                          cloud-synced plaintext notes.
                         </p>
                       </div>
                     </div>
