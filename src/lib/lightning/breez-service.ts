@@ -9,6 +9,7 @@ import type {
   LnurlPayRequestDetails,
   SendPaymentResponse,
   Fee,
+  LightningAddressInfo,
   Payment as SdkPayment,
 } from "@breeztech/breez-sdk-spark";
 import type { Payment } from "./types";
@@ -46,6 +47,7 @@ export interface BreezSparkConfig {
   network: "mainnet" | "regtest";
   storageDir?: string;
   mnemonic: string;
+  lnurlDomain?: string;
 }
 
 export async function initBreez(config: BreezSparkConfig): Promise<void> {
@@ -69,6 +71,7 @@ export async function initBreez(config: BreezSparkConfig): Promise<void> {
 
     const sdkConfig = defaultConfig(config.network);
     sdkConfig.apiKey = apiKey;
+    if (config.lnurlDomain) sdkConfig.lnurlDomain = config.lnurlDomain;
 
     if (!config.mnemonic) {
       throw new Error("Mnemonic is required to initialize the wallet");
@@ -300,6 +303,29 @@ export async function listPayments(): Promise<Payment[]> {
     console.error("Failed to list payments:", error);
     return [];
   }
+}
+
+export async function checkLightningAddressAvailable(username: string): Promise<boolean> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.checkLightningAddressAvailable({ username });
+}
+
+export async function registerLightningAddress(
+  username: string,
+  description?: string,
+): Promise<LightningAddressInfo> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.registerLightningAddress({ username, description });
+}
+
+export async function getLightningAddress(): Promise<LightningAddressInfo | undefined> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.getLightningAddress();
+}
+
+export async function deleteLightningAddress(): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.deleteLightningAddress();
 }
 
 export async function disconnectBreez(): Promise<void> {

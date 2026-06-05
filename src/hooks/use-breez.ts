@@ -14,6 +14,10 @@ import {
   recommendedFees,
   prepareLnurlPay,
   executeLnurlPay,
+  checkLightningAddressAvailable,
+  registerLightningAddress,
+  getLightningAddress,
+  deleteLightningAddress,
   type PrepareSendResult,
   type PrepareLnurlPayResult,
 } from "@/lib/lightning/breez-service";
@@ -29,6 +33,7 @@ export const breezKeys = {
   nodeState: () => [...breezKeys.all, "nodeState"] as const,
   payments: () => [...breezKeys.all, "payments"] as const,
   unclaimedDeposits: () => [...breezKeys.all, "unclaimedDeposits"] as const,
+  lightningAddress: () => [...breezKeys.all, "lightningAddress"] as const,
 };
 
 export function useBalance(enabled: boolean = true) {
@@ -192,6 +197,48 @@ export function useRefundDeposit() {
 export function useGetBitcoinAddress() {
   return useMutation({
     mutationFn: async () => getBitcoinAddress(),
+  });
+}
+
+export function useLightningAddress(enabled: boolean = true) {
+  return useQuery({
+    queryKey: breezKeys.lightningAddress(),
+    queryFn: getLightningAddress,
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useCheckLightningAddressAvailable() {
+  return useMutation({
+    mutationFn: async (username: string) =>
+      checkLightningAddressAvailable(username),
+  });
+}
+
+export function useRegisterLightningAddress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      username,
+      description,
+    }: {
+      username: string;
+      description?: string;
+    }) => registerLightningAddress(username, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: breezKeys.lightningAddress() });
+    },
+  });
+}
+
+export function useDeleteLightningAddress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteLightningAddress,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: breezKeys.lightningAddress() });
+    },
   });
 }
 

@@ -1,6 +1,6 @@
 import { initBreez, getBalance, getNodeState, listPayments } from "./breez-service";
 import { useWalletStore } from "@/store/wallet-store";
-import { SELECTED_BITCOIN_NETWORK } from "../config";
+import { SELECTED_BITCOIN_NETWORK, LNURL_DOMAIN } from "../config";
 import type { Payment } from "./types";
 
 export interface InitResult {
@@ -22,6 +22,7 @@ export async function initializeBreezWallet(): Promise<InitResult> {
       network: SELECTED_BITCOIN_NETWORK,
       storageDir: "scholar-wallet-data",
       mnemonic,
+      lnurlDomain: LNURL_DOMAIN,
     });
 
     const nodeState = await getNodeState();
