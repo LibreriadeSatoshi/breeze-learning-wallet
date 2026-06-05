@@ -48,6 +48,7 @@ export interface BreezSparkConfig {
   storageDir?: string;
   mnemonic: string;
   lnurlDomain?: string;
+  claimLeewaySatPerVbyte?: number;
 }
 
 export async function initBreez(config: BreezSparkConfig): Promise<void> {
@@ -72,6 +73,12 @@ export async function initBreez(config: BreezSparkConfig): Promise<void> {
     const sdkConfig = defaultConfig(config.network);
     sdkConfig.apiKey = apiKey;
     if (config.lnurlDomain) sdkConfig.lnurlDomain = config.lnurlDomain;
+    if (config.claimLeewaySatPerVbyte !== undefined) {
+      sdkConfig.maxDepositClaimFee = {
+        type: "networkRecommended",
+        leewaySatPerVbyte: config.claimLeewaySatPerVbyte,
+      };
+    }
 
     if (!config.mnemonic) {
       throw new Error("Mnemonic is required to initialize the wallet");

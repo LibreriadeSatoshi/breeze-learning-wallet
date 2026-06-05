@@ -22,6 +22,7 @@ import {
 import { onSdkEvent } from "@/lib/lightning/breez-service";
 import { useWalletStore } from "@/store/wallet-store";
 import { SELECTED_BITCOIN_NETWORK, LNURL_DOMAIN } from "@/lib/config";
+import { getClaimLeeway, setClaimLeeway, DEFAULT_CLAIM_LEEWAY } from "@/lib/wallet/prefs";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
 
@@ -101,6 +102,20 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        <Card className="mb-6">
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Auto-claim deposits</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              On-chain deposits are claimed automatically when the network fee
+              rate is at most <em>recommended + leeway</em> sat/vB. Higher leeway
+              means more claims succeed but you may overpay during quiet periods.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ClaimLeewaySection />
+          </CardContent>
+        </Card>
+
         <Card className="mb-6 border-red-200 dark:border-red-900">
           <CardHeader>
             <h2 className="text-lg font-semibold text-red-700 dark:text-red-300">
@@ -117,6 +132,45 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function ClaimLeewaySection() {
+  const [value, setValue] = useState(() => String(getClaimLeeway()));
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    const n = parseInt(value, 10);
+    if (isNaN(n) || n < 0) return;
+    setClaimLeeway(n);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const dirty = value.trim() !== String(getClaimLeeway());
+  const invalid = value.trim() === "" || isNaN(parseInt(value, 10));
+
+  return (
+    <div className="space-y-3">
+      <Input
+        label="Leeway (sat/vB)"
+        value={value}
+        onChange={(e) => {
+          setValue(e.target.value.replace(/[^0-9]/g, ""));
+          setSaved(false);
+        }}
+        inputMode="numeric"
+        helperText={`Default ${DEFAULT_CLAIM_LEEWAY}. Takes effect after the next wallet restart.`}
+      />
+      <Button
+        variant="primary"
+        onClick={handleSave}
+        disabled={!dirty || invalid}
+        className="w-full"
+      >
+        {saved ? "Saved" : "Save"}
+      </Button>
     </div>
   );
 }
