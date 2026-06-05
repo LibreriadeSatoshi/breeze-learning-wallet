@@ -112,7 +112,7 @@ export default function ReceivePage() {
               >
                 <Bitcoin className="w-6 h-6 text-orange-500" />
                 <div className="font-medium">Bitcoin</div>
-                <div className="text-xs text-gray-500">On-chain</div>
+                <div className="text-xs text-gray-500">Added to your wallet on confirmation</div>
               </button>
             </div>
           </CardContent>
