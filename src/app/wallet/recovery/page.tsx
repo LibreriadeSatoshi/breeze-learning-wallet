@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { useWalletStore } from "@/store/wallet-store";
 import {
   useUnclaimedDeposits,
-  useClaimDeposit,
   useRefundDeposit,
   useRecommendedFees,
 } from "@/hooks/use-breez";
@@ -19,8 +18,10 @@ export default function RecoveryPage() {
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
 
-  const { data: deposits = [], refetch } = useUnclaimedDeposits(isUnlocked);
+  const { data: allDeposits = [], refetch } = useUnclaimedDeposits(isUnlocked);
   const { data: fees } = useRecommendedFees(isUnlocked);
+
+  const rejected = allDeposits.filter((d) => d.claimError);
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");
@@ -39,27 +40,29 @@ export default function RecoveryPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold">Unclaimed deposits</h1>
+          <h1 className="text-2xl font-bold">Get refund</h1>
         </div>
 
-        {deposits.length === 0 ? (
+        {rejected.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center">
               <p className="text-gray-600 dark:text-gray-400">
-                No unclaimed deposits. Everything is settled.
+                Nothing needs a refund. All incoming Bitcoin is being added to
+                your wallet automatically.
               </p>
             </CardContent>
           </Card>
         ) : (
           <>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              These on-chain deposits haven&apos;t been claimed onto Spark yet.
-              Claim them to receive the funds, or refund them back to a Bitcoin
+              These Bitcoin transfers couldn&apos;t be added to your wallet
+              automatically — usually because network fees were higher than the
+              wallet&apos;s configured cap. You can refund them to a Bitcoin
               address you control.
             </p>
             <div className="space-y-3">
-              {deposits.map((deposit) => (
-                <DepositItem
+              {rejected.map((deposit) => (
+                <RefundItem
                   key={`${deposit.txid}:${deposit.vout}`}
                   deposit={deposit}
                   defaultFeeRate={fees?.halfHourFee ?? 5}
@@ -74,7 +77,7 @@ export default function RecoveryPage() {
   );
 }
 
-function DepositItem({
+function RefundItem({
   deposit,
   defaultFeeRate,
   onAfterAction,
@@ -83,30 +86,16 @@ function DepositItem({
   defaultFeeRate: number;
   onAfterAction: () => void;
 }) {
-  const claimMutation = useClaimDeposit();
   const refundMutation = useRefundDeposit();
-  const [mode, setMode] = useState<"none" | "claim" | "refund">("none");
+  const [open, setOpen] = useState(false);
   const [refundAddress, setRefundAddress] = useState("");
   const [feeRate, setFeeRate] = useState(String(defaultFeeRate));
   const [error, setError] = useState("");
 
-  const claim = async () => {
-    setError("");
-    try {
-      await claimMutation.mutateAsync({
-        txid: deposit.txid,
-        vout: deposit.vout,
-      });
-      onAfterAction();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to claim deposit");
-    }
-  };
-
   const refund = async () => {
     setError("");
     if (!refundAddress.trim()) {
-      setError("Enter a Bitcoin refund address");
+      setError("Enter a Bitcoin address");
       return;
     }
     const satPerVbyte = parseInt(feeRate, 10);
@@ -123,7 +112,7 @@ function DepositItem({
       });
       onAfterAction();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to refund deposit");
+      setError(e instanceof Error ? e.message : "Failed to send refund");
     }
   };
 
@@ -141,76 +130,22 @@ function DepositItem({
             {deposit.amountSats.toLocaleString()} sats
           </span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Status</span>
-          <span className="font-medium">
-            {deposit.isMature ? "Mature" : "Pending maturity"}
-          </span>
-        </div>
 
-        {deposit.claimError && (
-          <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg">
-            <p className="text-xs text-amber-800 dark:text-amber-200">
-              Previous claim attempt failed.
-            </p>
-          </div>
+        {!open && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setOpen(true)}
+            className="w-full"
+          >
+            Refund to Bitcoin
+          </Button>
         )}
 
-        {mode === "none" && (
-          <div className="flex gap-2">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setMode("claim")}
-              disabled={!deposit.isMature}
-              className="flex-1"
-            >
-              Claim
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setMode("refund")}
-              className="flex-1"
-            >
-              Refund
-            </Button>
-          </div>
-        )}
-
-        {mode === "claim" && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Claim this deposit onto Spark. Fees are taken from the deposited
-              amount at the SDK&apos;s recommended rate.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setMode("none")}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={claim}
-                loading={claimMutation.isPending}
-                disabled={claimMutation.isPending}
-                className="flex-1"
-              >
-                Confirm claim
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {mode === "refund" && (
+        {open && (
           <div className="space-y-2">
             <Input
-              label="Bitcoin refund address"
+              label="Bitcoin address"
               placeholder="bc1..."
               value={refundAddress}
               onChange={(e) => setRefundAddress(e.target.value)}
@@ -229,7 +164,7 @@ function DepositItem({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setMode("none")}
+                onClick={() => setOpen(false)}
                 disabled={refundMutation.isPending}
                 className="flex-1"
               >
@@ -243,7 +178,7 @@ function DepositItem({
                 disabled={refundMutation.isPending}
                 className="flex-1"
               >
-                Confirm refund
+                Send refund
               </Button>
             </div>
           </div>

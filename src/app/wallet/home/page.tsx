@@ -70,7 +70,8 @@ export default function WalletHomePage() {
   const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
   const { refresh } = useRefreshBreez();
 
-  const needsAttention = unclaimedDeposits.length;
+  const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
+  const needsAttention = rejectedDeposits.length;
 
   useEffect(() => {
     setMounted(true);
@@ -236,11 +237,11 @@ export default function WalletHomePage() {
               <div className="flex items-center gap-2 mb-1">
                 <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 <h3 className="font-semibold text-amber-900 dark:text-amber-200">
-                  {needsAttention} swap{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} your attention
+                  {needsAttention} Bitcoin transfer{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} a refund
                 </h3>
               </div>
               <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
-                On-chain deposits are waiting to be claimed onto Spark. Claim now or refund.
+                Couldn&apos;t add some incoming Bitcoin to your wallet automatically. Send them back to a Bitcoin address you control.
               </p>
               <Button
                 variant="outline"
@@ -248,7 +249,7 @@ export default function WalletHomePage() {
                 onClick={() => router.push("/wallet/recovery")}
                 className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/20"
               >
-                Resolve
+                Get refund
               </Button>
             </CardContent>
           </Card>
