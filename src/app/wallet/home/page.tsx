@@ -9,6 +9,7 @@ import {
   Copy as CopyIcon,
   Key,
   Lock,
+  Settings as SettingsIcon,
   TriangleAlert,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -207,6 +208,13 @@ export default function WalletHomePage() {
               >
                 <Key className="w-3.5 h-3.5" />
                 <span>Phrase</span>
+              </button>
+              <button
+                onClick={() => router.push("/wallet/settings")}
+                aria-label="Settings"
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                <SettingsIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={handleLock}
