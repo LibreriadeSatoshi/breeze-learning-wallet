@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -8,29 +8,29 @@ import {
   Check,
   Clock,
   Copy as CopyIcon,
+  Pencil,
   Share2,
   Zap,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { useWalletStore } from "@/store/wallet-store";
 import {
   useReceiveLightning,
   useGetBitcoinAddress,
+  useLightningAddress,
+  useCheckLightningAddressAvailable,
+  useRegisterLightningAddress,
 } from "@/hooks/use-breez";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
+import { generateRandomUsername } from "@/lib/wallet/username";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
+import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
 import { QRCodeSVG } from "qrcode.react";
 
-type ReceiveStep = "input" | "display" | "success";
 type PaymentMethod = "lightning" | "bitcoin";
-
-interface PaymentInfo {
-  paymentRequest: string;
-  expiresAt?: number;
-  fee?: number;
-}
 
 interface ReceivedPaymentDetails {
   id: string;
@@ -41,596 +41,758 @@ interface ReceivedPaymentDetails {
   status: string;
 }
 
+interface BitcoinReceive {
+  address: string;
+  fee: number;
+}
+
+interface InvoiceState {
+  paymentRequest: string;
+  expiresAt: number;
+  fee: number;
+  amountSat: number;
+  description: string;
+}
+
+const USERNAME_RE = /^[a-z0-9._-]{1,32}$/;
+
 export default function ReceivePage() {
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
 
-  const [step, setStep] = useState<ReceiveStep>("input");
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>("lightning");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
-  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
-  const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [, setPaymentReceived] = useState(false);
-  const [receivedPaymentDetails, setReceivedPaymentDetails] =
-    useState<ReceivedPaymentDetails | null>(null);
-
-  const receiveMutation = useReceiveLightning();
-  const getBitcoinAddressMutation = useGetBitcoinAddress();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("lightning");
+  const [received, setReceived] = useState<ReceivedPaymentDetails | null>(null);
 
   useEffect(() => {
-    if (!isUnlocked) {
-      router.push("/welcome");
-    }
+    if (!isUnlocked) router.push("/welcome");
   }, [isUnlocked, router]);
 
-  useEffect(() => {
-    if (step !== "display" || !paymentInfo) return;
+  if (!isUnlocked) return null;
 
-    const handleEvent = (event: SdkEvent) => {
-      if (event.type !== "paymentSucceeded") return;
-
-      const payment = event.payment;
-      const ourDestination = paymentInfo.paymentRequest;
-
-      const matchesLightning =
-        paymentMethod === "lightning" &&
-        payment.details?.type === "lightning" &&
-        payment.details.invoice === ourDestination;
-
-      // On-chain Bitcoin receives arrive as either "deposit" (waiting
-      // to claim) or a completed deposit/spark conversion. We accept the
-      // payment as soon as any related event fires once we're displaying
-      // a Bitcoin address.
-      const matchesBitcoin =
-        paymentMethod === "bitcoin" &&
-        (payment.details?.type === "deposit" ||
-          payment.method === "deposit" ||
-          payment.method === "spark");
-
-      if (!matchesLightning && !matchesBitcoin) return;
-
-      const method = payment.method === "deposit"
-        ? "deposit"
-        : payment.method === "spark"
-          ? "spark"
-          : payment.method === "token"
-            ? "token"
-            : "lightning";
-
-      setReceivedPaymentDetails({
-        id: payment.id,
-        amountSat: Number(payment.amount),
-        feesSat: Number(payment.fees),
-        timestamp: payment.timestamp,
-        method,
-        status: payment.status,
-      });
-      setPaymentReceived(true);
-      setStep("success");
-    };
-
-    const unsubscribe = onSdkEvent(handleEvent);
-    return () => unsubscribe();
-  }, [step, paymentInfo, paymentMethod]);
-
-  useEffect(() => {
-    if (
-      paymentInfo?.expiresAt &&
-      step === "display" &&
-      paymentMethod === "lightning"
-    ) {
-      const interval = setInterval(() => {
-        const remaining = Math.max(
-          0,
-          Math.floor((paymentInfo.expiresAt! - Date.now()) / 1000)
-        );
-        setTimeRemaining(remaining);
-
-        if (remaining === 0) {
-          clearInterval(interval);
-          setError("Invoice expired. Please create a new one.");
-        }
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [paymentInfo, step, paymentMethod]);
-
-  const handleAmountChange = (value: string) => {
-    const sanitized = value.replace(/[^0-9]/g, "");
-    setAmount(sanitized);
-    setError("");
-  };
-
-  const handleContinue = async () => {
-    setError("");
-
-    try {
-      if (paymentMethod === "lightning") {
-        const amountSat = parseInt(amount, 10);
-        if (isNaN(amountSat) || amountSat <= 0) {
-          setError("Please enter a valid amount");
-          return;
-        }
-        const result = await receiveMutation.mutateAsync({
-          amountSat,
-          description: description || "Lightning payment",
-        });
-        setPaymentInfo({
-          paymentRequest: result.paymentRequest,
-          expiresAt: result.expiresAt,
-          fee: result.fee,
-        });
-        setTimeRemaining(3600);
-        setStep("display");
-      } else {
-        const result = await getBitcoinAddressMutation.mutateAsync();
-        setPaymentInfo({
-          paymentRequest: result.address,
-          fee: result.fee,
-        });
-        setStep("display");
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to generate invoice";
-      setError(message);
-    }
-  };
-
-  const handleCopy = async () => {
-    if (paymentInfo?.paymentRequest) {
-      try {
-        await navigator.clipboard.writeText(paymentInfo.paymentRequest);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        setError("Failed to copy to clipboard");
-      }
-    }
-  };
-
-  const handleShare = async () => {
-    if (paymentInfo?.paymentRequest && navigator.share) {
-      try {
-        await navigator.share({
-          title:
-            paymentMethod === "lightning"
-              ? "Lightning Invoice"
-              : "Bitcoin Address",
-          text: paymentInfo.paymentRequest,
-        });
-      } catch {
-        // user cancelled or share unavailable
-      }
-    }
-  };
-
-  const handleNew = () => {
-    setStep("input");
-    setAmount("");
-    setDescription("");
-    setPaymentInfo(null);
-    setError("");
-    setCopied(false);
-    setTimeRemaining(0);
-    setPaymentReceived(false);
-    setReceivedPaymentDetails(null);
-  };
-
-  const handleDone = () => {
-    router.push("/wallet/home");
-  };
-
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  if (!isUnlocked) {
-    return null;
+  if (received) {
+    return <SuccessView details={received} onDone={() => router.push("/wallet/home")} />;
   }
 
-  if (step === "input") {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-2xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              onClick={() => router.back()}
-              aria-label="Back"
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-2xl font-bold">Receive Payment</h1>
-          </div>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Payment Method</h2>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setPaymentMethod("lightning")}
-                  className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
-                    paymentMethod === "lightning"
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <Zap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  <div className="font-medium">Lightning</div>
-                  <div className="text-xs text-gray-500">Instant</div>
-                </button>
-                <button
-                  onClick={() => setPaymentMethod("bitcoin")}
-                  className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
-                    paymentMethod === "bitcoin"
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <Bitcoin className="w-6 h-6 text-orange-500" />
-                  <div className="font-medium">Bitcoin</div>
-                  <div className="text-xs text-gray-500">On-chain</div>
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {paymentMethod === "lightning" && (
-            <Card className="mb-6">
-              <CardHeader>
-                <h2 className="text-lg font-semibold">Enter Amount</h2>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Input
-                    label="Amount (sats)"
-                    placeholder="1000"
-                    value={amount}
-                    onChange={(e) => handleAmountChange(e.target.value)}
-                    type="text"
-                    inputMode="numeric"
-                    error={error}
-                  />
-                </div>
-
-                <Input
-                  label="Description (optional)"
-                  placeholder="What is this payment for?"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  maxLength={100}
-                />
-              </CardContent>
-            </Card>
-          )}
-
-          {paymentMethod === "bitcoin" && (
-            <Card className="mb-6">
-              <CardContent className="pt-6 text-center">
-                <h3 className="text-lg font-semibold mb-2">Bitcoin address (one-time deposit)</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Generates a fresh Bitcoin address. Funds sent to it are
-                  claimed onto Spark automatically. Use a new address for
-                  each payment.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleContinue}
-            disabled={
-              (paymentMethod === "lightning" && !amount) ||
-              receiveMutation.isPending ||
-              getBitcoinAddressMutation.isPending
-            }
-            loading={
-              receiveMutation.isPending ||
-              getBitcoinAddressMutation.isPending
-            }
-            className="w-full mb-6"
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-2xl mx-auto px-6 py-6">
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => router.back()}
+            aria-label="Back"
+            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
           >
-            {receiveMutation.isPending || getBitcoinAddressMutation.isPending
-              ? "Preparing..."
-              : paymentMethod === "lightning"
-                ? "Generate invoice"
-                : "Show Bitcoin address"}
-          </Button>
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-2xl font-bold">Receive</h1>
+        </div>
 
-          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-            <p className="text-sm text-blue-900 dark:text-blue-200">
-              <strong>Tip:</strong>{" "}
-              {paymentMethod === "lightning"
-                ? "Lightning invoices expire after 1 hour. Make sure the sender pays before then."
-                : "Each Bitcoin address is single-use. Generate a new one for each payment."}
-            </p>
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setPaymentMethod("lightning")}
+                className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                  paymentMethod === "lightning"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <Zap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="font-medium">Lightning</div>
+                <div className="text-xs text-gray-500">Instant</div>
+              </button>
+              <button
+                onClick={() => setPaymentMethod("bitcoin")}
+                className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                  paymentMethod === "bitcoin"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <Bitcoin className="w-6 h-6 text-orange-500" />
+                <div className="font-medium">Bitcoin</div>
+                <div className="text-xs text-gray-500">On-chain</div>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {paymentMethod === "lightning" ? (
+          <LightningPanel onReceived={setReceived} />
+        ) : (
+          <BitcoinPanel onReceived={setReceived} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LightningPanel({
+  onReceived,
+}: {
+  onReceived: (d: ReceivedPaymentDetails) => void;
+}) {
+  const { data: lnAddress, isLoading, refetch } = useLightningAddress(true);
+  const registerMutation = useRegisterLightningAddress();
+  const [autoClaimError, setAutoClaimError] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const tryingRef = useRef(false);
+
+  const autoClaim = useCallback(async () => {
+    if (tryingRef.current) return;
+    tryingRef.current = true;
+    setAutoClaimError("");
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const username = generateRandomUsername();
+      try {
+        await registerMutation.mutateAsync({ username });
+        await refetch();
+        tryingRef.current = false;
+        return;
+      } catch (e) {
+        if (attempt === 2) {
+          setAutoClaimError(
+            e instanceof Error ? e.message : "Couldn't set up Lightning address",
+          );
+        }
+      }
+    }
+    tryingRef.current = false;
+  }, [registerMutation, refetch]);
+
+  useEffect(() => {
+    if (!isLoading && !lnAddress && !registerMutation.isPending) {
+      autoClaim();
+    }
+  }, [isLoading, lnAddress, registerMutation.isPending, autoClaim]);
+
+  if (isLoading || registerMutation.isPending) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="pt-8 pb-8 text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Setting up your Lightning address…
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (autoClaimError) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="pt-6 text-center">
+          <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+            {autoClaimError}
+          </p>
+          <Button variant="primary" onClick={autoClaim}>
+            Try again
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!lnAddress) return null;
+
+  return (
+    <>
+      <AddressCard info={lnAddress} onEdit={() => setEditOpen(true)} />
+      <InvoiceCreator onReceived={onReceived} />
+      <EditUsernameModal
+        open={editOpen}
+        currentAddress={lnAddress.lightningAddress}
+        onClose={() => setEditOpen(false)}
+        onChanged={() => {
+          setEditOpen(false);
+          refetch();
+        }}
+      />
+    </>
+  );
+}
+
+function AddressCard({
+  info,
+  onEdit,
+}: {
+  info: LightningAddressInfo;
+  onEdit: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(info.lightningAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard blocked, ignore
+    }
+  };
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <h2 className="text-lg font-semibold">Your Lightning address</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Share this with anyone who wants to pay you over Lightning.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex justify-center">
+          <div className="p-3 bg-white rounded-lg">
+            <QRCodeSVG
+              value={info.lightningAddress}
+              size={200}
+              level="M"
+              bgColor="#FFFFFF"
+              fgColor="#000000"
+            />
           </div>
         </div>
+        <p className="text-center font-mono text-base break-all">
+          {info.lightningAddress}
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="primary"
+            onClick={copy}
+            className="inline-flex items-center justify-center gap-2"
+          >
+            {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+            <span>{copied ? "Copied" : "Copy"}</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onEdit}
+            className="inline-flex items-center justify-center gap-2"
+          >
+            <Pencil className="w-4 h-4" />
+            <span>Edit username</span>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function InvoiceCreator({
+  onReceived,
+}: {
+  onReceived: (d: ReceivedPaymentDetails) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [invoice, setInvoice] = useState<InvoiceState | null>(null);
+  const [error, setError] = useState("");
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const receiveMutation = useReceiveLightning();
+
+  useEffect(() => {
+    if (!invoice) return;
+    const t = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((invoice.expiresAt - Date.now()) / 1000));
+      setTimeRemaining(remaining);
+      if (remaining === 0) {
+        clearInterval(t);
+        setError("Invoice expired. Generate a new one.");
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [invoice]);
+
+  useEffect(() => {
+    if (!invoice) return;
+    const handler = (e: SdkEvent) => {
+      if (e.type !== "paymentSucceeded") return;
+      const p = e.payment;
+      const match =
+        p.details?.type === "lightning" &&
+        p.details.invoice === invoice.paymentRequest;
+      if (!match) return;
+      onReceived({
+        id: p.id,
+        amountSat: Number(p.amount),
+        feesSat: Number(p.fees),
+        timestamp: p.timestamp,
+        method: "lightning",
+        status: p.status,
+      });
+    };
+    return onSdkEvent(handler);
+  }, [invoice, onReceived]);
+
+  const generate = async () => {
+    setError("");
+    const amountSat = parseInt(amount, 10);
+    if (isNaN(amountSat) || amountSat <= 0) {
+      setError("Enter a valid amount");
+      return;
+    }
+    try {
+      const result = await receiveMutation.mutateAsync({
+        amountSat,
+        description: description || "Lightning payment",
+      });
+      setInvoice({
+        paymentRequest: result.paymentRequest,
+        expiresAt: result.expiresAt,
+        fee: result.fee,
+        amountSat,
+        description,
+      });
+      setTimeRemaining(3600);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to generate invoice");
+    }
+  };
+
+  const copy = async () => {
+    if (!invoice) return;
+    try {
+      await navigator.clipboard.writeText(invoice.paymentRequest);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard blocked, ignore
+    }
+  };
+
+  const share = async () => {
+    if (!invoice || !navigator.share) return;
+    try {
+      await navigator.share({
+        title: "Lightning invoice",
+        text: invoice.paymentRequest,
+      });
+    } catch {
+      // user cancelled or share unavailable
+    }
+  };
+
+  const reset = () => {
+    setInvoice(null);
+    setAmount("");
+    setDescription("");
+    setError("");
+    setTimeRemaining(0);
+  };
+
+  if (!open) {
+    return (
+      <div className="text-center">
+        <button
+          onClick={() => setOpen(true)}
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          Or create a one-time invoice for a specific amount
+        </button>
       </div>
     );
   }
 
-  if (step === "display") {
-    const amountSats = parseInt(amount, 10) || 0;
-    const canShare = typeof navigator.share !== "undefined";
-    const isLightning = paymentMethod === "lightning";
-
+  if (invoice) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-2xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleNew}
-                aria-label="Back"
-                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h1 className="text-2xl font-bold">
-                {isLightning ? "Lightning Invoice" : "Bitcoin Address"}
-              </h1>
-            </div>
-            {isLightning && timeRemaining > 0 && (
-              <div className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/20 px-3 py-1.5 rounded-full text-sm">
-                <Clock className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold">One-time invoice</h3>
+            {timeRemaining > 0 && (
+              <div className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/20 px-3 py-1 rounded-full text-xs">
+                <Clock className="w-3 h-3 text-amber-700 dark:text-amber-300" />
                 <span className="font-medium text-amber-700 dark:text-amber-300">
                   {formatTime(timeRemaining)} left
                 </span>
               </div>
             )}
           </div>
-
-          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-            <div className="flex items-center gap-3">
-              <div className="animate-pulse">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              </div>
-              <div>
-                <p className="font-semibold text-blue-900 dark:text-blue-200">
-                  Waiting for payment...
-                </p>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  {isLightning
-                    ? "The page will update automatically when payment is received"
-                    : "Bitcoin payments may take a few minutes to appear"}
-                </p>
-              </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-center">
+            <span className="text-3xl font-bold text-orange-500">
+              {invoice.amountSat.toLocaleString()}
+            </span>
+            <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">sats</span>
+          </p>
+          <div className="flex justify-center">
+            <div className="p-3 bg-white rounded-lg">
+              <QRCodeSVG
+                value={invoice.paymentRequest}
+                size={200}
+                level="M"
+                bgColor="#FFFFFF"
+                fgColor="#000000"
+              />
             </div>
           </div>
-
-          {isLightning && amountSats > 0 && (
-            <Card className="mb-6">
-              <CardContent className="pt-8 pb-8">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Request for
-                  </p>
-                  <p className="text-5xl font-bold text-orange-500 mb-2">
-                    {amountSats.toLocaleString()}
-                  </p>
-                  <p className="text-lg text-gray-600 dark:text-gray-400">
-                    sats
-                  </p>
-                  {description && (
-                    <p className="text-sm text-gray-500 mt-3 italic">
-                      &ldquo;{description}&rdquo;
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {!isLightning && (
-            <Card className="mb-6">
-              <CardContent className="pt-6 pb-6 text-center">
-                <h3 className="text-lg font-semibold mb-2">
-                  One-time Bitcoin address
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Pay this address from any Bitcoin wallet. The funds will be
-                  swapped to Liquid and claimed automatically. Generate a new
-                  address for the next payment.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center">
-                {paymentInfo?.paymentRequest ? (
-                  <div className="p-4 bg-white rounded-lg">
-                    <QRCodeSVG
-                      value={paymentInfo.paymentRequest}
-                      size={256}
-                      level="M"
-                      bgColor="#FFFFFF"
-                      fgColor="#000000"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-64 h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
-                    <p className="text-gray-500">Loading QR code...</p>
-                  </div>
-                )}
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
-                  Scan this QR code with a{" "}
-                  {isLightning ? "Lightning" : "Bitcoin"} wallet
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                {isLightning ? "Invoice" : "Address"}
-              </h3>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg break-all font-mono text-sm mb-4">
-                {paymentInfo?.paymentRequest}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="primary"
-                  onClick={handleCopy}
-                  className="inline-flex items-center justify-center gap-2"
-                >
-                  {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-                  <span>{copied ? "Copied" : "Copy"}</span>
-                </Button>
-                {canShare && (
-                  <Button
-                    variant="outline"
-                    onClick={handleShare}
-                    className="inline-flex items-center justify-center gap-2"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span>Share</span>
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
+          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
+            {invoice.paymentRequest}
+          </div>
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
-              <p className="text-sm text-red-900 dark:text-red-200">{error}</p>
-            </div>
+            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
           )}
-
-          <div className="mt-6">
-            <Button variant="outline" onClick={handleNew} className="w-full">
-              Create New {isLightning ? "Invoice" : "Request"}
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="primary"
+              onClick={copy}
+              className="inline-flex items-center justify-center gap-2"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+              <span>{copied ? "Copied" : "Copy"}</span>
             </Button>
+            {typeof navigator !== "undefined" && typeof navigator.share !== "undefined" ? (
+              <Button
+                variant="outline"
+                onClick={share}
+                className="inline-flex items-center justify-center gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Share</span>
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={reset}>
+                New invoice
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <h3 className="font-semibold">One-time invoice</h3>
+          <button
+            onClick={() => setOpen(false)}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Hide
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Input
+          label="Amount (sats)"
+          placeholder="1000"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
+          inputMode="numeric"
+        />
+        <Input
+          label="Description (optional)"
+          placeholder="What is this payment for?"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          maxLength={100}
+        />
+        {error && (
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        )}
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={generate}
+          loading={receiveMutation.isPending}
+          disabled={receiveMutation.isPending || !amount}
+          className="w-full"
+        >
+          Generate invoice
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BitcoinPanel({
+  onReceived,
+}: {
+  onReceived: (d: ReceivedPaymentDetails) => void;
+}) {
+  const getMutation = useGetBitcoinAddress();
+  const [result, setResult] = useState<BitcoinReceive | null>(null);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const requestedRef = useRef(false);
+
+  useEffect(() => {
+    if (requestedRef.current) return;
+    requestedRef.current = true;
+    (async () => {
+      try {
+        const r = await getMutation.mutateAsync();
+        setResult({ address: r.address, fee: r.fee });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to generate address");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!result) return;
+    const handler = (e: SdkEvent) => {
+      if (e.type !== "paymentSucceeded") return;
+      const p = e.payment;
+      if (p.method !== "deposit" && p.method !== "spark") return;
+      onReceived({
+        id: p.id,
+        amountSat: Number(p.amount),
+        feesSat: Number(p.fees),
+        timestamp: p.timestamp,
+        method: p.method === "deposit" ? "deposit" : "spark",
+        status: p.status,
+      });
+    };
+    return onSdkEvent(handler);
+  }, [result, onReceived]);
+
+  const copy = async () => {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result.address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard blocked, ignore
+    }
+  };
+
+  if (error) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="pt-6 text-center">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!result) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="pt-8 pb-8 text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Generating Bitcoin address…
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <h2 className="text-lg font-semibold">One-time Bitcoin address</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Pay from any Bitcoin wallet. Funds are added to your wallet
+          automatically once confirmed.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex justify-center">
+          <div className="p-3 bg-white rounded-lg">
+            <QRCodeSVG
+              value={result.address}
+              size={200}
+              level="M"
+              bgColor="#FFFFFF"
+              fgColor="#000000"
+            />
           </div>
         </div>
-      </div>
-    );
-  }
-  if (step === "success") {
-    const receivedAmount = receivedPaymentDetails?.amountSat ?? parseInt(amount, 10) ?? 0;
-    const receivedFees = receivedPaymentDetails?.feesSat ?? 0;
+        <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
+          {result.address}
+        </div>
+        <Button
+          variant="primary"
+          onClick={copy}
+          className="w-full inline-flex items-center justify-center gap-2"
+        >
+          {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+          <span>{copied ? "Copied" : "Copy address"}</span>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
 
-    const formattedDate = receivedPaymentDetails?.timestamp
-      ? new Date(receivedPaymentDetails.timestamp * 1000).toLocaleString()
-      : new Date().toLocaleString();
+function EditUsernameModal({
+  open,
+  currentAddress,
+  onClose,
+  onChanged,
+}: {
+  open: boolean;
+  currentAddress: string;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const [username, setUsername] = useState("");
+  const [available, setAvailable] = useState<boolean | null>(null);
+  const [error, setError] = useState("");
+  const checkMutation = useCheckLightningAddressAvailable();
+  const registerMutation = useRegisterLightningAddress();
 
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-2xl mx-auto px-6 py-6">
-          <Card className="mb-6">
-            <CardContent className="pt-8 pb-6 text-center">
-              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <Check className="w-9 h-9 text-green-600 dark:text-green-400" strokeWidth={3} />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">Payment received</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                {paymentMethod === "lightning"
-                  ? "Successfully received via Lightning"
-                  : "Bitcoin payment received and claimed"}
-              </p>
+  useEffect(() => {
+    if (!open) {
+      setUsername("");
+      setAvailable(null);
+      setError("");
+    }
+  }, [open]);
 
-              <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-6 mb-6">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  Amount Received
-                </p>
-                <p className="text-4xl font-bold text-green-600 dark:text-green-400 mb-1">
-                  {receivedAmount.toLocaleString()} sats
-                </p>
-              </div>
+  useEffect(() => {
+    setAvailable(null);
+    setError("");
+    const trimmed = username.trim().toLowerCase();
+    if (!trimmed || !USERNAME_RE.test(trimmed)) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const ok = await checkMutation.mutateAsync(trimmed);
+        if (!cancelled) setAvailable(ok);
+      } catch {
+        // ignore — surfaces on save
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
 
-              {receivedPaymentDetails && (
-                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mb-6 space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Payment ID
-                    </span>
-                    <span className="font-mono text-xs">
-                      {receivedPaymentDetails.id.slice(0, 20)}...
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Method
-                    </span>
-                    <span className="font-medium capitalize">
-                      {receivedPaymentDetails.method}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Fees
-                    </span>
-                    <span className="font-medium">{receivedFees} sats</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Status
-                    </span>
-                    <span className="font-medium capitalize text-green-600 dark:text-green-400">
-                      {receivedPaymentDetails.status}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Time
-                    </span>
-                    <span className="font-medium text-xs">{formattedDate}</span>
-                  </div>
-                </div>
-              )}
+  const save = async () => {
+    setError("");
+    const trimmed = username.trim().toLowerCase();
+    if (!USERNAME_RE.test(trimmed)) {
+      setError("Use lowercase letters, numbers, dots, underscores, hyphens (max 32).");
+      return;
+    }
+    try {
+      await registerMutation.mutateAsync({ username: trimmed });
+      onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to update address");
+    }
+  };
 
-              {!receivedPaymentDetails && paymentInfo && (
-                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mb-6">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    Payment Request
-                  </p>
-                  <p className="font-mono text-xs break-all">
-                    {paymentInfo.paymentRequest.slice(0, 50)}...
-                  </p>
-                </div>
-              )}
+  const trimmed = username.trim().toLowerCase();
+  const showAvailability = trimmed.length > 0 && USERNAME_RE.test(trimmed);
 
-              <div className="space-y-3">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={handleDone}
-                  className="w-full"
-                >
-                  Done
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={handleNew}
-                  className="w-full"
-                >
-                  Receive Another Payment
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      dismissable={!registerMutation.isPending}
+      title="Edit Lightning address"
+      description={`Changing your username releases ${currentAddress}. Anyone who has it saved will see payments fail and need the new one.`}
+    >
+      <div className="space-y-4">
+        <Input
+          label="New username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          autoFocus
+        />
+        {showAvailability && checkMutation.isPending && (
+          <p className="text-xs text-gray-500">Checking availability…</p>
+        )}
+        {showAvailability && !checkMutation.isPending && available === true && (
+          <p className="text-xs text-green-700 dark:text-green-400">Available</p>
+        )}
+        {showAvailability && !checkMutation.isPending && available === false && (
+          <p className="text-xs text-red-700 dark:text-red-400">Taken — pick another</p>
+        )}
+        {error && (
+          <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          </div>
+        )}
+        <div className="flex gap-3">
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={onClose}
+            disabled={registerMutation.isPending}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={save}
+            loading={registerMutation.isPending}
+            disabled={registerMutation.isPending || available !== true}
+            className="flex-1"
+          >
+            Replace address
+          </Button>
         </div>
       </div>
-    );
-  }
+    </Modal>
+  );
+}
 
-  return null;
+function SuccessView({
+  details,
+  onDone,
+}: {
+  details: ReceivedPaymentDetails;
+  onDone: () => void;
+}) {
+  const formattedDate = new Date(details.timestamp * 1000).toLocaleString();
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-2xl mx-auto px-6 py-6">
+        <Card>
+          <CardContent className="pt-8 pb-6 text-center">
+            <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <Check className="w-9 h-9 text-green-600 dark:text-green-400" strokeWidth={3} />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Payment received</h2>
+            <p className="text-4xl font-bold text-orange-500 mt-4 mb-1">
+              {details.amountSat.toLocaleString()} sats
+            </p>
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mt-6 mb-6 space-y-2 text-sm text-left">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Method</span>
+                <span className="font-medium capitalize">{details.method}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Fees</span>
+                <span className="font-medium">{details.feesSat.toLocaleString()} sats</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Time</span>
+                <span className="font-medium text-xs">{formattedDate}</span>
+              </div>
+            </div>
+            <Button variant="primary" size="lg" onClick={onDone} className="w-full">
+              Done
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
