@@ -318,9 +318,10 @@ export async function registerLightningAddress(
   return sdk.registerLightningAddress({ username, description });
 }
 
-export async function getLightningAddress(): Promise<LightningAddressInfo | undefined> {
+export async function getLightningAddress(): Promise<LightningAddressInfo | null> {
   if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.getLightningAddress();
+  const result = await sdk.getLightningAddress();
+  return result ?? null;
 }
 
 export async function deleteLightningAddress(): Promise<void> {
