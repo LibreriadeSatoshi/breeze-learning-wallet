@@ -12,7 +12,9 @@ import {
   useRefundDeposit,
   useRecommendedFees,
 } from "@/hooks/use-breez";
-import type { DepositInfo } from "@breeztech/breez-sdk-spark";
+import type { DepositInfo, RecommendedFees } from "@breeztech/breez-sdk-spark";
+
+type FeeChoice = "fast" | "medium" | "slow" | "custom";
 
 export default function RecoveryPage() {
   const router = useRouter();
@@ -65,7 +67,7 @@ export default function RecoveryPage() {
                 <RefundItem
                   key={`${deposit.txid}:${deposit.vout}`}
                   deposit={deposit}
-                  defaultFeeRate={fees?.halfHourFee ?? 5}
+                  fees={fees}
                   onAfterAction={() => refetch()}
                 />
               ))}
@@ -79,18 +81,36 @@ export default function RecoveryPage() {
 
 function RefundItem({
   deposit,
-  defaultFeeRate,
+  fees,
   onAfterAction,
 }: {
   deposit: DepositInfo;
-  defaultFeeRate: number;
+  fees: RecommendedFees | undefined;
   onAfterAction: () => void;
 }) {
   const refundMutation = useRefundDeposit();
   const [open, setOpen] = useState(false);
   const [refundAddress, setRefundAddress] = useState("");
-  const [feeRate, setFeeRate] = useState(String(defaultFeeRate));
+  const [choice, setChoice] = useState<FeeChoice>("medium");
+  const [customRate, setCustomRate] = useState("");
   const [error, setError] = useState("");
+
+  const fastRate = fees?.fastestFee ?? 0;
+  const mediumRate = fees?.halfHourFee ?? 0;
+  const slowRate = fees?.hourFee ?? 0;
+
+  const selectedRate = (() => {
+    switch (choice) {
+      case "fast":
+        return fastRate;
+      case "medium":
+        return mediumRate;
+      case "slow":
+        return slowRate;
+      case "custom":
+        return parseInt(customRate, 10);
+    }
+  })();
 
   const refund = async () => {
     setError("");
@@ -98,9 +118,8 @@ function RefundItem({
       setError("Enter a Bitcoin address");
       return;
     }
-    const satPerVbyte = parseInt(feeRate, 10);
-    if (isNaN(satPerVbyte) || satPerVbyte <= 0) {
-      setError("Enter a valid fee rate");
+    if (isNaN(selectedRate) || selectedRate <= 0) {
+      setError("Pick a fee rate");
       return;
     }
     try {
@@ -108,7 +127,7 @@ function RefundItem({
         txid: deposit.txid,
         vout: deposit.vout,
         destinationAddress: refundAddress.trim(),
-        fee: { type: "rate", satPerVbyte },
+        fee: { type: "rate", satPerVbyte: selectedRate },
       });
       onAfterAction();
     } catch (e) {
@@ -143,7 +162,7 @@ function RefundItem({
         )}
 
         {open && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Input
               label="Bitcoin address"
               placeholder="bc1..."
@@ -151,15 +170,57 @@ function RefundItem({
               onChange={(e) => setRefundAddress(e.target.value)}
               disabled={refundMutation.isPending}
             />
-            <Input
-              label="Fee rate (sat/vB)"
-              value={feeRate}
-              onChange={(e) =>
-                setFeeRate(e.target.value.replace(/[^0-9]/g, ""))
-              }
-              inputMode="numeric"
-              disabled={refundMutation.isPending}
-            />
+            <div>
+              <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                Fee rate
+              </div>
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                <FeePreset
+                  label="Slow"
+                  rate={slowRate}
+                  selected={choice === "slow"}
+                  onClick={() => setChoice("slow")}
+                  disabled={refundMutation.isPending}
+                />
+                <FeePreset
+                  label="Medium"
+                  rate={mediumRate}
+                  selected={choice === "medium"}
+                  onClick={() => setChoice("medium")}
+                  disabled={refundMutation.isPending}
+                />
+                <FeePreset
+                  label="Fast"
+                  rate={fastRate}
+                  selected={choice === "fast"}
+                  onClick={() => setChoice("fast")}
+                  disabled={refundMutation.isPending}
+                />
+              </div>
+              <button
+                onClick={() => setChoice("custom")}
+                className={`text-xs ${
+                  choice === "custom"
+                    ? "text-blue-600 dark:text-blue-400 font-medium"
+                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}
+                disabled={refundMutation.isPending}
+              >
+                {choice === "custom" ? "Custom rate" : "Or set a custom rate"}
+              </button>
+              {choice === "custom" && (
+                <Input
+                  className="mt-2"
+                  placeholder="sat/vB"
+                  value={customRate}
+                  onChange={(e) =>
+                    setCustomRate(e.target.value.replace(/[^0-9]/g, ""))
+                  }
+                  inputMode="numeric"
+                  disabled={refundMutation.isPending}
+                />
+              )}
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="ghost"
@@ -189,5 +250,36 @@ function RefundItem({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function FeePreset({
+  label,
+  rate,
+  selected,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  rate: number;
+  selected: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || rate === 0}
+      className={`p-3 rounded-lg border-2 text-center transition-all disabled:opacity-50 ${
+        selected
+          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+          : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+      }`}
+    >
+      <div className="text-xs text-gray-600 dark:text-gray-400">{label}</div>
+      <div className="text-sm font-semibold">
+        {rate > 0 ? `${rate} sat/vB` : "—"}
+      </div>
+    </button>
   );
 }
