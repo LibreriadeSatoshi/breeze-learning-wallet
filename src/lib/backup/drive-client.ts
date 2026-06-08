@@ -140,6 +140,14 @@ function clearConnection() {
   cachedToken = null;
 }
 
+// Clears the local Drive connection state without touching Drive or the
+// OAuth token. Use when the local wallet is destroyed and the connection
+// metadata no longer corresponds to anything meaningful on this device.
+export function clearLocalDriveState(): void {
+  if (typeof window === "undefined") return;
+  clearConnection();
+}
+
 // TS 5.7 narrows fetch body types to Uint8Array<ArrayBuffer>; the SDK's blob
 // is typed as Uint8Array<ArrayBufferLike>. Copy into a fresh, properly-typed
 // buffer.
