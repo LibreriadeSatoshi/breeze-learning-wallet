@@ -23,6 +23,15 @@ import { onSdkEvent } from "@/lib/lightning/breez-service";
 import { useWalletStore } from "@/store/wallet-store";
 import { SELECTED_BITCOIN_NETWORK, LNURL_DOMAIN } from "@/lib/config";
 import { getClaimLeeway, setClaimLeeway, DEFAULT_CLAIM_LEEWAY } from "@/lib/wallet/prefs";
+import {
+  connectAndUpload,
+  backupNow,
+  disconnect as disconnectDrive,
+  isDriveConnected,
+  isDriveBackupConfigured,
+  getLastSyncIso,
+} from "@/lib/backup/drive-client";
+import { loadVault } from "@/lib/storage/vault-storage";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
 
@@ -102,6 +111,22 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {isDriveBackupConfigured() && (
+          <Card className="mb-6">
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Google Drive backup</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Stores an encrypted copy of your wallet in your own Google
+                Drive (hidden app folder). Your recovery phrase is still the
+                master backup.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <DriveBackupSection />
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="mb-6">
           <CardHeader>
             <h2 className="text-lg font-semibold">Auto-claim deposits</h2>
@@ -132,6 +157,115 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function DriveBackupSection() {
+  const [connected, setConnected] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setConnected(isDriveConnected());
+    setLastSync(getLastSyncIso());
+  }, []);
+
+  const handleConnect = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const blob = await loadVault();
+      if (!blob) throw new Error("No wallet to back up");
+      await connectAndUpload(blob);
+      setConnected(true);
+      setLastSync(getLastSyncIso());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to connect Google Drive");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleBackupNow = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const blob = await loadVault();
+      if (!blob) throw new Error("No wallet to back up");
+      await backupNow(blob);
+      setLastSync(getLastSyncIso());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Backup failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await disconnectDrive();
+      setConnected(false);
+      setLastSync(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to disconnect");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!connected) {
+    return (
+      <div className="space-y-3">
+        <Button
+          variant="primary"
+          onClick={handleConnect}
+          loading={busy}
+          disabled={busy}
+          className="w-full"
+        >
+          Connect Google Drive
+        </Button>
+        {error && (
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        )}
+      </div>
+    );
+  }
+
+  const lastSyncLabel = lastSync
+    ? new Date(lastSync).toLocaleString()
+    : "Never";
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm flex justify-between">
+        <span className="text-gray-600 dark:text-gray-400">Last backed up</span>
+        <span className="font-medium">{lastSyncLabel}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          variant="primary"
+          onClick={handleBackupNow}
+          loading={busy}
+          disabled={busy}
+        >
+          Back up now
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleDisconnect}
+          disabled={busy}
+        >
+          Disconnect
+        </Button>
+      </div>
+      {error && (
+        <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+      )}
     </div>
   );
 }
