@@ -33,6 +33,7 @@ import {
   getDriveEmail,
 } from "@/lib/backup/drive-client";
 import { loadVault } from "@/lib/storage/vault-storage";
+import { formatRelativeTime } from "@/lib/wallet/relative-time";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
 
@@ -241,9 +242,7 @@ function DriveBackupSection() {
     );
   }
 
-  const lastSyncLabel = lastSync
-    ? new Date(lastSync).toLocaleString()
-    : "Never";
+  const lastSyncLabel = formatRelativeTime(lastSync);
 
   return (
     <div className="space-y-3">
