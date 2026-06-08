@@ -1,10 +1,11 @@
 import { GOOGLE_OAUTH_CLIENT_ID } from "@/lib/config";
 
-const SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+const SCOPE = "openid email https://www.googleapis.com/auth/drive.appdata";
 const VAULT_FILE_NAME = "vault.bin";
 
 const STORAGE_KEY_CONNECTED = "scholar-wallet:drive-connected";
 const STORAGE_KEY_LAST_SYNC = "scholar-wallet:drive-last-sync";
+const STORAGE_KEY_EMAIL = "scholar-wallet:drive-email";
 
 // Google Identity Services types — declared inline since we load the script
 // via Next.js <Script>, not via an npm package with typings.
@@ -101,8 +102,31 @@ export function getLastSyncIso(): string | null {
   return window.localStorage.getItem(STORAGE_KEY_LAST_SYNC);
 }
 
+export function getDriveEmail(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(STORAGE_KEY_EMAIL);
+}
+
+async function fetchUserEmail(token: string): Promise<string | null> {
+  try {
+    const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { email?: string };
+    return data.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function markConnected() {
   window.localStorage.setItem(STORAGE_KEY_CONNECTED, "1");
+}
+
+function setEmail(email: string | null) {
+  if (email) window.localStorage.setItem(STORAGE_KEY_EMAIL, email);
+  else window.localStorage.removeItem(STORAGE_KEY_EMAIL);
 }
 
 function markSyncedNow() {
@@ -112,6 +136,7 @@ function markSyncedNow() {
 function clearConnection() {
   window.localStorage.removeItem(STORAGE_KEY_CONNECTED);
   window.localStorage.removeItem(STORAGE_KEY_LAST_SYNC);
+  window.localStorage.removeItem(STORAGE_KEY_EMAIL);
   cachedToken = null;
 }
 
@@ -187,6 +212,7 @@ async function updateExisting(
 
 export async function connectAndUpload(vaultBlob: Uint8Array): Promise<void> {
   const token = await getAccessToken(true);
+  const email = await fetchUserEmail(token);
   const existing = await findVaultFileId(token);
   if (existing) {
     await updateExisting(token, existing, vaultBlob);
@@ -194,6 +220,7 @@ export async function connectAndUpload(vaultBlob: Uint8Array): Promise<void> {
     await uploadNew(token, vaultBlob);
   }
   markConnected();
+  setEmail(email);
   markSyncedNow();
 }
 

@@ -30,6 +30,7 @@ import {
   isDriveConnected,
   isDriveBackupConfigured,
   getLastSyncIso,
+  getDriveEmail,
 } from "@/lib/backup/drive-client";
 import { loadVault } from "@/lib/storage/vault-storage";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
@@ -164,12 +165,14 @@ export default function SettingsPage() {
 function DriveBackupSection() {
   const [connected, setConnected] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setConnected(isDriveConnected());
     setLastSync(getLastSyncIso());
+    setEmail(getDriveEmail());
   }, []);
 
   const handleConnect = async () => {
@@ -181,6 +184,7 @@ function DriveBackupSection() {
       await connectAndUpload(blob);
       setConnected(true);
       setLastSync(getLastSyncIso());
+      setEmail(getDriveEmail());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to connect Google Drive");
     } finally {
@@ -210,6 +214,7 @@ function DriveBackupSection() {
       await disconnectDrive();
       setConnected(false);
       setLastSync(null);
+      setEmail(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to disconnect");
     } finally {
@@ -242,6 +247,12 @@ function DriveBackupSection() {
 
   return (
     <div className="space-y-3">
+      {email && (
+        <div className="text-sm flex justify-between">
+          <span className="text-gray-600 dark:text-gray-400">Account</span>
+          <span className="font-medium">{email}</span>
+        </div>
+      )}
       <div className="text-sm flex justify-between">
         <span className="text-gray-600 dark:text-gray-400">Last backed up</span>
         <span className="font-medium">{lastSyncLabel}</span>
