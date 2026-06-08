@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Check,
   Copy as CopyIcon,
+  Pencil,
   TriangleAlert,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
@@ -17,8 +18,8 @@ import {
   useLightningAddress,
   useCheckLightningAddressAvailable,
   useRegisterLightningAddress,
-  useDeleteLightningAddress,
 } from "@/hooks/use-breez";
+import { EditUsernameModal } from "@/components/wallet/edit-username-modal";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
 import { useWalletStore } from "@/store/wallet-store";
 import { SELECTED_BITCOIN_NETWORK, LNURL_DOMAIN } from "@/lib/config";
@@ -91,7 +92,7 @@ export default function SettingsPage() {
             ) : lightningAddress ? (
               <RegisteredAddress
                 info={lightningAddress}
-                onAfterDelete={() => refetchAddress()}
+                onAfterChange={() => refetchAddress()}
               />
             ) : (
               <ClaimUsername onClaimed={() => refetchAddress()} />
@@ -478,14 +479,13 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
 
 function RegisteredAddress({
   info,
-  onAfterDelete,
+  onAfterChange,
 }: {
   info: LightningAddressInfo;
-  onAfterDelete: () => void;
+  onAfterChange: () => void;
 }) {
   const [copied, setCopied] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const deleteMutation = useDeleteLightningAddress();
+  const [editOpen, setEditOpen] = useState(false);
 
   const copy = async () => {
     try {
@@ -494,16 +494,6 @@ function RegisteredAddress({
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // clipboard blocked, ignore
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync();
-      setConfirmDelete(false);
-      onAfterDelete();
-    } catch {
-      // ignore
     }
   };
 
@@ -541,50 +531,23 @@ function RegisteredAddress({
         </Button>
         <Button
           variant="outline"
-          onClick={() => setConfirmDelete(true)}
+          onClick={() => setEditOpen(true)}
+          className="inline-flex items-center justify-center gap-2"
         >
-          Delete
+          <Pencil className="w-4 h-4" />
+          <span>Edit username</span>
         </Button>
       </div>
 
-      <Modal
-        open={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
-        title="Delete this Lightning address?"
-        description="The username will be released back to the pool. Anyone can claim it next."
-        dismissable={!deleteMutation.isPending}
-      >
-        <div className="space-y-4">
-          <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
-            <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
-            <span>
-              Payments to {info.lightningAddress} will stop working after this.
-              You can still receive via raw invoices.
-            </span>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={() => setConfirmDelete(false)}
-              disabled={deleteMutation.isPending}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleDelete}
-              loading={deleteMutation.isPending}
-              disabled={deleteMutation.isPending}
-              className="flex-1 bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <EditUsernameModal
+        open={editOpen}
+        currentAddress={info.lightningAddress}
+        onClose={() => setEditOpen(false)}
+        onChanged={() => {
+          setEditOpen(false);
+          onAfterChange();
+        }}
+      />
     </div>
   );
 }
@@ -626,7 +589,7 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
         }}
         dismissable={!forgetting}
         title="Forget this wallet?"
-        description="This erases the encrypted wallet from this browser and deletes any backup in your connected Google Drive. Without your recovery phrase, anything in this wallet is gone for good."
+        description="This erases the encrypted wallet from this browser. Without your recovery phrase, anything in this wallet is gone for good."
       >
         <div className="space-y-4">
           <Input
