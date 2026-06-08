@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 import { clearLocalDriveState } from "@/lib/backup/drive-client";
+import { disconnectBreez } from "@/lib/lightning/breez-service";
 
 // The plaintext mnemonic lives in a module-private variable, never in
 // persisted state, never observable from React props. The vault module
@@ -73,6 +74,11 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   },
 
   destroyVault: async () => {
+    // Disconnect the SDK first so a subsequent createVault() actually
+    // re-initialises it with the new mnemonic. Otherwise initBreez() sees
+    // the still-running SDK and silently skips init, leaving the next
+    // "new wallet" using the previous wallet's keys.
+    await disconnectBreez();
     await clearVault();
     clearLocalDriveState();
     mnemonicInMemory = null;
