@@ -2,15 +2,20 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Copy as CopyIcon, Eye, Lightbulb, TriangleAlert } from 'lucide-react';
+import { Check, Cloud, Copy as CopyIcon, Eye, Lightbulb, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { MnemonicDisplay } from '@/components/wallet/mnemonic-display';
 import { generateMnemonic, mnemonicToWords } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
+import {
+  connectAndUpload,
+  isDriveBackupConfigured,
+} from '@/lib/backup/drive-client';
+import { loadVault } from '@/lib/storage/vault-storage';
 
-type Step = 'reveal' | 'shown' | 'verify' | 'password' | 'creating';
+type Step = 'reveal' | 'shown' | 'verify' | 'password' | 'creating' | 'drive-offer';
 
 const VERIFY_SLOTS = 4;
 
@@ -49,6 +54,8 @@ export default function CreateWalletPage() {
   const [picks, setPicks] = useState<number[]>([]);
   const [verifyError, setVerifyError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [driveBusy, setDriveBusy] = useState(false);
+  const [driveError, setDriveError] = useState('');
 
   const createVault = useWalletStore((s) => s.createVault);
 
@@ -130,11 +137,34 @@ export default function CreateWalletPage() {
     setStep('creating');
     try {
       await createVault(mnemonic, password);
-      router.push('/wallet/home');
+      if (isDriveBackupConfigured()) {
+        setStep('drive-offer');
+      } else {
+        router.push('/wallet/home');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create wallet');
       setStep('password');
     }
+  };
+
+  const handleDriveBackup = async () => {
+    setDriveBusy(true);
+    setDriveError('');
+    try {
+      const blob = await loadVault();
+      if (!blob) throw new Error('No wallet to back up');
+      await connectAndUpload(blob);
+      router.push('/wallet/home');
+    } catch (err) {
+      setDriveError(err instanceof Error ? err.message : 'Failed to back up to Google Drive');
+    } finally {
+      setDriveBusy(false);
+    }
+  };
+
+  const handleSkipDrive = () => {
+    router.push('/wallet/home');
   };
 
   const heading = useMemo(() => {
@@ -147,6 +177,8 @@ export default function CreateWalletPage() {
       case 'password':
       case 'creating':
         return 'Set a Wallet Password';
+      case 'drive-offer':
+        return 'Back up to Google Drive?';
     }
   }, [step]);
 
@@ -160,6 +192,8 @@ export default function CreateWalletPage() {
       case 'password':
       case 'creating':
         return 'This password encrypts your wallet on this device. You will need it every time you unlock.';
+      case 'drive-offer':
+        return 'Optional: add an encrypted backup to your own Google Drive so you can restore on other devices without typing the 12 words.';
     }
   }, [step]);
 
@@ -386,6 +420,51 @@ export default function CreateWalletPage() {
                 className="w-full shadow-lg hover:shadow-xl transition-shadow"
               >
                 {step === 'creating' ? 'Encrypting…' : 'Create wallet'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 'drive-offer' && (
+          <Card className="mb-6 shadow-lg">
+            <CardContent className="pt-6 space-y-4">
+              <div className="text-center text-blue-600 dark:text-blue-400">
+                <Cloud className="w-12 h-12 mx-auto" />
+              </div>
+              <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                <p>
+                  Stores the <strong>same encrypted file</strong> as the one on
+                  this device. Your wallet password is still required to use it.
+                </p>
+                <p>
+                  Your recovery phrase remains the master backup. Drive is a
+                  convenience for switching devices.
+                </p>
+              </div>
+              {driveError && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+                  <p className="text-sm text-red-700 dark:text-red-300">{driveError}</p>
+                </div>
+              )}
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleDriveBackup}
+                loading={driveBusy}
+                disabled={driveBusy}
+                className="w-full inline-flex items-center justify-center gap-2"
+              >
+                <Cloud className="w-4 h-4" />
+                <span>Back up to Google Drive</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={handleSkipDrive}
+                disabled={driveBusy}
+                className="w-full"
+              >
+                Skip for now
               </Button>
             </CardContent>
           </Card>
