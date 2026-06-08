@@ -2,19 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Clipboard, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Cloud, Clipboard, KeyRound, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { validateMnemonic } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
+import {
+  downloadVault,
+  isDriveBackupConfigured,
+} from '@/lib/backup/drive-client';
+import { saveVault } from '@/lib/storage/vault-storage';
 
-type Step = 'phrase' | 'password' | 'restoring';
+type Step = 'method' | 'phrase' | 'password' | 'restoring' | 'drive';
 
 export default function RestoreWalletPage() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>('phrase');
+  const [step, setStep] = useState<Step>('method');
   const [mnemonic, setMnemonic] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -22,9 +27,11 @@ export default function RestoreWalletPage() {
   const [error, setError] = useState('');
   const [overwriteAcknowledged, setOverwriteAcknowledged] = useState(false);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+  const [driveStatus, setDriveStatus] = useState<'idle' | 'fetching' | 'saving' | 'done' | 'error'>('idle');
 
   const hasVault = useWalletStore((s) => s.hasVault);
   const createVault = useWalletStore((s) => s.createVault);
+  const refreshHasVault = useWalletStore((s) => s.refreshHasVault);
 
   useEffect(() => {
     if (hasVault === true && !overwriteAcknowledged) {
@@ -33,6 +40,8 @@ export default function RestoreWalletPage() {
   }, [hasVault, overwriteAcknowledged]);
 
   const wordCount = mnemonic.trim().split(/\s+/).filter(Boolean).length;
+
+  const driveAvailable = isDriveBackupConfigured();
 
   const handlePaste = async () => {
     try {
@@ -81,6 +90,32 @@ export default function RestoreWalletPage() {
     }
   };
 
+  const handleDriveRestore = async () => {
+    setError('');
+    if (hasVault && !overwriteAcknowledged) {
+      setShowOverwriteModal(true);
+      return;
+    }
+    setStep('drive');
+    setDriveStatus('fetching');
+    try {
+      const blob = await downloadVault();
+      if (!blob) {
+        setDriveStatus('error');
+        setError('No backup found in your Google Drive. Did you back up from this app before?');
+        return;
+      }
+      setDriveStatus('saving');
+      await saveVault(blob);
+      await refreshHasVault();
+      setDriveStatus('done');
+      router.push('/welcome');
+    } catch (err) {
+      setDriveStatus('error');
+      setError(err instanceof Error ? err.message : 'Failed to fetch backup');
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
       <div className="max-w-2xl mx-auto">
@@ -100,10 +135,45 @@ export default function RestoreWalletPage() {
               Restore Wallet
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              {step === 'phrase' ? 'Enter your 12-word recovery phrase' : 'Set a wallet password to encrypt this device'}
+              {step === 'method' && 'Choose how you want to restore your wallet'}
+              {step === 'phrase' && 'Enter your 12-word recovery phrase'}
+              {(step === 'password' || step === 'restoring') && 'Set a wallet password to encrypt this device'}
+              {step === 'drive' && 'Pulling your encrypted vault from Google Drive'}
             </p>
           </div>
         </div>
+
+        {step === 'method' && (
+          <div className="grid grid-cols-1 gap-3 mb-6">
+            <button
+              onClick={() => setStep('phrase')}
+              className="p-5 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 bg-white dark:bg-gray-900 text-left transition-colors flex items-start gap-4"
+            >
+              <KeyRound className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1" />
+              <div>
+                <div className="font-semibold">From recovery phrase</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Type your 12 words to restore the wallet on this device.
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={handleDriveRestore}
+              disabled={!driveAvailable}
+              className="p-5 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-900 text-left transition-colors flex items-start gap-4"
+            >
+              <Cloud className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1" />
+              <div>
+                <div className="font-semibold">From Google Drive</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {driveAvailable
+                    ? 'Sign in to your Google account to download your encrypted vault.'
+                    : 'Not configured for this build.'}
+                </div>
+              </div>
+            </button>
+          </div>
+        )}
 
         {step === 'phrase' && (
           <>
@@ -164,6 +234,15 @@ export default function RestoreWalletPage() {
                   className="w-full shadow-lg hover:shadow-xl transition-shadow"
                 >
                   Continue
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => setStep('method')}
+                  className="w-full inline-flex items-center justify-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Choose a different method</span>
                 </Button>
               </CardContent>
             </Card>
@@ -227,6 +306,50 @@ export default function RestoreWalletPage() {
             </CardContent>
           </Card>
         )}
+
+        {step === 'drive' && (
+          <Card className="mb-6 shadow-lg">
+            <CardContent className="pt-8 pb-6 text-center space-y-4">
+              {driveStatus !== 'error' && (
+                <div className="w-12 h-12 mx-auto rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
+              )}
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {driveStatus === 'fetching' && 'Downloading your encrypted vault…'}
+                {driveStatus === 'saving' && 'Saving to this device…'}
+                {driveStatus === 'done' && 'Done. Redirecting to unlock…'}
+              </p>
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg text-left">
+                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                </div>
+              )}
+              {driveStatus === 'error' && (
+                <div className="flex gap-3">
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => {
+                      setStep('method');
+                      setDriveStatus('idle');
+                      setError('');
+                    }}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleDriveRestore}
+                    className="flex-1"
+                  >
+                    Try again
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Modal
@@ -236,7 +359,7 @@ export default function RestoreWalletPage() {
           if (!overwriteAcknowledged) router.back();
         }}
         title="Replace the wallet on this device?"
-        description="Entering a recovery phrase erases the existing encrypted wallet from this browser. Funds in the existing wallet remain controlled by its recovery phrase — make sure you still have it before continuing."
+        description="Restoring erases the existing encrypted wallet from this browser. Funds in the existing wallet remain controlled by its recovery phrase — make sure you still have it before continuing."
       >
         <div className="flex gap-3">
           <Button
