@@ -15,8 +15,11 @@ const STORAGE_KEY_EMAIL = "scholar-wallet:drive-email";
 type TokenResponse = {
   access_token: string;
   expires_in: number;
+  scope?: string;
   error?: string;
 };
+
+const REQUIRED_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
 
 type TokenClient = {
   requestAccessToken: (overrides?: { prompt?: string }) => void;
@@ -81,6 +84,14 @@ function getAccessToken(prompt: boolean): Promise<string> {
         callback: (resp) => {
           if (resp.error) return reject(new Error(resp.error));
           if (!resp.access_token) return reject(new Error("No access token returned"));
+          const granted = (resp.scope ?? "").split(/\s+/);
+          if (!granted.includes(REQUIRED_SCOPE)) {
+            return reject(
+              new Error(
+                "Drive access wasn't granted. On the Google consent screen, leave the Drive permission checked.",
+              ),
+            );
+          }
           cachedToken = {
             value: resp.access_token,
             expiresAt: Date.now() + resp.expires_in * 1000,
