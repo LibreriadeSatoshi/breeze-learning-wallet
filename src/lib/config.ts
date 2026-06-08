@@ -8,3 +8,6 @@ export const SELECTED_BITCOIN_NETWORK: SparkNetwork =
 
 export const LNURL_DOMAIN: string | undefined =
   process.env.NEXT_PUBLIC_LNURL_DOMAIN || undefined;
+
+export const GOOGLE_OAUTH_CLIENT_ID: string | undefined =
+  process.env.NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID || undefined;
