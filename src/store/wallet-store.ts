@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
+import { disconnect as disconnectDrive, isDriveConnected } from "@/lib/backup/drive-client";
 
 // The plaintext mnemonic lives in a module-private variable, never in
 // persisted state, never observable from React props. The vault module
@@ -20,6 +21,7 @@ interface WalletStore {
   isBootstrapped: boolean;
 
   bootstrap: () => Promise<void>;
+  refreshHasVault: () => Promise<void>;
   createVault: (mnemonic: string, password: string) => Promise<void>;
   unlock: (password: string) => Promise<void>;
   lock: () => void;
@@ -45,6 +47,11 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     set({ hasVault: blob !== null, isBootstrapped: true });
   },
 
+  refreshHasVault: async () => {
+    const blob = await loadVault();
+    set({ hasVault: blob !== null });
+  },
+
   createVault: async (mnemonic, password) => {
     const blob = await encryptMnemonic(mnemonic, password);
     await saveVault(blob);
@@ -66,6 +73,15 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   },
 
   destroyVault: async () => {
+    if (isDriveConnected()) {
+      // Best-effort: delete the Drive backup so it can't be silently
+      // overwritten by a different seed reusing the same password.
+      try {
+        await disconnectDrive();
+      } catch {
+        // ignore — local destroy proceeds regardless
+      }
+    }
     await clearVault();
     mnemonicInMemory = null;
     set({ hasVault: false, isUnlocked: false });

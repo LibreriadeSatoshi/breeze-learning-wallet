@@ -626,7 +626,7 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
         }}
         dismissable={!forgetting}
         title="Forget this wallet?"
-        description="This erases the encrypted wallet from this browser. Without your recovery phrase, anything in this wallet is gone for good."
+        description="This erases the encrypted wallet from this browser and deletes any backup in your connected Google Drive. Without your recovery phrase, anything in this wallet is gone for good."
       >
         <div className="space-y-4">
           <Input
