@@ -258,7 +258,12 @@ export async function downloadVault(): Promise<Uint8Array | null> {
     { headers: { Authorization: `Bearer ${token}` } },
   );
   if (!res.ok) throw new Error(`Drive download failed: ${res.status}`);
-  return new Uint8Array(await res.arrayBuffer());
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  const email = await fetchUserEmail(token);
+  markConnected();
+  setEmail(email);
+  markSyncedNow();
+  return bytes;
 }
 
 export async function disconnect(): Promise<void> {
