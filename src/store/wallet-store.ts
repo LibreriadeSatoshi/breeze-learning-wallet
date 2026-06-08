@@ -74,10 +74,6 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   },
 
   destroyVault: async () => {
-    // Disconnect the SDK first so a subsequent createVault() actually
-    // re-initialises it with the new mnemonic. Otherwise initBreez() sees
-    // the still-running SDK and silently skips init, leaving the next
-    // "new wallet" using the previous wallet's keys.
     await disconnectBreez();
     await clearVault();
     clearLocalDriveState();

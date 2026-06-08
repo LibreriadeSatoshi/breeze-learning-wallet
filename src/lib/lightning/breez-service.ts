@@ -20,9 +20,7 @@ let sdk: SparkSdk | null = null;
 let eventListenerId: string | null = null;
 let isInitializing: boolean = false;
 let cachedApiKey: string | null = null;
-// Tracks which mnemonic the currently-running SDK was initialised for.
-// Lets initBreez detect a wallet switch (forget+create, restore, etc.) and
-// disconnect+reinit instead of silently reusing the previous identity.
+// Mnemonic the running SDK is init'd for; used to detect wallet switches.
 let activeMnemonic: string | null = null;
 
 type EventCallback = (event: SdkEvent) => void;
@@ -58,12 +56,7 @@ export interface BreezSparkConfig {
 export async function initBreez(config: BreezSparkConfig): Promise<void> {
   if (isInitializing) return;
   if (sdk && activeMnemonic === config.mnemonic) return;
-  if (sdk) {
-    // Different mnemonic than the running SDK — fully tear down before
-    // initialising again so we don't end up serving the previous wallet's
-    // state to the new one.
-    await disconnectBreez();
-  }
+  if (sdk) await disconnectBreez();
 
   isInitializing = true;
 
