@@ -192,7 +192,7 @@ export default function WelcomePage() {
         }}
         dismissable={!forgetting}
         title="Forget this wallet?"
-        description="This erases the encrypted wallet from this browser and deletes any backup in your connected Google Drive. Funds remain controlled by your recovery phrase — without it, anything in this wallet is gone for good."
+        description="This erases the encrypted wallet from this browser. Funds remain controlled by your recovery phrase — without it, anything in this wallet is gone for good."
       >
         <div className="space-y-4">
           <Input
