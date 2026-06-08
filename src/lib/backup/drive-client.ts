@@ -1,6 +1,9 @@
 import { GOOGLE_OAUTH_CLIENT_ID } from "@/lib/config";
 
-const SCOPE = "openid email https://www.googleapis.com/auth/drive.appdata";
+const SCOPE = [
+  "https://www.googleapis.com/auth/drive.appdata",
+  "https://www.googleapis.com/auth/userinfo.email",
+].join(" ");
 const VAULT_FILE_NAME = "vault.bin";
 
 const STORAGE_KEY_CONNECTED = "scholar-wallet:drive-connected";
@@ -165,7 +168,10 @@ async function findVaultFileId(token: string): Promise<string | null> {
   const res = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error(`Drive list failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Drive list failed: ${res.status} ${body}`);
+  }
   const data = (await res.json()) as { files: Array<{ id: string; name: string }> };
   return data.files[0]?.id ?? null;
 }
