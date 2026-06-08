@@ -248,7 +248,20 @@ export async function downloadVault(): Promise<Uint8Array | null> {
 }
 
 export async function disconnect(): Promise<void> {
-  const token = cachedToken?.value;
+  let token: string | null = null;
+  try {
+    token = await getAccessToken(false);
+    const fileId = await findVaultFileId(token);
+    if (fileId) {
+      await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
+  } catch {
+    // Best-effort delete. If we can't fetch a token or list/delete fails,
+    // still clear local state and revoke below.
+  }
   if (token && isGisReady()) {
     await new Promise<void>((resolve) => {
       window.google!.accounts.oauth2.revoke(token, () => resolve());

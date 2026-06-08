@@ -169,6 +169,7 @@ function DriveBackupSection() {
   const [email, setEmail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
   useEffect(() => {
     setConnected(isDriveConnected());
@@ -267,7 +268,7 @@ function DriveBackupSection() {
         </Button>
         <Button
           variant="outline"
-          onClick={handleDisconnect}
+          onClick={() => setConfirmDisconnect(true)}
           disabled={busy}
         >
           Disconnect
@@ -276,6 +277,48 @@ function DriveBackupSection() {
       {error && (
         <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
       )}
+
+      <Modal
+        open={confirmDisconnect}
+        onClose={() => setConfirmDisconnect(false)}
+        dismissable={!busy}
+        title="Disconnect and delete the backup?"
+        description="This removes the encrypted file from your Google Drive. To restore on another device you'll need your recovery phrase, not Google Drive."
+      >
+        <div className="space-y-4">
+          <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
+            <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              The wallet on this device is not affected. Only the Drive copy is
+              deleted.
+            </span>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => setConfirmDisconnect(false)}
+              disabled={busy}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={async () => {
+                await handleDisconnect();
+                setConfirmDisconnect(false);
+              }}
+              loading={busy}
+              disabled={busy}
+              className="flex-1 bg-red-600 hover:bg-red-700"
+            >
+              Disconnect & delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
