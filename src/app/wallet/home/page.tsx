@@ -300,15 +300,6 @@ export default function WalletHomePage() {
           </CardContent>
         </Card>
 
-        {!isReady && (
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900 shadow-sm">
-            <p className="text-sm text-blue-900 dark:text-blue-200">
-              <strong>Lightning node:</strong>{" "}
-              {initializing ? "Initializing…" : "Connecting…"}
-            </p>
-          </div>
-        )}
-
         <div className="mt-8 pb-6"></div>
       </div>
 
