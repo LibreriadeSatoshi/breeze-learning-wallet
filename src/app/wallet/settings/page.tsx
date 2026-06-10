@@ -18,12 +18,19 @@ import {
   useLightningAddress,
   useCheckLightningAddressAvailable,
   useRegisterLightningAddress,
+  useFiatCurrencies,
 } from "@/hooks/use-breez";
 import { EditUsernameModal } from "@/components/wallet/edit-username-modal";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
 import { useWalletStore } from "@/store/wallet-store";
 import { SELECTED_BITCOIN_NETWORK, LNURL_DOMAIN } from "@/lib/config";
-import { getClaimLeeway, setClaimLeeway, DEFAULT_CLAIM_LEEWAY } from "@/lib/wallet/prefs";
+import {
+  getClaimLeeway,
+  setClaimLeeway,
+  DEFAULT_CLAIM_LEEWAY,
+  getSelectedCurrency,
+  setSelectedCurrency,
+} from "@/lib/wallet/prefs";
 import {
   connectAndUpload,
   backupNow,
@@ -129,6 +136,18 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         )}
+
+        <Card className="mb-6">
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Display currency</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Used for fiat equivalents shown alongside sats.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <CurrencyPickerSection />
+          </CardContent>
+        </Card>
 
         <Card className="mb-6">
           <CardHeader>
@@ -321,6 +340,36 @@ function DriveBackupSection() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+function CurrencyPickerSection() {
+  const { data: currencies = [], isLoading } = useFiatCurrencies();
+  const [selected, setSelected] = useState(() => getSelectedCurrency());
+
+  const handleChange = (value: string) => {
+    setSelected(value);
+    setSelectedCurrency(value);
+  };
+
+  if (isLoading) {
+    return <p className="text-sm text-gray-500">Loading currencies…</p>;
+  }
+
+  const sorted = [...currencies].sort((a, b) => a.id.localeCompare(b.id));
+
+  return (
+    <select
+      value={selected}
+      onChange={(e) => handleChange(e.target.value)}
+      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+    >
+      {sorted.map((c) => (
+        <option key={c.id} value={c.id}>
+          {c.id} — {c.info.name}
+        </option>
+      ))}
+    </select>
   );
 }
 

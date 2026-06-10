@@ -18,6 +18,8 @@ import {
   registerLightningAddress,
   getLightningAddress,
   deleteLightningAddress,
+  listFiatCurrencies,
+  listFiatRates,
   type PrepareSendResult,
   type PrepareLnurlPayResult,
 } from "@/lib/lightning/breez-service";
@@ -34,6 +36,8 @@ export const breezKeys = {
   payments: () => [...breezKeys.all, "payments"] as const,
   unclaimedDeposits: () => [...breezKeys.all, "unclaimedDeposits"] as const,
   lightningAddress: () => [...breezKeys.all, "lightningAddress"] as const,
+  fiatCurrencies: () => [...breezKeys.all, "fiatCurrencies"] as const,
+  fiatRates: () => [...breezKeys.all, "fiatRates"] as const,
 };
 
 export function useBalance(enabled: boolean = true) {
@@ -191,6 +195,25 @@ export function useRefundDeposit() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.unclaimedDeposits() });
     },
+  });
+}
+
+export function useFiatCurrencies(enabled: boolean = true) {
+  return useQuery({
+    queryKey: breezKeys.fiatCurrencies(),
+    queryFn: listFiatCurrencies,
+    enabled,
+    staleTime: 60 * 60 * 1000,
+  });
+}
+
+export function useFiatRates(enabled: boolean = true) {
+  return useQuery({
+    queryKey: breezKeys.fiatRates(),
+    queryFn: listFiatRates,
+    enabled,
+    refetchInterval: enabled ? 60_000 : false,
+    staleTime: 30_000,
   });
 }
 

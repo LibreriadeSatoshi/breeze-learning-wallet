@@ -10,6 +10,8 @@ import type {
   SendPaymentResponse,
   Fee,
   LightningAddressInfo,
+  FiatCurrency,
+  Rate,
   Payment as SdkPayment,
 } from "@breeztech/breez-sdk-spark";
 import type { Payment } from "./types";
@@ -314,6 +316,18 @@ export async function listPayments(): Promise<Payment[]> {
     console.error("Failed to list payments:", error);
     return [];
   }
+}
+
+export async function listFiatCurrencies(): Promise<FiatCurrency[]> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const response = await sdk.listFiatCurrencies();
+  return response.currencies;
+}
+
+export async function listFiatRates(): Promise<Rate[]> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const response = await sdk.listFiatRates();
+  return response.rates;
 }
 
 export async function checkLightningAddressAvailable(username: string): Promise<boolean> {
