@@ -30,9 +30,8 @@ import {
   usePayments,
   useUnclaimedDeposits,
   useRefreshBreez,
-  useFiatRates,
 } from "@/hooks/use-breez";
-import { getSelectedCurrency } from "@/lib/wallet/prefs";
+import { useFiat } from "@/hooks/use-fiat";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Payment } from "@/lib/lightning/types";
 
@@ -70,14 +69,8 @@ export default function WalletHomePage() {
   const { data: payments = [], isLoading: paymentsLoading } =
     usePayments(isReady);
   const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
-  const { data: fiatRates = [] } = useFiatRates(isReady);
   const { refresh } = useRefreshBreez();
-
-  const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
-  useEffect(() => {
-    setSelectedCurrency(getSelectedCurrency());
-  }, []);
-  const fiatRate = fiatRates.find((r) => r.coin === selectedCurrency)?.value;
+  const { rate: fiatRate, currency: selectedCurrency } = useFiat(isReady);
 
   const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
   const needsAttention = rejectedDeposits.length;
