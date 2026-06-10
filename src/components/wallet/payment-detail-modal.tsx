@@ -5,6 +5,8 @@ import { ArrowDownLeft, ArrowUpRight, Copy as CopyIcon, Check } from "lucide-rea
 import type { Payment } from "@/lib/lightning/types";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { useFiat } from "@/hooks/use-fiat";
+import { formatFiat } from "@/lib/wallet/format-fiat";
 
 interface PaymentDetailModalProps {
   payment: Payment | null;
@@ -30,6 +32,13 @@ function PaymentDetailContent({
   const feeSats = payment.feeSat;
   const isReceived = payment.paymentType === "received";
   const date = new Date(payment.paymentTime * 1000);
+  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const amountFiat =
+    fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
+  const feeFiat =
+    fiatRate !== undefined && feeSats > 0
+      ? formatFiat(feeSats, fiatRate, fiatCurrency)
+      : null;
 
   const statusStyles = {
     pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
@@ -60,6 +69,11 @@ function PaymentDetailContent({
           {sats.toLocaleString()}
         </div>
         <div className="text-sm text-gray-500 dark:text-gray-400">sats</div>
+        {amountFiat && (
+          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            ≈ {amountFiat}
+          </div>
+        )}
         <span
           className={`inline-block mt-3 px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusStyles[payment.status]}`}
         >
@@ -69,7 +83,14 @@ function PaymentDetailContent({
 
       <dl className="divide-y divide-gray-200 dark:divide-gray-800 text-sm">
         <DetailRow label="Direction" value={isReceived ? "Received" : "Sent"} />
-        <DetailRow label="Fee" value={`${feeSats.toLocaleString()} sats`} />
+        <DetailRow
+          label="Fee"
+          value={
+            feeFiat
+              ? `${feeSats.toLocaleString()} sats · ≈ ${feeFiat}`
+              : `${feeSats.toLocaleString()} sats`
+          }
+        />
         <DetailRow
           label="Time"
           value={`${date.toLocaleDateString()} ${date.toLocaleTimeString([], {

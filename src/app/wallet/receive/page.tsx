@@ -25,6 +25,8 @@ import {
 } from "@/hooks/use-breez";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
 import { generateRandomUsername } from "@/lib/wallet/username";
+import { useFiat } from "@/hooks/use-fiat";
+import { formatFiat } from "@/lib/wallet/format-fiat";
 import { EditUsernameModal } from "@/components/wallet/edit-username-modal";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
@@ -290,6 +292,12 @@ function InvoiceCreator({
   const [error, setError] = useState("");
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [copied, setCopied] = useState(false);
+  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const amountSat = parseInt(amount, 10) || 0;
+  const fiatPreview =
+    amountSat > 0 && fiatRate !== undefined
+      ? formatFiat(amountSat, fiatRate, fiatCurrency)
+      : null;
   const receiveMutation = useReceiveLightning();
 
   useEffect(() => {
@@ -478,13 +486,20 @@ function InvoiceCreator({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Input
-          label="Amount (sats)"
-          placeholder="1000"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
-          inputMode="numeric"
-        />
+        <div>
+          <Input
+            label="Amount (sats)"
+            placeholder="1000"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
+            inputMode="numeric"
+          />
+          {fiatPreview && (
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              ≈ {fiatPreview}
+            </p>
+          )}
+        </div>
         <Input
           label="Description (optional)"
           placeholder="What is this payment for?"

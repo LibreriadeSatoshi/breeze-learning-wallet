@@ -15,6 +15,8 @@ import {
   usePrepareLnurlPay,
   useExecuteLnurlPay,
 } from "@/hooks/use-breez";
+import { useFiat } from "@/hooks/use-fiat";
+import { formatFiat } from "@/lib/wallet/format-fiat";
 import type {
   PrepareSendResult,
   PrepareLnurlPayResult,
@@ -45,6 +47,7 @@ export default function SendPage() {
   const [error, setError] = useState("");
 
   const { data: balance } = useBalance(true);
+  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
   const executeMutation = useExecuteSend();
@@ -296,6 +299,11 @@ export default function SendPage() {
                   {amountSat.toLocaleString()}
                 </p>
                 <p className="text-lg text-gray-600 dark:text-gray-400">sats</p>
+                {fiatRate !== undefined && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    ≈ {formatFiat(amountSat, fiatRate, fiatCurrency)}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

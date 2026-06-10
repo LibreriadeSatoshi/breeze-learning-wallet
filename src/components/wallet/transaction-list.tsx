@@ -3,6 +3,8 @@
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Payment } from "@/lib/lightning/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useFiat } from "@/hooks/use-fiat";
+import { formatFiat } from "@/lib/wallet/format-fiat";
 
 interface TransactionListProps {
   payments: Payment[];
@@ -60,6 +62,9 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
   const sats = payment.amountSat;
   const date = new Date(payment.paymentTime * 1000);
   const isReceived = payment.paymentType === "received";
+  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const fiat =
+    fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
 
   const statusColors = {
     pending: "text-yellow-600 dark:text-yellow-400",
@@ -122,6 +127,11 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
             {sats.toLocaleString()}
           </div>
           <div className="text-xs text-gray-500">sats</div>
+          {fiat && (
+            <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              ≈ {fiat}
+            </div>
+          )}
         </div>
       </div>
     </div>
