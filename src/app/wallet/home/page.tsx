@@ -7,6 +7,7 @@ import {
   ArrowUpFromLine,
   Check,
   Copy as CopyIcon,
+  CreditCard,
   Key,
   Lock,
   Settings as SettingsIcon,
@@ -23,6 +24,8 @@ import {
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { TransactionList } from "@/components/wallet/transaction-list";
 import { PaymentDetailModal } from "@/components/wallet/payment-detail-modal";
+import { BuyBitcoinModal } from "@/components/wallet/buy-bitcoin-modal";
+import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
 import {
@@ -57,6 +60,7 @@ export default function WalletHomePage() {
   const [conn, setConn] = useState<"offline" | "syncing" | "synced" | "failed">("offline");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
+  const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSeedModal, setShowSeedModal] = useState(false);
   const [seedPassword, setSeedPassword] = useState("");
   const [seedError, setSeedError] = useState("");
@@ -204,6 +208,17 @@ export default function WalletHomePage() {
                 <div className={`w-2 h-2 rounded-full ${CONN_STYLES[conn].dot}`} />
                 <span>{CONN_STYLES[conn].label}</span>
               </div>
+              {SELECTED_BITCOIN_NETWORK === "mainnet" && (
+                <button
+                  onClick={() => setShowBuyModal(true)}
+                  disabled={!isReady}
+                  className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Buy Bitcoin"
+                >
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>Buy</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowSeedModal(true)}
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
@@ -313,6 +328,8 @@ export default function WalletHomePage() {
         payment={selectedPayment}
         onClose={() => setSelectedPayment(null)}
       />
+
+      <BuyBitcoinModal open={showBuyModal} onClose={() => setShowBuyModal(false)} />
 
       <Modal
         open={showSeedModal}

@@ -13,6 +13,8 @@ import type {
   FiatCurrency,
   Rate,
   Payment as SdkPayment,
+  BuyBitcoinRequest,
+  BuyBitcoinResponse,
 } from "@breeztech/breez-sdk-spark";
 import type { Payment } from "./types";
 
@@ -352,6 +354,13 @@ export async function getLightningAddress(): Promise<LightningAddressInfo | null
 export async function deleteLightningAddress(): Promise<void> {
   if (!sdk) throw new Error("Wallet not ready.");
   return sdk.deleteLightningAddress();
+}
+
+export async function buyBitcoin(
+  request: BuyBitcoinRequest,
+): Promise<BuyBitcoinResponse> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.buyBitcoin(request);
 }
 
 export async function disconnectBreez(): Promise<void> {
