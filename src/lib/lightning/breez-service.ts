@@ -67,7 +67,7 @@ export async function initBreez(config: BreezSparkConfig): Promise<void> {
   try {
     const apiKey = await getBreezApiKey();
 
-    const breezSdkModule = await import("@breeztech/breez-sdk-spark");
+    const breezSdkModule = await import("@breeztech/breez-sdk-spark/web");
     if (
       breezSdkModule.default &&
       typeof breezSdkModule.default === "function"
