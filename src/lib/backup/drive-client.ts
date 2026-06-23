@@ -10,8 +10,6 @@ const STORAGE_KEY_CONNECTED = "scholar-wallet:drive-connected";
 const STORAGE_KEY_LAST_SYNC = "scholar-wallet:drive-last-sync";
 const STORAGE_KEY_EMAIL = "scholar-wallet:drive-email";
 
-// Google Identity Services types — declared inline since we load the script
-// via Next.js <Script>, not via an npm package with typings.
 type TokenResponse = {
   access_token: string;
   expires_in: number;
@@ -23,6 +21,11 @@ type TokenClient = {
   callback?: (resp: TokenResponse) => void;
 };
 
+type TokenErrorResponse = {
+  type?: string;
+  message?: string;
+};
+
 declare global {
   interface Window {
     google?: {
@@ -32,6 +35,7 @@ declare global {
             client_id: string;
             scope: string;
             callback: (resp: TokenResponse) => void;
+            error_callback?: (err: TokenErrorResponse) => void;
           }) => TokenClient;
           revoke: (token: string, callback?: () => void) => void;
         };
@@ -65,6 +69,8 @@ async function waitForGis(timeoutMs = 5000): Promise<void> {
   });
 }
 
+const TOKEN_REQUEST_TIMEOUT_MS = 90_000;
+
 function getAccessToken(prompt: boolean): Promise<string> {
   if (!isConfigured()) {
     throw new Error("Google OAuth client ID is not configured");
@@ -73,24 +79,54 @@ function getAccessToken(prompt: boolean): Promise<string> {
     return Promise.resolve(cachedToken.value);
   }
   return new Promise(async (resolve, reject) => {
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn();
+    };
+    const timer = setTimeout(
+      () =>
+        settle(() =>
+          reject(
+            new Error(
+              "Google sign-in timed out. Close any blocked popups and try again.",
+            ),
+          ),
+        ),
+      TOKEN_REQUEST_TIMEOUT_MS,
+    );
     try {
       await waitForGis();
       const tokenClient = window.google!.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_OAUTH_CLIENT_ID!,
         scope: SCOPE,
-        callback: (resp) => {
-          if (resp.error) return reject(new Error(resp.error));
-          if (!resp.access_token) return reject(new Error("No access token returned"));
-          cachedToken = {
-            value: resp.access_token,
-            expiresAt: Date.now() + resp.expires_in * 1000,
-          };
-          resolve(resp.access_token);
-        },
+        callback: (resp) =>
+          settle(() => {
+            if (resp.error) return reject(new Error(resp.error));
+            if (!resp.access_token) return reject(new Error("No access token returned"));
+            cachedToken = {
+              value: resp.access_token,
+              expiresAt: Date.now() + resp.expires_in * 1000,
+            };
+            resolve(resp.access_token);
+          }),
+        error_callback: (err) =>
+          settle(() => {
+            const type = err?.type ?? "unknown_error";
+            const message =
+              type === "popup_closed"
+                ? "Google sign-in was cancelled before granting access."
+                : type === "popup_failed_to_open"
+                  ? "Google sign-in popup was blocked. Allow popups for this site and try again."
+                  : err?.message ?? "Google sign-in failed. Please try again.";
+            reject(new Error(message));
+          }),
       });
       tokenClient.requestAccessToken({ prompt: prompt ? "consent" : "" });
     } catch (e) {
-      reject(e);
+      settle(() => reject(e));
     }
   });
 }
@@ -143,15 +179,11 @@ function clearConnection() {
   cachedToken = null;
 }
 
-// Local-only counterpart to disconnect(): no Drive call, no token revoke.
 export function clearLocalDriveState(): void {
   if (typeof window === "undefined") return;
   clearConnection();
 }
 
-// TS 5.7 narrows fetch body types to Uint8Array<ArrayBuffer>; the SDK's blob
-// is typed as Uint8Array<ArrayBufferLike>. Copy into a fresh, properly-typed
-// buffer.
 function toPlainBytes(src: Uint8Array): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(src.length);
   out.set(src);
@@ -276,8 +308,7 @@ export async function disconnect(): Promise<void> {
       });
     }
   } catch {
-    // Best-effort delete. If we can't fetch a token or list/delete fails,
-    // still clear local state and revoke below.
+    // best-effort
   }
   if (token && isGisReady()) {
     await new Promise<void>((resolve) => {
