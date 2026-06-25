@@ -4,17 +4,34 @@ import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 import { clearLocalDriveState } from "@/lib/backup/drive-client";
 import { disconnectBreez } from "@/lib/lightning/breez-service";
 
-// The plaintext mnemonic lives in a module-private variable, never in
-// persisted state, never observable from React props. The vault module
-// is the only place that holds it; the rest of the app sees only the
-// initialized Breez SDK and the booleans below.
 let mnemonicInMemory: string | null = null;
+
+const SESSION_KEY_MNEMONIC = "scholar-wallet:session-mnemonic";
 
 const LEGACY_STORAGE_KEYS = [
   "etta-wallet-storage",
   "etta-auth-storage",
   "scholar-wallet-prefs",
 ];
+
+function persistMnemonic(mnemonic: string) {
+  mnemonicInMemory = mnemonic;
+  if (typeof window !== "undefined") {
+    window.sessionStorage.setItem(SESSION_KEY_MNEMONIC, mnemonic);
+  }
+}
+
+function clearMnemonic() {
+  mnemonicInMemory = null;
+  if (typeof window !== "undefined") {
+    window.sessionStorage.removeItem(SESSION_KEY_MNEMONIC);
+  }
+}
+
+function readSessionMnemonic(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage.getItem(SESSION_KEY_MNEMONIC);
+}
 
 interface WalletStore {
   hasVault: boolean | null;
@@ -45,7 +62,15 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
       }
     }
     const blob = await loadVault();
-    set({ hasVault: blob !== null, isBootstrapped: true });
+    const session = readSessionMnemonic();
+    if (session && blob) {
+      mnemonicInMemory = session;
+    }
+    set({
+      hasVault: blob !== null,
+      isUnlocked: session !== null && blob !== null,
+      isBootstrapped: true,
+    });
   },
 
   refreshHasVault: async () => {
@@ -56,7 +81,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   createVault: async (mnemonic, password) => {
     const blob = await encryptMnemonic(mnemonic, password);
     await saveVault(blob);
-    mnemonicInMemory = mnemonic;
+    persistMnemonic(mnemonic);
     set({ hasVault: true, isUnlocked: true });
   },
 
@@ -64,12 +89,12 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     const blob = await loadVault();
     if (!blob) throw new Error("No vault found");
     const plaintext = await decryptMnemonic(blob, password);
-    mnemonicInMemory = plaintext;
+    persistMnemonic(plaintext);
     set({ isUnlocked: true });
   },
 
   lock: () => {
-    mnemonicInMemory = null;
+    clearMnemonic();
     set({ isUnlocked: false });
   },
 
@@ -77,7 +102,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     await disconnectBreez();
     await clearVault();
     clearLocalDriveState();
-    mnemonicInMemory = null;
+    clearMnemonic();
     set({ hasVault: false, isUnlocked: false });
   },
 
