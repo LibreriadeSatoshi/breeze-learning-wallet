@@ -10,10 +10,9 @@ import { MnemonicDisplay } from '@/components/wallet/mnemonic-display';
 import { generateMnemonic, mnemonicToWords } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
 import {
-  connectAndUpload,
+  startDriveAuthFlow,
   isDriveBackupConfigured,
 } from '@/lib/backup/drive-client';
-import { loadVault } from '@/lib/storage/vault-storage';
 
 type Step = 'reveal' | 'shown' | 'verify' | 'password' | 'creating' | 'drive-offer';
 
@@ -148,18 +147,14 @@ export default function CreateWalletPage() {
     }
   };
 
-  const handleDriveBackup = async () => {
-    setDriveBusy(true);
+  const handleDriveBackup = () => {
     setDriveError('');
+    setDriveBusy(true);
     try {
-      const blob = await loadVault();
-      if (!blob) throw new Error('No wallet to back up');
-      await connectAndUpload(blob);
-      router.push('/wallet/home');
+      startDriveAuthFlow({ type: 'backup', returnTo: '/wallet/home' });
     } catch (err) {
-      setDriveError(err instanceof Error ? err.message : 'Failed to back up to Google Drive');
-    } finally {
       setDriveBusy(false);
+      setDriveError(err instanceof Error ? err.message : 'Failed to start Google Drive backup');
     }
   };
 

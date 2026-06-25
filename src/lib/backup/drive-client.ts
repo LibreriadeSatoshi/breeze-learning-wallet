@@ -9,43 +9,20 @@ const VAULT_FILE_NAME = "vault.bin";
 const STORAGE_KEY_CONNECTED = "scholar-wallet:drive-connected";
 const STORAGE_KEY_LAST_SYNC = "scholar-wallet:drive-last-sync";
 const STORAGE_KEY_EMAIL = "scholar-wallet:drive-email";
+const SESSION_KEY_PENDING = "scholar-wallet:drive-pending";
 
-type TokenResponse = {
-  access_token: string;
-  expires_in: number;
-  scope?: string;
-  error?: string;
+const AUTH_BASE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
+
+export type DriveIntent =
+  | { type: "connect"; returnTo: string }
+  | { type: "backup"; returnTo: string }
+  | { type: "restore"; returnTo: string };
+
+type PendingFlow = {
+  state: string;
+  intent: DriveIntent;
 };
-
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
-
-type TokenClient = {
-  requestAccessToken: (overrides?: { prompt?: string }) => void;
-  callback?: (resp: TokenResponse) => void;
-};
-
-type TokenErrorResponse = {
-  type?: string;
-  message?: string;
-};
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        oauth2: {
-          initTokenClient: (config: {
-            client_id: string;
-            scope: string;
-            callback: (resp: TokenResponse) => void;
-            error_callback?: (err: TokenErrorResponse) => void;
-          }) => TokenClient;
-          revoke: (token: string, callback?: () => void) => void;
-        };
-      };
-    };
-  }
-}
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
 
@@ -53,93 +30,129 @@ function isConfigured(): boolean {
   return Boolean(GOOGLE_OAUTH_CLIENT_ID);
 }
 
-function isGisReady(): boolean {
-  return typeof window !== "undefined" && Boolean(window.google?.accounts?.oauth2);
+function getRedirectUri(): string {
+  return `${window.location.origin}/wallet/drive-callback`;
 }
 
-async function waitForGis(timeoutMs = 5000): Promise<void> {
-  if (isGisReady()) return;
-  const start = Date.now();
-  return new Promise((resolve, reject) => {
-    const check = () => {
-      if (isGisReady()) return resolve();
-      if (Date.now() - start > timeoutMs) {
-        return reject(new Error("Google Identity Services failed to load"));
-      }
-      setTimeout(check, 100);
-    };
-    check();
-  });
+function randomState(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
-const TOKEN_REQUEST_TIMEOUT_MS = 90_000;
-
-function getAccessToken(prompt: boolean): Promise<string> {
+export function startDriveAuthFlow(intent: DriveIntent): void {
   if (!isConfigured()) {
     throw new Error("Google OAuth client ID is not configured");
   }
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 30_000) {
-    return Promise.resolve(cachedToken.value);
+  const state = randomState();
+  const pending: PendingFlow = { state, intent };
+  window.sessionStorage.setItem(SESSION_KEY_PENDING, JSON.stringify(pending));
+
+  const url = new URL(AUTH_BASE_URL);
+  url.searchParams.set("client_id", GOOGLE_OAUTH_CLIENT_ID!);
+  url.searchParams.set("redirect_uri", getRedirectUri());
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", SCOPE);
+  url.searchParams.set("state", state);
+  url.searchParams.set("include_granted_scopes", "true");
+  url.searchParams.set("prompt", intent.type === "backup" ? "" : "consent");
+
+  window.location.href = url.toString();
+}
+
+function takePendingFlow(): PendingFlow | null {
+  const raw = window.sessionStorage.getItem(SESSION_KEY_PENDING);
+  if (!raw) return null;
+  window.sessionStorage.removeItem(SESSION_KEY_PENDING);
+  try {
+    return JSON.parse(raw) as PendingFlow;
+  } catch {
+    return null;
   }
-  return new Promise(async (resolve, reject) => {
-    let settled = false;
-    const settle = (fn: () => void) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      fn();
-    };
-    const timer = setTimeout(
-      () =>
-        settle(() =>
-          reject(
-            new Error(
-              "Google sign-in timed out. Close any blocked popups and try again.",
-            ),
-          ),
-        ),
-      TOKEN_REQUEST_TIMEOUT_MS,
-    );
-    try {
-      await waitForGis();
-      const tokenClient = window.google!.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_OAUTH_CLIENT_ID!,
-        scope: SCOPE,
-        callback: (resp) =>
-          settle(() => {
-            if (resp.error) return reject(new Error(resp.error));
-            if (!resp.access_token) return reject(new Error("No access token returned"));
-            const grantedScopes = resp.scope?.split(" ") ?? [];
-            if (!grantedScopes.includes(DRIVE_SCOPE)) {
-              return reject(
-                new Error(
-                  "Google Drive access was not granted. Allow Drive access to back up your wallet.",
-                ),
-              );
-            }
-            cachedToken = {
-              value: resp.access_token,
-              expiresAt: Date.now() + resp.expires_in * 1000,
-            };
-            resolve(resp.access_token);
-          }),
-        error_callback: (err) =>
-          settle(() => {
-            const type = err?.type ?? "unknown_error";
-            const message =
-              type === "popup_closed"
-                ? "Google sign-in was cancelled before granting access."
-                : type === "popup_failed_to_open"
-                  ? "Google sign-in popup was blocked. Allow popups for this site and try again."
-                  : err?.message ?? "Google sign-in failed. Please try again.";
-            reject(new Error(message));
-          }),
-      });
-      tokenClient.requestAccessToken({ prompt: prompt ? "consent" : "" });
-    } catch (e) {
-      settle(() => reject(e));
-    }
+}
+
+type ExchangeResponse = {
+  accessToken: string;
+  expiresIn: number;
+  scope: string;
+};
+
+async function exchangeCode(code: string): Promise<ExchangeResponse> {
+  const res = await fetch("/api/drive/exchange", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, redirectUri: getRedirectUri() }),
   });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? `Token exchange failed (${res.status})`);
+  }
+  return res.json();
+}
+
+export type DriveCallbackResult =
+  | { ok: true; token: string; intent: DriveIntent }
+  | { ok: false; error: string; intent: DriveIntent | null };
+
+export async function handleDriveCallback(
+  params: URLSearchParams,
+): Promise<DriveCallbackResult> {
+  const pending = takePendingFlow();
+  const intent = pending?.intent ?? null;
+
+  const error = params.get("error");
+  if (error) {
+    const message =
+      error === "access_denied"
+        ? "Google Drive access was not granted."
+        : `Google sign-in failed: ${error}`;
+    return { ok: false, error: message, intent };
+  }
+
+  const code = params.get("code");
+  const state = params.get("state");
+  const grantedScope = params.get("scope") ?? "";
+
+  if (!pending) {
+    return {
+      ok: false,
+      error: "Missing or expired session. Please try again.",
+      intent: null,
+    };
+  }
+  if (!code || !state || state !== pending.state) {
+    return {
+      ok: false,
+      error: "Invalid OAuth state. Please try again.",
+      intent,
+    };
+  }
+  if (!grantedScope.split(" ").includes("https://www.googleapis.com/auth/drive.appdata")) {
+    return {
+      ok: false,
+      error:
+        "Google Drive access was not granted. Allow Drive access to back up your wallet.",
+      intent,
+    };
+  }
+
+  try {
+    const { accessToken, expiresIn } = await exchangeCode(code);
+    cachedToken = {
+      value: accessToken,
+      expiresAt: Date.now() + expiresIn * 1000,
+    };
+    return { ok: true, token: accessToken, intent: pending.intent };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Token exchange failed.",
+      intent,
+    };
+  }
 }
 
 export function isDriveConnected(): boolean {
@@ -219,7 +232,7 @@ async function findVaultFileId(token: string): Promise<string | null> {
 
 async function uploadNew(token: string, blob: Uint8Array): Promise<string> {
   const metadata = { name: VAULT_FILE_NAME, parents: ["appDataFolder"] };
-  const boundary = "scholar-wallet-" + Math.random().toString(36).slice(2);
+  const boundary = "scholar-wallet-" + randomState();
   const payload = toPlainBytes(blob);
   const body = new Blob([
     `--${boundary}\r\n`,
@@ -265,33 +278,20 @@ async function updateExisting(
   if (!res.ok) throw new Error(`Drive update failed: ${res.status}`);
 }
 
-export async function connectAndUpload(vaultBlob: Uint8Array): Promise<void> {
-  const token = await getAccessToken(true);
-  const email = await fetchUserEmail(token);
+export async function uploadVault(token: string, blob: Uint8Array): Promise<void> {
   const existing = await findVaultFileId(token);
   if (existing) {
-    await updateExisting(token, existing, vaultBlob);
+    await updateExisting(token, existing, blob);
   } else {
-    await uploadNew(token, vaultBlob);
+    await uploadNew(token, blob);
   }
+  const email = await fetchUserEmail(token);
   markConnected();
   setEmail(email);
   markSyncedNow();
 }
 
-export async function backupNow(vaultBlob: Uint8Array): Promise<void> {
-  const token = await getAccessToken(false);
-  const existing = await findVaultFileId(token);
-  if (existing) {
-    await updateExisting(token, existing, vaultBlob);
-  } else {
-    await uploadNew(token, vaultBlob);
-  }
-  markSyncedNow();
-}
-
-export async function downloadVault(): Promise<Uint8Array | null> {
-  const token = await getAccessToken(true);
+export async function fetchVault(token: string): Promise<Uint8Array | null> {
   const fileId = await findVaultFileId(token);
   if (!fileId) return null;
   const res = await fetch(
@@ -308,23 +308,28 @@ export async function downloadVault(): Promise<Uint8Array | null> {
 }
 
 export async function disconnect(): Promise<void> {
-  let token: string | null = null;
+  const token = cachedToken?.value ?? null;
   try {
-    token = await getAccessToken(false);
-    const fileId = await findVaultFileId(token);
-    if (fileId) {
-      await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    if (token) {
+      const fileId = await findVaultFileId(token);
+      if (fileId) {
+        await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
     }
   } catch {
     // best-effort
   }
-  if (token && isGisReady()) {
-    await new Promise<void>((resolve) => {
-      window.google!.accounts.oauth2.revoke(token, () => resolve());
-    });
+  if (token) {
+    try {
+      const url = new URL(REVOKE_URL);
+      url.searchParams.set("token", token);
+      await fetch(url.toString(), { method: "POST" });
+    } catch {
+      // best-effort
+    }
   }
   clearConnection();
 }

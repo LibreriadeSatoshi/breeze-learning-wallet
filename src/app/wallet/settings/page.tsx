@@ -32,15 +32,13 @@ import {
   setSelectedCurrency,
 } from "@/lib/wallet/prefs";
 import {
-  connectAndUpload,
-  backupNow,
+  startDriveAuthFlow,
   disconnect as disconnectDrive,
   isDriveConnected,
   isDriveBackupConfigured,
   getLastSyncIso,
   getDriveEmail,
 } from "@/lib/backup/drive-client";
-import { loadVault } from "@/lib/storage/vault-storage";
 import { formatRelativeTime } from "@/lib/wallet/relative-time";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
@@ -197,35 +195,25 @@ function DriveBackupSection() {
     setEmail(getDriveEmail());
   }, []);
 
-  const handleConnect = async () => {
-    setBusy(true);
+  const handleConnect = () => {
     setError("");
+    setBusy(true);
     try {
-      const blob = await loadVault();
-      if (!blob) throw new Error("No wallet to back up");
-      await connectAndUpload(blob);
-      setConnected(true);
-      setLastSync(getLastSyncIso());
-      setEmail(getDriveEmail());
+      startDriveAuthFlow({ type: "connect", returnTo: "/wallet/settings" });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to connect Google Drive");
-    } finally {
       setBusy(false);
+      setError(e instanceof Error ? e.message : "Failed to start Google Drive sign-in");
     }
   };
 
-  const handleBackupNow = async () => {
-    setBusy(true);
+  const handleBackupNow = () => {
     setError("");
+    setBusy(true);
     try {
-      const blob = await loadVault();
-      if (!blob) throw new Error("No wallet to back up");
-      await backupNow(blob);
-      setLastSync(getLastSyncIso());
+      startDriveAuthFlow({ type: "backup", returnTo: "/wallet/settings" });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Backup failed");
-    } finally {
       setBusy(false);
+      setError(e instanceof Error ? e.message : "Failed to start backup");
     }
   };
 

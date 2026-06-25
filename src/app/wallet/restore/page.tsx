@@ -10,12 +10,11 @@ import { Modal } from '@/components/ui/modal';
 import { validateMnemonic } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
 import {
-  downloadVault,
+  startDriveAuthFlow,
   isDriveBackupConfigured,
 } from '@/lib/backup/drive-client';
-import { saveVault } from '@/lib/storage/vault-storage';
 
-type Step = 'method' | 'phrase' | 'password' | 'restoring' | 'drive';
+type Step = 'method' | 'phrase' | 'password' | 'restoring';
 
 export default function RestoreWalletPage() {
   const router = useRouter();
@@ -27,11 +26,9 @@ export default function RestoreWalletPage() {
   const [error, setError] = useState('');
   const [overwriteAcknowledged, setOverwriteAcknowledged] = useState(false);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
-  const [driveStatus, setDriveStatus] = useState<'idle' | 'fetching' | 'saving' | 'done' | 'error'>('idle');
 
   const hasVault = useWalletStore((s) => s.hasVault);
   const createVault = useWalletStore((s) => s.createVault);
-  const refreshHasVault = useWalletStore((s) => s.refreshHasVault);
 
   useEffect(() => {
     if (hasVault === true && !overwriteAcknowledged) {
@@ -90,29 +87,16 @@ export default function RestoreWalletPage() {
     }
   };
 
-  const handleDriveRestore = async () => {
+  const handleDriveRestore = () => {
     setError('');
     if (hasVault && !overwriteAcknowledged) {
       setShowOverwriteModal(true);
       return;
     }
-    setStep('drive');
-    setDriveStatus('fetching');
     try {
-      const blob = await downloadVault();
-      if (!blob) {
-        setDriveStatus('error');
-        setError('No backup found in your Google Drive. Did you back up from this app before?');
-        return;
-      }
-      setDriveStatus('saving');
-      await saveVault(blob);
-      await refreshHasVault();
-      setDriveStatus('done');
-      router.push('/welcome');
+      startDriveAuthFlow({ type: 'restore', returnTo: '/welcome' });
     } catch (err) {
-      setDriveStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to fetch backup');
+      setError(err instanceof Error ? err.message : 'Failed to start Google Drive sign-in');
     }
   };
 
@@ -138,7 +122,6 @@ export default function RestoreWalletPage() {
               {step === 'method' && 'Choose how you want to restore your wallet'}
               {step === 'phrase' && 'Enter your 12-word recovery phrase'}
               {(step === 'password' || step === 'restoring') && 'Set a wallet password to encrypt this device'}
-              {step === 'drive' && 'Pulling your encrypted vault from Google Drive'}
             </p>
           </div>
         </div>
@@ -307,49 +290,6 @@ export default function RestoreWalletPage() {
           </Card>
         )}
 
-        {step === 'drive' && (
-          <Card className="mb-6 shadow-lg">
-            <CardContent className="pt-8 pb-6 text-center space-y-4">
-              {driveStatus !== 'error' && (
-                <div className="w-12 h-12 mx-auto rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
-              )}
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {driveStatus === 'fetching' && 'Downloading your encrypted vault…'}
-                {driveStatus === 'saving' && 'Saving to this device…'}
-                {driveStatus === 'done' && 'Done. Redirecting to unlock…'}
-              </p>
-              {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg text-left">
-                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-                </div>
-              )}
-              {driveStatus === 'error' && (
-                <div className="flex gap-3">
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    onClick={() => {
-                      setStep('method');
-                      setDriveStatus('idle');
-                      setError('');
-                    }}
-                    className="flex-1"
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={handleDriveRestore}
-                    className="flex-1"
-                  >
-                    Try again
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       <Modal
