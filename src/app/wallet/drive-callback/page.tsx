@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,13 +27,14 @@ export default function DriveCallbackPage() {
     kind: "working",
     label: t("driveCallback.signingIn"),
   });
+  const ranRef = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    if (ranRef.current) return;
+    ranRef.current = true;
     (async () => {
       const params = new URLSearchParams(window.location.search);
       const result = await handleDriveCallback(params);
-      if (cancelled) return;
 
       if (!result.ok) {
         setStatus({
@@ -46,10 +47,8 @@ export default function DriveCallbackPage() {
 
       try {
         await runIntent(result.intent, result.token, refreshHasVault, setStatus, t);
-        if (cancelled) return;
         router.replace(result.intent.returnTo);
       } catch (e) {
-        if (cancelled) return;
         setStatus({
           kind: "error",
           message: e instanceof Error ? e.message : t("driveCallback.operationFailed"),
@@ -57,9 +56,6 @@ export default function DriveCallbackPage() {
         });
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [router, refreshHasVault, t]);
 
   return (

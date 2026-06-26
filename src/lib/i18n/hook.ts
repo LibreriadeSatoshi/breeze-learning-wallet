@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useLocaleContext } from "./provider";
 import type { Locale } from "./types";
 
@@ -27,7 +28,10 @@ function interpolate(template: string, params?: Params): string {
 
 export function useT(): (key: string, params?: Params) => string {
   const { messages } = useLocaleContext();
-  return (key, params) => interpolate(resolve(messages, key), params);
+  return useCallback(
+    (key, params) => interpolate(resolve(messages, key), params),
+    [messages],
+  );
 }
 
 export function useLocale(): {
