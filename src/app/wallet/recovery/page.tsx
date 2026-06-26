@@ -12,11 +12,13 @@ import {
   useRefundDeposit,
   useRecommendedFees,
 } from "@/hooks/use-breez";
+import { useT } from "@/lib/i18n/hook";
 import type { DepositInfo, RecommendedFees } from "@breeztech/breez-sdk-spark";
 
 type FeeChoice = "fast" | "medium" | "slow" | "custom";
 
 export default function RecoveryPage() {
+  const t = useT();
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
 
@@ -37,30 +39,26 @@ export default function RecoveryPage() {
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={() => router.back()}
-            aria-label="Back"
+            aria-label={t("common.back")}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold">Get refund</h1>
+          <h1 className="text-2xl font-bold">{t("recovery.title")}</h1>
         </div>
 
         {rejected.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center">
               <p className="text-gray-600 dark:text-gray-400">
-                Nothing needs a refund. All incoming Bitcoin is being added to
-                your wallet automatically.
+                {t("recovery.nothing")}
               </p>
             </CardContent>
           </Card>
         ) : (
           <>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              These Bitcoin transfers couldn&apos;t be added to your wallet
-              automatically — usually because network fees were higher than the
-              wallet&apos;s configured cap. You can refund them to a Bitcoin
-              address you control.
+              {t("recovery.explainer")}
             </p>
             <div className="space-y-3">
               {rejected.map((deposit) => (
@@ -88,6 +86,7 @@ function RefundItem({
   fees: RecommendedFees | undefined;
   onAfterAction: () => void;
 }) {
+  const t = useT();
   const refundMutation = useRefundDeposit();
   const [open, setOpen] = useState(false);
   const [refundAddress, setRefundAddress] = useState("");
@@ -115,11 +114,11 @@ function RefundItem({
   const refund = async () => {
     setError("");
     if (!refundAddress.trim()) {
-      setError("Enter a Bitcoin address");
+      setError(t("recovery.addressRequired"));
       return;
     }
     if (isNaN(selectedRate) || selectedRate <= 0) {
-      setError("Pick a fee rate");
+      setError(t("recovery.feeRequired"));
       return;
     }
     try {
@@ -131,7 +130,7 @@ function RefundItem({
       });
       onAfterAction();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to send refund");
+      setError(e instanceof Error ? e.message : t("recovery.refundFailed"));
     }
   };
 
@@ -144,9 +143,9 @@ function RefundItem({
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Amount</span>
+          <span className="text-gray-600 dark:text-gray-400">{t("recovery.amount")}</span>
           <span className="font-medium">
-            {deposit.amountSats.toLocaleString()} sats
+            {deposit.amountSats.toLocaleString()} {t("send.sats")}
           </span>
         </div>
 
@@ -157,40 +156,40 @@ function RefundItem({
             onClick={() => setOpen(true)}
             className="w-full"
           >
-            Refund to Bitcoin
+            {t("recovery.refundButton")}
           </Button>
         )}
 
         {open && (
           <div className="space-y-3">
             <Input
-              label="Bitcoin address"
-              placeholder="bc1..."
+              label={t("recovery.addressLabel")}
+              placeholder={t("recovery.addressPlaceholder")}
               value={refundAddress}
               onChange={(e) => setRefundAddress(e.target.value)}
               disabled={refundMutation.isPending}
             />
             <div>
               <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                Fee rate
+                {t("recovery.feeRate")}
               </div>
               <div className="grid grid-cols-3 gap-2 mb-2">
                 <FeePreset
-                  label="Slow"
+                  label={t("recovery.feeSlow")}
                   rate={slowRate}
                   selected={choice === "slow"}
                   onClick={() => setChoice("slow")}
                   disabled={refundMutation.isPending}
                 />
                 <FeePreset
-                  label="Medium"
+                  label={t("recovery.feeMedium")}
                   rate={mediumRate}
                   selected={choice === "medium"}
                   onClick={() => setChoice("medium")}
                   disabled={refundMutation.isPending}
                 />
                 <FeePreset
-                  label="Fast"
+                  label={t("recovery.feeFast")}
                   rate={fastRate}
                   selected={choice === "fast"}
                   onClick={() => setChoice("fast")}
@@ -206,12 +205,12 @@ function RefundItem({
                 }`}
                 disabled={refundMutation.isPending}
               >
-                {choice === "custom" ? "Custom rate" : "Or set a custom rate"}
+                {choice === "custom" ? t("recovery.customRate") : t("recovery.orCustomRate")}
               </button>
               {choice === "custom" && (
                 <Input
                   className="mt-2"
-                  placeholder="sat/vB"
+                  placeholder={t("recovery.customPlaceholder")}
                   value={customRate}
                   onChange={(e) =>
                     setCustomRate(e.target.value.replace(/[^0-9]/g, ""))
@@ -229,7 +228,7 @@ function RefundItem({
                 disabled={refundMutation.isPending}
                 className="flex-1"
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 variant="primary"
@@ -239,7 +238,7 @@ function RefundItem({
                 disabled={refundMutation.isPending}
                 className="flex-1"
               >
-                Send refund
+                {t("recovery.sendRefund")}
               </Button>
             </div>
           </div>

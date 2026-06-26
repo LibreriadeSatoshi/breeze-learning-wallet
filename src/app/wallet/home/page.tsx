@@ -35,17 +35,19 @@ import {
   useRefreshBreez,
 } from "@/hooks/use-breez";
 import { useFiat } from "@/hooks/use-fiat";
+import { useT } from "@/lib/i18n/hook";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Payment } from "@/lib/lightning/types";
 
-const CONN_STYLES: Record<"offline" | "syncing" | "synced" | "failed", { dot: string; label: string }> = {
-  offline: { dot: "bg-gray-400", label: "Offline" },
-  syncing: { dot: "bg-yellow-400 animate-pulse", label: "Syncing…" },
-  synced: { dot: "bg-green-500", label: "Synced" },
-  failed: { dot: "bg-red-500", label: "Connection issue" },
+const CONN_DOT: Record<"offline" | "syncing" | "synced" | "failed", string> = {
+  offline: "bg-gray-400",
+  syncing: "bg-yellow-400 animate-pulse",
+  synced: "bg-green-500",
+  failed: "bg-red-500",
 };
 
 export default function WalletHomePage() {
+  const t = useT();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -159,7 +161,7 @@ export default function WalletHomePage() {
   const handleVerifyPassword = async () => {
     setSeedError("");
     if (!seedPassword) {
-      setSeedError("Enter your wallet password");
+      setSeedError(t("home.seed.passwordRequired"));
       return;
     }
     setVerifying(true);
@@ -168,7 +170,7 @@ export default function WalletHomePage() {
       setRevealedSeed(mnemonic.split(" "));
       setSeedPassword("");
     } catch {
-      setSeedError("Wrong password");
+      setSeedError(t("home.seed.wrongPassword"));
     } finally {
       setVerifying(false);
     }
@@ -199,37 +201,37 @@ export default function WalletHomePage() {
                 <span className="text-xl font-bold">₿</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold">My Wallet</h1>
-                <p className="text-sm text-blue-100">Satoshi Scholar</p>
+                <h1 className="text-2xl font-bold">{t("home.title")}</h1>
+                <p className="text-sm text-blue-100">{t("home.tagline")}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-sm">
-                <div className={`w-2 h-2 rounded-full ${CONN_STYLES[conn].dot}`} />
-                <span>{CONN_STYLES[conn].label}</span>
+                <div className={`w-2 h-2 rounded-full ${CONN_DOT[conn]}`} />
+                <span>{t(`home.connection.${conn}`)}</span>
               </div>
               {SELECTED_BITCOIN_NETWORK === "mainnet" && (
                 <button
                   onClick={() => setShowBuyModal(true)}
                   disabled={!isReady}
                   className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Buy Bitcoin"
+                  aria-label={t("home.buyAria")}
                 >
                   <CreditCard className="w-3.5 h-3.5" />
-                  <span>Buy</span>
+                  <span>{t("home.buy")}</span>
                 </button>
               )}
               <button
                 onClick={() => setShowSeedModal(true)}
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
-                aria-label="Show recovery phrase"
+                aria-label={t("home.phraseAria")}
               >
                 <Key className="w-3.5 h-3.5" />
-                <span>Phrase</span>
+                <span>{t("home.phrase")}</span>
               </button>
               <button
                 onClick={() => router.push("/wallet/settings")}
-                aria-label="Settings"
+                aria-label={t("home.settingsAria")}
                 className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
               >
                 <SettingsIcon className="w-4 h-4" />
@@ -239,7 +241,7 @@ export default function WalletHomePage() {
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Lock</span>
+                <span>{t("home.lock")}</span>
               </button>
             </div>
           </div>
@@ -258,11 +260,11 @@ export default function WalletHomePage() {
               <div className="flex items-center gap-2 mb-1">
                 <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 <h3 className="font-semibold text-amber-900 dark:text-amber-200">
-                  {needsAttention} Bitcoin transfer{needsAttention > 1 ? "s" : ""} need{needsAttention > 1 ? "" : "s"} a refund
+                  {t(needsAttention === 1 ? "home.refund.title_one" : "home.refund.title_other", { count: needsAttention })}
                 </h3>
               </div>
               <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
-                Couldn&apos;t add some incoming Bitcoin to your wallet automatically. Send them back to a Bitcoin address you control.
+                {t("home.refund.subtitle")}
               </p>
               <Button
                 variant="outline"
@@ -270,7 +272,7 @@ export default function WalletHomePage() {
                 onClick={() => router.push("/wallet/recovery")}
                 className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/20"
               >
-                Get refund
+                {t("home.refund.action")}
               </Button>
             </CardContent>
           </Card>
@@ -285,7 +287,7 @@ export default function WalletHomePage() {
             className="h-20 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
           >
             <ArrowUpFromLine className="w-5 h-5" />
-            <span className="font-semibold text-lg">Send</span>
+            <span className="font-semibold text-lg">{t("home.actions.send")}</span>
           </Button>
           <Button
             variant="outline"
@@ -295,18 +297,18 @@ export default function WalletHomePage() {
             className="h-20 flex flex-row items-center justify-center gap-3 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
           >
             <ArrowDownToLine className="w-5 h-5" />
-            <span className="font-semibold text-lg">Receive</span>
+            <span className="font-semibold text-lg">{t("home.actions.receive")}</span>
           </Button>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Recent Activity</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t("home.recent.title")}</h3>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8 text-gray-500">
-                Loading transactions...
+                {t("home.recent.loading")}
               </div>
             ) : payments.length > 0 ? (
               <TransactionList
@@ -315,7 +317,7 @@ export default function WalletHomePage() {
               />
             ) : (
               <div className="text-center py-8 text-gray-500">
-                <p>No recent activity</p>
+                <p>{t("home.recent.empty")}</p>
               </div>
             )}
           </CardContent>
@@ -334,12 +336,8 @@ export default function WalletHomePage() {
       <Modal
         open={showSeedModal}
         onClose={closeSeedModal}
-        title={revealedSeed ? "Your recovery phrase" : "Show recovery phrase"}
-        description={
-          revealedSeed
-            ? undefined
-            : "Re-enter your wallet password to reveal the 12 words."
-        }
+        title={revealedSeed ? t("home.seed.titleRevealed") : t("home.seed.titleHidden")}
+        description={revealedSeed ? undefined : t("home.seed.description")}
         dismissable={!verifying}
       >
         {revealedSeed ? (
@@ -351,24 +349,21 @@ export default function WalletHomePage() {
               className="w-full inline-flex items-center justify-center gap-2"
             >
               {seedCopied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-              <span>{seedCopied ? "Copied" : "Copy to clipboard"}</span>
+              <span>{seedCopied ? t("common.copied") : t("common.copy")}</span>
             </Button>
             <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
               <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>
-                Anyone with these words can drain your wallet. Never share them
-                and avoid cloud-synced plaintext storage.
-              </span>
+              <span>{t("home.seed.warning")}</span>
             </div>
             <Button variant="primary" size="lg" onClick={closeSeedModal} className="w-full">
-              Done
+              {t("common.done")}
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
             <Input
               type="password"
-              label="Wallet password"
+              label={t("create.password.label")}
               value={seedPassword}
               onChange={(e) => {
                 setSeedPassword(e.target.value);
@@ -393,7 +388,7 @@ export default function WalletHomePage() {
                 disabled={verifying}
                 className="flex-1"
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 variant="primary"
@@ -403,7 +398,7 @@ export default function WalletHomePage() {
                 disabled={verifying || !seedPassword}
                 className="flex-1"
               >
-                Reveal
+                {t("home.seed.reveal")}
               </Button>
             </div>
           </div>

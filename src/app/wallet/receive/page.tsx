@@ -27,6 +27,7 @@ import { onSdkEvent } from "@/lib/lightning/breez-service";
 import { generateRandomUsername } from "@/lib/wallet/username";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
+import { useT } from "@/lib/i18n/hook";
 import { EditUsernameModal } from "@/components/wallet/edit-username-modal";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
@@ -58,6 +59,7 @@ interface InvoiceState {
 
 
 export default function ReceivePage() {
+  const t = useT();
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
 
@@ -80,12 +82,12 @@ export default function ReceivePage() {
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={() => router.back()}
-            aria-label="Back"
+            aria-label={t("common.back")}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold">Receive</h1>
+          <h1 className="text-2xl font-bold">{t("receive.title")}</h1>
         </div>
 
         <Card className="mb-6">
@@ -100,8 +102,8 @@ export default function ReceivePage() {
                 }`}
               >
                 <Zap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                <div className="font-medium">Lightning</div>
-                <div className="text-xs text-gray-500">Instant</div>
+                <div className="font-medium">{t("receive.methods.lightning")}</div>
+                <div className="text-xs text-gray-500">{t("receive.methods.lightningSubtitle")}</div>
               </button>
               <button
                 onClick={() => setPaymentMethod("bitcoin")}
@@ -112,8 +114,8 @@ export default function ReceivePage() {
                 }`}
               >
                 <Bitcoin className="w-6 h-6 text-orange-500" />
-                <div className="font-medium">Bitcoin</div>
-                <div className="text-xs text-gray-500">Added to your wallet on confirmation</div>
+                <div className="font-medium">{t("receive.methods.bitcoin")}</div>
+                <div className="text-xs text-gray-500">{t("receive.methods.bitcoinSubtitle")}</div>
               </button>
             </div>
           </CardContent>
@@ -134,6 +136,7 @@ function LightningPanel({
 }: {
   onReceived: (d: ReceivedPaymentDetails) => void;
 }) {
+  const t = useT();
   const { data: lnAddress, isLoading, refetch } = useLightningAddress(true);
   const registerMutation = useRegisterLightningAddress();
   const [autoClaimError, setAutoClaimError] = useState("");
@@ -154,13 +157,13 @@ function LightningPanel({
       } catch (e) {
         if (attempt === 2) {
           setAutoClaimError(
-            e instanceof Error ? e.message : "Couldn't set up Lightning address",
+            e instanceof Error ? e.message : t("receive.lightning.setupFailed"),
           );
         }
       }
     }
     tryingRef.current = false;
-  }, [registerMutation, refetch]);
+  }, [registerMutation, refetch, t]);
 
   useEffect(() => {
     if (!isLoading && !lnAddress && !registerMutation.isPending) {
@@ -174,7 +177,7 @@ function LightningPanel({
         <CardContent className="pt-8 pb-8 text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Setting up your Lightning address…
+            {t("receive.lightning.settingUp")}
           </p>
         </CardContent>
       </Card>
@@ -189,7 +192,7 @@ function LightningPanel({
             {autoClaimError}
           </p>
           <Button variant="primary" onClick={autoClaim}>
-            Try again
+            {t("common.retry")}
           </Button>
         </CardContent>
       </Card>
@@ -222,6 +225,7 @@ function AddressCard({
   info: LightningAddressInfo;
   onEdit: () => void;
 }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -237,9 +241,9 @@ function AddressCard({
   return (
     <Card className="mb-6">
       <CardHeader>
-        <h2 className="text-lg font-semibold">Your Lightning address</h2>
+        <h2 className="text-lg font-semibold">{t("receive.lightning.addressTitle")}</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Share this with anyone who wants to pay you over Lightning.
+          {t("receive.lightning.addressSubtitle")}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -264,7 +268,7 @@ function AddressCard({
             className="inline-flex items-center justify-center gap-2"
           >
             {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-            <span>{copied ? "Copied" : "Copy"}</span>
+            <span>{copied ? t("common.copied") : t("common.copy")}</span>
           </Button>
           <Button
             variant="outline"
@@ -272,7 +276,7 @@ function AddressCard({
             className="inline-flex items-center justify-center gap-2"
           >
             <Pencil className="w-4 h-4" />
-            <span>Edit username</span>
+            <span>{t("receive.lightning.editUsername")}</span>
           </Button>
         </div>
       </CardContent>
@@ -285,6 +289,7 @@ function InvoiceCreator({
 }: {
   onReceived: (d: ReceivedPaymentDetails) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -302,16 +307,16 @@ function InvoiceCreator({
 
   useEffect(() => {
     if (!invoice) return;
-    const t = setInterval(() => {
+    const id = setInterval(() => {
       const remaining = Math.max(0, Math.floor((invoice.expiresAt - Date.now()) / 1000));
       setTimeRemaining(remaining);
       if (remaining === 0) {
-        clearInterval(t);
-        setError("Invoice expired. Generate a new one.");
+        clearInterval(id);
+        setError(t("receive.invoice.expired"));
       }
     }, 1000);
-    return () => clearInterval(t);
-  }, [invoice]);
+    return () => clearInterval(id);
+  }, [invoice, t]);
 
   useEffect(() => {
     if (!invoice) return;
@@ -338,7 +343,7 @@ function InvoiceCreator({
     setError("");
     const amountSat = parseInt(amount, 10);
     if (isNaN(amountSat) || amountSat <= 0) {
-      setError("Enter a valid amount");
+      setError(t("receive.invoice.amountInvalid"));
       return;
     }
     try {
@@ -355,7 +360,7 @@ function InvoiceCreator({
       });
       setTimeRemaining(3600);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to generate invoice");
+      setError(e instanceof Error ? e.message : t("receive.invoice.generateFailed"));
     }
   };
 
@@ -374,7 +379,7 @@ function InvoiceCreator({
     if (!invoice || !navigator.share) return;
     try {
       await navigator.share({
-        title: "Lightning invoice",
+        title: t("receive.invoice.shareTitle"),
         text: invoice.paymentRequest,
       });
     } catch {
@@ -397,7 +402,7 @@ function InvoiceCreator({
           onClick={() => setOpen(true)}
           className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
-          Or create a one-time invoice for a specific amount
+          {t("receive.invoice.openLink")}
         </button>
       </div>
     );
@@ -408,12 +413,12 @@ function InvoiceCreator({
       <Card className="mt-6">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold">One-time invoice</h3>
+            <h3 className="font-semibold">{t("receive.invoice.title")}</h3>
             {timeRemaining > 0 && (
               <div className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/20 px-3 py-1 rounded-full text-xs">
                 <Clock className="w-3 h-3 text-amber-700 dark:text-amber-300" />
                 <span className="font-medium text-amber-700 dark:text-amber-300">
-                  {formatTime(timeRemaining)} left
+                  {t("receive.invoice.timeLeft", { time: formatTime(timeRemaining) })}
                 </span>
               </div>
             )}
@@ -424,7 +429,7 @@ function InvoiceCreator({
             <span className="text-3xl font-bold text-orange-500">
               {invoice.amountSat.toLocaleString()}
             </span>
-            <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">sats</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">{t("send.sats")}</span>
           </p>
           <div className="flex justify-center">
             <div className="p-3 bg-white rounded-lg">
@@ -450,7 +455,7 @@ function InvoiceCreator({
               className="inline-flex items-center justify-center gap-2"
             >
               {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-              <span>{copied ? "Copied" : "Copy"}</span>
+              <span>{copied ? t("common.copied") : t("common.copy")}</span>
             </Button>
             {typeof navigator !== "undefined" && typeof navigator.share !== "undefined" ? (
               <Button
@@ -459,11 +464,11 @@ function InvoiceCreator({
                 className="inline-flex items-center justify-center gap-2"
               >
                 <Share2 className="w-4 h-4" />
-                <span>Share</span>
+                <span>{t("common.share")}</span>
               </Button>
             ) : (
               <Button variant="outline" onClick={reset}>
-                New invoice
+                {t("receive.invoice.newInvoice")}
               </Button>
             )}
           </div>
@@ -476,20 +481,20 @@ function InvoiceCreator({
     <Card className="mt-6">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <h3 className="font-semibold">One-time invoice</h3>
+          <h3 className="font-semibold">{t("receive.invoice.title")}</h3>
           <button
             onClick={() => setOpen(false)}
             className="text-sm text-gray-500 hover:text-gray-700"
           >
-            Hide
+            {t("common.hide")}
           </button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
           <Input
-            label="Amount (sats)"
-            placeholder="1000"
+            label={t("receive.invoice.addressAmountLabel")}
+            placeholder={t("receive.invoice.addressAmountPlaceholder")}
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
             inputMode="numeric"
@@ -501,8 +506,8 @@ function InvoiceCreator({
           )}
         </div>
         <Input
-          label="Description (optional)"
-          placeholder="What is this payment for?"
+          label={t("receive.invoice.descriptionLabel")}
+          placeholder={t("receive.invoice.descriptionPlaceholder")}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           maxLength={100}
@@ -518,7 +523,7 @@ function InvoiceCreator({
           disabled={receiveMutation.isPending || !amount}
           className="w-full"
         >
-          Generate invoice
+          {t("receive.invoice.generate")}
         </Button>
       </CardContent>
     </Card>
@@ -530,6 +535,7 @@ function BitcoinPanel({
 }: {
   onReceived: (d: ReceivedPaymentDetails) => void;
 }) {
+  const t = useT();
   const getMutation = useGetBitcoinAddress();
   const [result, setResult] = useState<BitcoinReceive | null>(null);
   const [error, setError] = useState("");
@@ -544,7 +550,7 @@ function BitcoinPanel({
         const r = await getMutation.mutateAsync();
         setResult({ address: r.address, fee: r.fee });
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to generate address");
+        setError(e instanceof Error ? e.message : t("receive.bitcoin.addressFailed"));
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -595,7 +601,7 @@ function BitcoinPanel({
         <CardContent className="pt-8 pb-8 text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Generating Bitcoin address…
+            {t("receive.bitcoin.generating")}
           </p>
         </CardContent>
       </Card>
@@ -605,10 +611,9 @@ function BitcoinPanel({
   return (
     <Card className="mb-6">
       <CardHeader>
-        <h2 className="text-lg font-semibold">One-time Bitcoin address</h2>
+        <h2 className="text-lg font-semibold">{t("receive.bitcoin.title")}</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Pay from any Bitcoin wallet. Funds are added to your wallet
-          automatically once confirmed.
+          {t("receive.bitcoin.subtitle")}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -632,7 +637,7 @@ function BitcoinPanel({
           className="w-full inline-flex items-center justify-center gap-2"
         >
           {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-          <span>{copied ? "Copied" : "Copy address"}</span>
+          <span>{copied ? t("common.copied") : t("receive.bitcoin.copyAddress")}</span>
         </Button>
       </CardContent>
     </Card>
@@ -646,6 +651,7 @@ function SuccessView({
   details: ReceivedPaymentDetails;
   onDone: () => void;
 }) {
+  const t = useT();
   const formattedDate = new Date(details.timestamp * 1000).toLocaleString();
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -655,26 +661,26 @@ function SuccessView({
             <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
               <Check className="w-9 h-9 text-green-600 dark:text-green-400" strokeWidth={3} />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Payment received</h2>
+            <h2 className="text-2xl font-bold mb-2">{t("receive.success.title")}</h2>
             <p className="text-4xl font-bold text-orange-500 mt-4 mb-1">
-              {details.amountSat.toLocaleString()} sats
+              {details.amountSat.toLocaleString()} {t("send.sats")}
             </p>
             <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mt-6 mb-6 space-y-2 text-sm text-left">
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Method</span>
+                <span className="text-gray-600 dark:text-gray-400">{t("receive.success.method")}</span>
                 <span className="font-medium capitalize">{details.method}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Fees</span>
-                <span className="font-medium">{details.feesSat.toLocaleString()} sats</span>
+                <span className="text-gray-600 dark:text-gray-400">{t("receive.success.fees")}</span>
+                <span className="font-medium">{details.feesSat.toLocaleString()} {t("send.sats")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Time</span>
+                <span className="text-gray-600 dark:text-gray-400">{t("receive.success.time")}</span>
                 <span className="font-medium text-xs">{formattedDate}</span>
               </div>
             </div>
             <Button variant="primary" size="lg" onClick={onDone} className="w-full">
-              Done
+              {t("common.done")}
             </Button>
           </CardContent>
         </Card>

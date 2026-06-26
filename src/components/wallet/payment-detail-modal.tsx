@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
+import { useT } from "@/lib/i18n/hook";
 
 interface PaymentDetailModalProps {
   payment: Payment | null;
@@ -14,8 +15,9 @@ interface PaymentDetailModalProps {
 }
 
 export function PaymentDetailModal({ payment, onClose }: PaymentDetailModalProps) {
+  const t = useT();
   return (
-    <Modal open={payment !== null} onClose={onClose} title="Payment details">
+    <Modal open={payment !== null} onClose={onClose} title={t("paymentDetail.title")}>
       {payment && <PaymentDetailContent payment={payment} onClose={onClose} />}
     </Modal>
   );
@@ -28,6 +30,7 @@ function PaymentDetailContent({
   payment: Payment;
   onClose: () => void;
 }) {
+  const t = useT();
   const sats = payment.amountSat;
   const feeSats = payment.feeSat;
   const isReceived = payment.paymentType === "received";
@@ -68,7 +71,7 @@ function PaymentDetailContent({
           {isReceived ? "+" : "-"}
           {sats.toLocaleString()}
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">sats</div>
+        <div className="text-sm text-gray-500 dark:text-gray-400">{t("send.sats")}</div>
         {amountFiat && (
           <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             ≈ {amountFiat}
@@ -77,37 +80,37 @@ function PaymentDetailContent({
         <span
           className={`inline-block mt-3 px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusStyles[payment.status]}`}
         >
-          {payment.status}
+          {t(`paymentDetail.status${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}`)}
         </span>
       </div>
 
       <dl className="divide-y divide-gray-200 dark:divide-gray-800 text-sm">
-        <DetailRow label="Direction" value={isReceived ? "Received" : "Sent"} />
+        <DetailRow label={t("paymentDetail.direction")} value={isReceived ? t("paymentDetail.received") : t("paymentDetail.sent")} />
         <DetailRow
-          label="Fee"
+          label={t("paymentDetail.fee")}
           value={
             feeFiat
-              ? `${feeSats.toLocaleString()} sats · ≈ ${feeFiat}`
-              : `${feeSats.toLocaleString()} sats`
+              ? `${feeSats.toLocaleString()} ${t("send.sats")} · ≈ ${feeFiat}`
+              : `${feeSats.toLocaleString()} ${t("send.sats")}`
           }
         />
         <DetailRow
-          label="Time"
+          label={t("paymentDetail.time")}
           value={`${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}`}
         />
         {payment.description && (
-          <DetailRow label="Description" value={payment.description} wrap />
+          <DetailRow label={t("paymentDetail.description")} value={payment.description} wrap />
         )}
-        {payment.id && <CopyRow label="Payment ID" value={payment.id} />}
-        {payment.bolt11 && <CopyRow label="Invoice" value={payment.bolt11} />}
-        {payment.preimage && <CopyRow label="Preimage" value={payment.preimage} />}
+        {payment.id && <CopyRow label={t("paymentDetail.paymentId")} value={payment.id} />}
+        {payment.bolt11 && <CopyRow label={t("paymentDetail.invoice")} value={payment.bolt11} />}
+        {payment.preimage && <CopyRow label={t("paymentDetail.preimage")} value={payment.preimage} />}
       </dl>
 
       <Button variant="primary" size="lg" onClick={onClose} className="w-full">
-        Close
+        {t("common.close")}
       </Button>
     </div>
   );
@@ -137,6 +140,7 @@ function DetailRow({
 }
 
 function CopyRow({ label, value }: { label: string; value: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const truncated = value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
 
@@ -156,7 +160,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
       <button
         onClick={copy}
         className="ml-auto inline-flex items-center gap-2 font-mono text-xs text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1.5 py-0.5"
-        aria-label={`Copy ${label.toLowerCase()}`}
+        aria-label={t("paymentDetail.copyAria", { label: label.toLowerCase() })}
       >
         <span>{truncated}</span>
         {copied ? (

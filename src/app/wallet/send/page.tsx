@@ -17,6 +17,7 @@ import {
 } from "@/hooks/use-breez";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
+import { useT } from "@/lib/i18n/hook";
 import type {
   PrepareSendResult,
   PrepareLnurlPayResult,
@@ -38,6 +39,7 @@ type SendDestinationKind =
   | "bip21";
 
 export default function SendPage() {
+  const t = useT();
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
   const [step, setStep] = useState<SendStep>("input");
@@ -68,7 +70,7 @@ export default function SendPage() {
         setError("");
       }
     } catch {
-      setError("Failed to access clipboard");
+      setError(t("send.pasteFailed"));
     }
   };
 
@@ -76,12 +78,12 @@ export default function SendPage() {
     setError("");
     const dest = destination.trim();
     if (!dest) {
-      setError("Enter a destination");
+      setError(t("send.destinationRequired"));
       return;
     }
     try {
       const parsed = await parseMutation.mutateAsync(dest);
-      const unsupported = describeUnsupported(parsed);
+      const unsupported = describeUnsupported(parsed, t);
       if (unsupported) {
         setError(unsupported);
         return;
@@ -91,21 +93,18 @@ export default function SendPage() {
 
       let prep: PrepareResult;
       if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
-        // Both flow through LNURL pay. lightningAddress wraps payRequest.
         const payRequest: LnurlPayRequestDetails =
           parsed.type === "lightningAddress"
             ? parsed.payRequest
             : pickLnurlPayDetails(parsed);
         if (!amountSat || amountSat <= 0) {
-          setError("Enter an amount to send to this Lightning address");
+          setError(t("send.lnurlAmountRequired"));
           return;
         }
         const minSat = Math.ceil(payRequest.minSendable / 1000);
         const maxSat = Math.floor(payRequest.maxSendable / 1000);
         if (amountSat < minSat || amountSat > maxSat) {
-          setError(
-            `This Lightning address accepts ${minSat.toLocaleString()}–${maxSat.toLocaleString()} sats`,
-          );
+          setError(t("send.lnurlRange", { min: minSat.toLocaleString(), max: maxSat.toLocaleString() }));
           return;
         }
         const lnurlPrep = await prepareLnurlMutation.mutateAsync({
@@ -127,15 +126,13 @@ export default function SendPage() {
 
       const sendAmountSat = readAmountSat(prep);
       if (sendAmountSat !== null && sendAmountSat > balanceSat) {
-        setError(
-          `Insufficient balance. You can send up to ${balanceSat.toLocaleString()} sats`,
-        );
+        setError(t("send.insufficientBalance", { balance: balanceSat.toLocaleString() }));
         return;
       }
       setPrepareResult(prep);
       setStep("confirm");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Could not parse destination";
+      const msg = err instanceof Error ? err.message : t("send.parseFailed");
       setError(msg);
     }
   };
@@ -153,7 +150,7 @@ export default function SendPage() {
       setStep("success");
       setTimeout(() => router.push("/wallet/home"), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment failed");
+      setError(err instanceof Error ? err.message : t("send.failed"));
       setStep("error");
     }
   };
@@ -180,22 +177,22 @@ export default function SendPage() {
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={handleBack}
-              aria-label="Back"
+              aria-label={t("common.back")}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-2xl font-bold">Send Payment</h1>
+            <h1 className="text-2xl font-bold">{t("send.title")}</h1>
           </div>
 
           <Card className="mb-6">
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Available to Send
+                  {t("send.available")}
                 </p>
                 <p className="text-3xl font-bold text-orange-500">
-                  {balanceSat.toLocaleString()} sats
+                  {balanceSat.toLocaleString()} {t("send.sats")}
                 </p>
               </div>
             </CardContent>
@@ -203,30 +200,30 @@ export default function SendPage() {
 
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Destination</h2>
+              <h2 className="text-lg font-semibold">{t("send.destination.title")}</h2>
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
-                label="Invoice, Lightning address, Bitcoin address, or Spark address"
-                placeholder="lnbc... | alice@example.com | bc1... | sprt1..."
+                label={t("send.destination.label")}
+                placeholder={t("send.destination.placeholder")}
                 value={destination}
                 onChange={(e) => {
                   setDestination(e.target.value);
                   setError("");
                 }}
                 error={error || undefined}
-                helperText="The wallet will figure out the payment type"
+                helperText={t("send.destination.helper")}
               />
 
               <Input
-                label="Amount (sats)"
-                placeholder="0"
+                label={t("send.amount.label")}
+                placeholder={t("send.amount.placeholder")}
                 value={amountSatInput}
                 onChange={(e) =>
                   setAmountSatInput(e.target.value.replace(/[^0-9]/g, ""))
                 }
                 inputMode="numeric"
-                helperText="Optional for invoices that already encode an amount"
+                helperText={t("send.amount.helper")}
               />
 
               <div className="grid grid-cols-1 gap-3">
@@ -236,7 +233,7 @@ export default function SendPage() {
                   className="inline-flex items-center justify-center gap-2"
                 >
                   <Clipboard className="w-4 h-4" />
-                  <span>Paste from clipboard</span>
+                  <span>{t("send.paste")}</span>
                 </Button>
               </div>
 
@@ -260,8 +257,8 @@ export default function SendPage() {
                 {prepareMutation.isPending ||
                 prepareLnurlMutation.isPending ||
                 parseMutation.isPending
-                  ? "Checking…"
-                  : "Continue"}
+                  ? t("send.checking")
+                  : t("common.continue")}
               </Button>
             </CardContent>
           </Card>
@@ -273,7 +270,7 @@ export default function SendPage() {
   if (step === "confirm" && prepareResult) {
     const amountSat = readAmountSat(prepareResult) ?? 0;
     const feesSat = readFeeSat(prepareResult);
-    const destLabel = describeDestination(prepareResult);
+    const destLabel = describeDestination(prepareResult, t);
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -281,24 +278,24 @@ export default function SendPage() {
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={handleBack}
-              aria-label="Back"
+              aria-label={t("common.back")}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-2xl font-bold">Confirm Payment</h1>
+            <h1 className="text-2xl font-bold">{t("send.confirmTitle")}</h1>
           </div>
 
           <Card className="mb-6">
             <CardContent className="pt-8 pb-8">
               <div className="text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  You&apos;re sending
+                  {t("send.youreSending")}
                 </p>
                 <p className="text-5xl font-bold text-orange-500 mb-2">
                   {amountSat.toLocaleString()}
                 </p>
-                <p className="text-lg text-gray-600 dark:text-gray-400">sats</p>
+                <p className="text-lg text-gray-600 dark:text-gray-400">{t("send.sats")}</p>
                 {fiatRate !== undefined && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                     ≈ {formatFiat(amountSat, fiatRate, fiatCurrency)}
@@ -310,21 +307,21 @@ export default function SendPage() {
 
           <Card className="mb-6">
             <CardHeader>
-              <h2 className="text-lg font-semibold">Payment Details</h2>
+              <h2 className="text-lg font-semibold">{t("send.details")}</h2>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Type</span>
+                <span className="text-gray-600 dark:text-gray-400">{t("send.type")}</span>
                 <span className="font-medium">{destLabel}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Network Fee</span>
-                <span className="font-medium">{feesSat.toLocaleString()} sats</span>
+                <span className="text-gray-600 dark:text-gray-400">{t("send.networkFee")}</span>
+                <span className="font-medium">{feesSat.toLocaleString()} {t("send.sats")}</span>
               </div>
               <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                <span className="font-semibold">Total</span>
+                <span className="font-semibold">{t("send.total")}</span>
                 <span className="font-bold text-orange-500">
-                  {(amountSat + feesSat).toLocaleString()} sats
+                  {(amountSat + feesSat).toLocaleString()} {t("send.sats")}
                 </span>
               </div>
             </CardContent>
@@ -345,8 +342,8 @@ export default function SendPage() {
             className="w-full"
           >
             {executeMutation.isPending || executeLnurlMutation.isPending
-              ? "Processing..."
-              : "Confirm & Send Payment"}
+              ? t("send.processing")
+              : t("send.confirmSend")}
           </Button>
         </div>
       </div>
@@ -358,7 +355,7 @@ export default function SendPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-6 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
-          <h2 className="text-2xl font-bold mb-2">Sending payment…</h2>
+          <h2 className="text-2xl font-bold mb-2">{t("send.sendingPayment")}</h2>
         </div>
       </div>
     );
@@ -372,12 +369,12 @@ export default function SendPage() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
             <Check className="w-10 h-10 text-green-600 dark:text-green-400" strokeWidth={3} />
           </div>
-          <h2 className="text-3xl font-bold mb-3 text-green-600">Payment sent</h2>
+          <h2 className="text-3xl font-bold mb-3 text-green-600">{t("send.sent")}</h2>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">
-            {amountSat.toLocaleString()} sats
+            {amountSat.toLocaleString()} {t("send.sats")}
           </p>
           <Button variant="primary" onClick={() => router.push("/wallet/home")}>
-            Back to wallet
+            {t("send.backToWallet")}
           </Button>
         </div>
       </div>
@@ -391,16 +388,16 @@ export default function SendPage() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
             <X className="w-10 h-10 text-red-600 dark:text-red-400" strokeWidth={3} />
           </div>
-          <h2 className="text-3xl font-bold mb-3 text-red-600">Payment failed</h2>
+          <h2 className="text-3xl font-bold mb-3 text-red-600">{t("send.failed")}</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
-            {error || "Something went wrong. Please try again."}
+            {error || t("send.genericError")}
           </p>
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={() => router.push("/wallet/home")}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button variant="primary" onClick={handleRetry}>
-              Try Again
+              {t("send.tryAgain")}
             </Button>
           </div>
         </div>
@@ -468,34 +465,27 @@ function destinationKindForParsed(parsed: InputType): SendDestinationKind {
   }
 }
 
-function describeDestination(prep: PrepareResult): string {
-  if (prep.kind === "lnurlPay") return `Lightning address (${prep.domain})`;
-  switch (prep.destinationKind) {
-    case "bolt11":
-      return "Lightning invoice";
-    case "bolt12":
-      return "BOLT12 offer";
-    case "bitcoinAddress":
-      return "Bitcoin address";
-    case "sparkAddress":
-      return "Spark address";
-    case "sparkInvoice":
-      return "Spark invoice";
-    case "bip21":
-      return "BIP21 payment request";
-  }
+function describeDestination(
+  prep: PrepareResult,
+  t: (k: string, p?: Record<string, string | number>) => string,
+): string {
+  if (prep.kind === "lnurlPay") return t("send.destinationKind.lnurlPay", { domain: prep.domain });
+  return t(`send.destinationKind.${prep.destinationKind}`);
 }
 
-function describeUnsupported(parsed: InputType): string | null {
+function describeUnsupported(
+  parsed: InputType,
+  t: (k: string) => string,
+): string | null {
   switch (parsed.type) {
     case "lnurlAuth":
-      return "LNURL-auth is for logging in, not paying. Use it elsewhere.";
+      return t("send.unsupported.lnurlAuth");
     case "lnurlWithdraw":
-      return "LNURL-withdraw is for receiving, not sending.";
+      return t("send.unsupported.lnurlWithdraw");
     case "url":
-      return "That looks like a web link, not a payment destination.";
+      return t("send.unsupported.url");
     case "silentPaymentAddress":
-      return "Silent payment addresses aren't supported yet.";
+      return t("send.unsupported.silentPayment");
     default:
       return null;
   }

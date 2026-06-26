@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { buyBitcoin, onSdkEvent } from "@/lib/lightning/breez-service";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
+import { useT } from "@/lib/i18n/hook";
 
 type Provider = "moonpay" | "cashApp";
 type Step = "select" | "amount" | "qr";
@@ -22,6 +23,7 @@ interface BuyBitcoinModalProps {
 }
 
 export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
+  const t = useT();
   const [step, setStep] = useState<Step>("select");
   const [redirecting, setRedirecting] = useState<Provider | null>(null);
   const [amountInput, setAmountInput] = useState("");
@@ -79,12 +81,12 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
       onClose();
     } catch (e) {
       tab?.close();
-      const message = e instanceof Error ? e.message : "Failed to open MoonPay";
+      const message = e instanceof Error ? e.message : t("buyBitcoin.moonpayFailed");
       setError(message);
     } finally {
       setRedirecting(null);
     }
-  }, [onClose]);
+  }, [onClose, t]);
 
   const isCoarsePointer = () =>
     typeof window !== "undefined" &&
@@ -93,7 +95,7 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
 
   const handleGenerateCashApp = useCallback(async () => {
     if (!validAmount || amountSats === null) {
-      setError(`Amount must be at least ${MIN_CASH_APP_SATS} sats`);
+      setError(t("buyBitcoin.amountTooLow", { min: MIN_CASH_APP_SATS }));
       return;
     }
     setError(null);
@@ -113,12 +115,12 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
     } catch (e) {
       tab?.close();
       const message =
-        e instanceof Error ? e.message : "Failed to create Cash App invoice";
+        e instanceof Error ? e.message : t("buyBitcoin.cashAppFailed");
       setError(message);
     } finally {
       setGenerating(false);
     }
-  }, [validAmount, amountSats, onClose]);
+  }, [validAmount, amountSats, onClose, t]);
 
   const handleCopy = useCallback(async () => {
     if (!cashAppUrl) return;
@@ -133,10 +135,10 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
 
   const title =
     step === "select"
-      ? "Buy Bitcoin"
+      ? t("buyBitcoin.select")
       : step === "amount"
-        ? "Buy with Cash App"
-        : "Pay with Cash App";
+        ? t("buyBitcoin.amount")
+        : t("buyBitcoin.qr");
 
   return (
     <Modal open={open} onClose={onClose} title={title} dismissable={!generating && !redirecting}>
@@ -150,10 +152,10 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
             <ProviderBadge provider="moonpay" />
             <div className="flex-1">
               <div className="font-semibold text-gray-900 dark:text-gray-100">
-                {redirecting === "moonpay" ? "Redirecting…" : "MoonPay"}
+                {redirecting === "moonpay" ? t("buyBitcoin.moonpayRedirecting") : "MoonPay"}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                Card, Apple/Google Pay, bank transfer
+                {t("buyBitcoin.moonpaySubtitle")}
               </div>
             </div>
             <ExternalLink className="w-4 h-4 text-gray-400" />
@@ -169,7 +171,7 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
                 Cash App
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                US/UK only · pays a Lightning invoice
+                {t("buyBitcoin.cashAppSubtitle")}
               </div>
             </div>
           </button>
@@ -183,13 +185,13 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
             <Input
               type="number"
               inputMode="numeric"
-              label="Amount (sats)"
+              label={t("buyBitcoin.amountLabel")}
               value={amountInput}
               onChange={(e) => {
                 setAmountInput(e.target.value);
                 setError(null);
               }}
-              placeholder="Enter amount in satoshis"
+              placeholder={t("buyBitcoin.amountPlaceholder")}
               disabled={generating}
               autoFocus
               min={1}
@@ -221,8 +223,7 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
             ))}
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Cash App will show the equivalent in your local currency and charge
-            your Cash or BTC balance.
+            {t("buyBitcoin.cashAppInfo")}
           </p>
           {error && (
             <div className="p-3 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-300">
@@ -237,7 +238,7 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
             disabled={!validAmount || generating}
             className="w-full"
           >
-            Continue
+            {t("common.continue")}
           </Button>
         </div>
       )}
@@ -246,8 +247,7 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
         <div className="space-y-4">
           <BackButton onClick={() => setStep("amount")} />
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-            Scan this code with Cash App, or open the link on a device with Cash
-            App installed.
+            {t("buyBitcoin.qrInstructions")}
           </p>
           <div className="flex justify-center">
             <div className="bg-white p-4 rounded-xl">
@@ -263,10 +263,10 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
             ) : (
               <CopyIcon className="w-4 h-4" />
             )}
-            <span>{copied ? "Copied" : "Copy Cash App link"}</span>
+            <span>{copied ? t("common.copied") : t("buyBitcoin.copyLink")}</span>
           </button>
           <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-            This dialog will refresh automatically once the payment lands.
+            {t("buyBitcoin.autoRefresh")}
           </p>
         </div>
       )}

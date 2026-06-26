@@ -10,7 +10,10 @@
     "retry": "Reintentar",
     "goBack": "Volver",
     "close": "Cerrar",
-    "skip": "Omitir por ahora"
+    "skip": "Omitir por ahora",
+    "done": "Listo",
+    "hide": "Ocultar",
+    "share": "Compartir"
   },
   "welcome": {
     "tagline": "Una billetera Bitcoin y Lightning no custodial. Tus claves, tus monedas.",
@@ -143,6 +146,163 @@
     "noVault": "No hay billetera para respaldar.",
     "operationFailed": "La operación de Drive falló."
   },
+  "home": {
+    "title": "Mi billetera",
+    "tagline": "Satoshi Scholar",
+    "connection": {
+      "offline": "Desconectado",
+      "syncing": "Sincronizando…",
+      "synced": "Sincronizado",
+      "failed": "Problema de conexión"
+    },
+    "buy": "Comprar",
+    "buyAria": "Comprar Bitcoin",
+    "phrase": "Frase",
+    "phraseAria": "Mostrar frase de recuperación",
+    "settingsAria": "Configuración",
+    "lock": "Bloquear",
+    "refund": {
+      "title_one": "{{count}} transferencia de Bitcoin necesita un reembolso",
+      "title_other": "{{count}} transferencias de Bitcoin necesitan un reembolso",
+      "subtitle": "No se pudieron agregar automáticamente algunos Bitcoin entrantes a tu billetera. Reenviálos a una dirección Bitcoin que controles.",
+      "action": "Obtener reembolso"
+    },
+    "actions": {
+      "send": "Enviar",
+      "receive": "Recibir"
+    },
+    "recent": {
+      "title": "Actividad reciente",
+      "loading": "Cargando transacciones...",
+      "empty": "Sin actividad reciente"
+    },
+    "seed": {
+      "titleHidden": "Mostrar frase de recuperación",
+      "titleRevealed": "Tu frase de recuperación",
+      "description": "Reingresá tu contraseña para mostrar las 12 palabras.",
+      "passwordRequired": "Ingresá la contraseña de tu billetera",
+      "wrongPassword": "Contraseña incorrecta",
+      "warning": "Cualquiera con estas palabras puede vaciar tu billetera. Nunca las compartas y evitá guardarlas en la nube en texto plano.",
+      "reveal": "Mostrar"
+    }
+  },
+  "send": {
+    "title": "Enviar pago",
+    "confirmTitle": "Confirmar pago",
+    "available": "Disponible para enviar",
+    "sats": "sats",
+    "destination": {
+      "title": "Destino",
+      "label": "Invoice, dirección Lightning, dirección Bitcoin o Spark",
+      "placeholder": "lnbc... | alice@example.com | bc1... | sprt1...",
+      "helper": "La billetera detecta el tipo de pago"
+    },
+    "amount": {
+      "label": "Monto (sats)",
+      "placeholder": "0",
+      "helper": "Opcional para invoices que ya tienen un monto codificado"
+    },
+    "paste": "Pegar desde portapapeles",
+    "pasteFailed": "No se pudo acceder al portapapeles",
+    "destinationRequired": "Ingresá un destino",
+    "lnurlAmountRequired": "Ingresá un monto para enviar a esta dirección Lightning",
+    "lnurlRange": "Esta dirección Lightning acepta {{min}}–{{max}} sats",
+    "insufficientBalance": "Saldo insuficiente. Podés enviar hasta {{balance}} sats",
+    "parseFailed": "No se pudo interpretar el destino",
+    "checking": "Verificando…",
+    "youreSending": "Estás enviando",
+    "details": "Detalles del pago",
+    "type": "Tipo",
+    "networkFee": "Tarifa de red",
+    "total": "Total",
+    "processing": "Procesando...",
+    "confirmSend": "Confirmar y enviar pago",
+    "sendingPayment": "Enviando pago…",
+    "sent": "Pago enviado",
+    "backToWallet": "Volver a la billetera",
+    "failed": "Pago fallido",
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "tryAgain": "Reintentar",
+    "destinationKind": {
+      "bolt11": "Invoice Lightning",
+      "bolt12": "Oferta BOLT12",
+      "bitcoinAddress": "Dirección Bitcoin",
+      "sparkAddress": "Dirección Spark",
+      "sparkInvoice": "Invoice Spark",
+      "bip21": "Solicitud de pago BIP21",
+      "lnurlPay": "Dirección Lightning ({{domain}})"
+    },
+    "unsupported": {
+      "lnurlAuth": "LNURL-auth es para iniciar sesión, no para pagar. Usalo en otro lado.",
+      "lnurlWithdraw": "LNURL-withdraw es para recibir, no para enviar.",
+      "url": "Eso parece un enlace web, no un destino de pago.",
+      "silentPayment": "Las direcciones silent payment aún no están soportadas."
+    }
+  },
+  "receive": {
+    "title": "Recibir",
+    "methods": {
+      "lightning": "Lightning",
+      "lightningSubtitle": "Instantáneo",
+      "bitcoin": "Bitcoin",
+      "bitcoinSubtitle": "Agregado a tu billetera al confirmar"
+    },
+    "lightning": {
+      "settingUp": "Configurando tu dirección Lightning…",
+      "setupFailed": "No se pudo configurar la dirección Lightning",
+      "addressTitle": "Tu dirección Lightning",
+      "addressSubtitle": "Compartila con cualquiera que quiera pagarte por Lightning.",
+      "editUsername": "Editar nombre de usuario"
+    },
+    "invoice": {
+      "openLink": "O creá un invoice de un solo uso por un monto específico",
+      "title": "Invoice de un solo uso",
+      "expired": "El invoice expiró. Generá uno nuevo.",
+      "timeLeft": "{{time}} restantes",
+      "addressAmountLabel": "Monto (sats)",
+      "addressAmountPlaceholder": "1000",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "¿Para qué es este pago?",
+      "amountInvalid": "Ingresá un monto válido",
+      "generate": "Generar invoice",
+      "generateFailed": "No se pudo generar el invoice",
+      "shareTitle": "Invoice Lightning",
+      "newInvoice": "Nuevo invoice"
+    },
+    "bitcoin": {
+      "title": "Dirección Bitcoin de un solo uso",
+      "subtitle": "Pagá desde cualquier billetera Bitcoin. Los fondos se agregan a tu billetera automáticamente al confirmarse.",
+      "generating": "Generando dirección Bitcoin…",
+      "addressFailed": "No se pudo generar la dirección",
+      "copyAddress": "Copiar dirección"
+    },
+    "success": {
+      "title": "Pago recibido",
+      "method": "Método",
+      "fees": "Tarifas",
+      "time": "Hora"
+    }
+  },
+  "recovery": {
+    "title": "Obtener reembolso",
+    "nothing": "Nada necesita reembolso. Todo el Bitcoin entrante se agrega a tu billetera automáticamente.",
+    "explainer": "Estas transferencias de Bitcoin no se pudieron agregar automáticamente a tu billetera — generalmente porque las tarifas de red estaban por encima del límite configurado. Podés reembolsarlas a una dirección Bitcoin que controles.",
+    "amount": "Monto",
+    "refundButton": "Reembolsar a Bitcoin",
+    "addressLabel": "Dirección Bitcoin",
+    "addressPlaceholder": "bc1...",
+    "feeRate": "Tarifa",
+    "feeSlow": "Lenta",
+    "feeMedium": "Media",
+    "feeFast": "Rápida",
+    "customRate": "Tarifa personalizada",
+    "orCustomRate": "O definí una tarifa personalizada",
+    "customPlaceholder": "sat/vB",
+    "addressRequired": "Ingresá una dirección Bitcoin",
+    "feeRequired": "Elegí una tarifa",
+    "sendRefund": "Enviar reembolso",
+    "refundFailed": "No se pudo enviar el reembolso"
+  },
   "settings": {
     "title": "Configuración",
     "lightningAddress": {
@@ -207,5 +367,57 @@
     "registeredAddress": {
       "editUsername": "Editar nombre de usuario"
     }
+  },
+  "transactions": {
+    "empty": "Aún no hay transacciones",
+    "emptyHint": "Tus pagos Lightning aparecerán acá.",
+    "receivedDefault": "Pago recibido",
+    "sentDefault": "Pago enviado",
+    "statusPending": "Pendiente",
+    "statusFailed": "Fallido"
+  },
+  "paymentDetail": {
+    "title": "Detalles del pago",
+    "direction": "Dirección",
+    "received": "Recibido",
+    "sent": "Enviado",
+    "fee": "Tarifa",
+    "time": "Hora",
+    "description": "Descripción",
+    "paymentId": "ID del pago",
+    "invoice": "Invoice",
+    "preimage": "Preimage",
+    "statusPending": "Pendiente",
+    "statusComplete": "Completo",
+    "statusFailed": "Fallido",
+    "copyAria": "Copiar {{label}}"
+  },
+  "editUsername": {
+    "title": "Editar dirección Lightning",
+    "description": "Cambiar tu nombre de usuario libera {{address}}. Cualquiera que la tenga guardada va a ver fallar los pagos y necesitar la nueva.",
+    "newLabel": "Nuevo nombre de usuario",
+    "checking": "Verificando disponibilidad…",
+    "available": "Disponible",
+    "taken": "Ya tomado — elegí otro",
+    "invalid": "Usá letras minúsculas, números, puntos, guiones bajos y medios (máx 32).",
+    "failed": "No se pudo actualizar la dirección",
+    "replace": "Reemplazar dirección"
+  },
+  "buyBitcoin": {
+    "select": "Comprar Bitcoin",
+    "amount": "Comprar con Cash App",
+    "qr": "Pagar con Cash App",
+    "moonpaySubtitle": "Tarjeta, Apple/Google Pay, transferencia",
+    "moonpayRedirecting": "Redirigiendo…",
+    "cashAppSubtitle": "Solo EEUU/Reino Unido · paga un invoice Lightning",
+    "amountLabel": "Monto (sats)",
+    "amountPlaceholder": "Ingresá el monto en satoshis",
+    "amountTooLow": "El monto debe ser al menos {{min}} sats",
+    "cashAppInfo": "Cash App va a mostrar el equivalente en tu moneda local y va a cobrar de tu saldo en Cash o BTC.",
+    "moonpayFailed": "No se pudo abrir MoonPay",
+    "cashAppFailed": "No se pudo crear el invoice de Cash App",
+    "qrInstructions": "Escaneá este código con Cash App, o abrí el enlace en un dispositivo con Cash App instalada.",
+    "copyLink": "Copiar enlace de Cash App",
+    "autoRefresh": "Este diálogo se actualizará automáticamente cuando llegue el pago."
   }
 }

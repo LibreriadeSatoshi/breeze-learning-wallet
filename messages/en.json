@@ -10,7 +10,10 @@
     "retry": "Try again",
     "goBack": "Go back",
     "close": "Close",
-    "skip": "Skip for now"
+    "skip": "Skip for now",
+    "done": "Done",
+    "hide": "Hide",
+    "share": "Share"
   },
   "welcome": {
     "tagline": "A non-custodial Bitcoin & Lightning wallet. Your keys, your coins.",
@@ -143,6 +146,163 @@
     "noVault": "No wallet to back up.",
     "operationFailed": "Drive operation failed."
   },
+  "home": {
+    "title": "My Wallet",
+    "tagline": "Satoshi Scholar",
+    "connection": {
+      "offline": "Offline",
+      "syncing": "Syncing…",
+      "synced": "Synced",
+      "failed": "Connection issue"
+    },
+    "buy": "Buy",
+    "buyAria": "Buy Bitcoin",
+    "phrase": "Phrase",
+    "phraseAria": "Show recovery phrase",
+    "settingsAria": "Settings",
+    "lock": "Lock",
+    "refund": {
+      "title_one": "{{count}} Bitcoin transfer needs a refund",
+      "title_other": "{{count}} Bitcoin transfers need a refund",
+      "subtitle": "Couldn't add some incoming Bitcoin to your wallet automatically. Send them back to a Bitcoin address you control.",
+      "action": "Get refund"
+    },
+    "actions": {
+      "send": "Send",
+      "receive": "Receive"
+    },
+    "recent": {
+      "title": "Recent Activity",
+      "loading": "Loading transactions...",
+      "empty": "No recent activity"
+    },
+    "seed": {
+      "titleHidden": "Show recovery phrase",
+      "titleRevealed": "Your recovery phrase",
+      "description": "Re-enter your wallet password to reveal the 12 words.",
+      "passwordRequired": "Enter your wallet password",
+      "wrongPassword": "Wrong password",
+      "warning": "Anyone with these words can drain your wallet. Never share them and avoid cloud-synced plaintext storage.",
+      "reveal": "Reveal"
+    }
+  },
+  "send": {
+    "title": "Send Payment",
+    "confirmTitle": "Confirm Payment",
+    "available": "Available to Send",
+    "sats": "sats",
+    "destination": {
+      "title": "Destination",
+      "label": "Invoice, Lightning address, Bitcoin address, or Spark address",
+      "placeholder": "lnbc... | alice@example.com | bc1... | sprt1...",
+      "helper": "The wallet will figure out the payment type"
+    },
+    "amount": {
+      "label": "Amount (sats)",
+      "placeholder": "0",
+      "helper": "Optional for invoices that already encode an amount"
+    },
+    "paste": "Paste from clipboard",
+    "pasteFailed": "Failed to access clipboard",
+    "destinationRequired": "Enter a destination",
+    "lnurlAmountRequired": "Enter an amount to send to this Lightning address",
+    "lnurlRange": "This Lightning address accepts {{min}}–{{max}} sats",
+    "insufficientBalance": "Insufficient balance. You can send up to {{balance}} sats",
+    "parseFailed": "Could not parse destination",
+    "checking": "Checking…",
+    "youreSending": "You're sending",
+    "details": "Payment Details",
+    "type": "Type",
+    "networkFee": "Network Fee",
+    "total": "Total",
+    "processing": "Processing...",
+    "confirmSend": "Confirm & Send Payment",
+    "sendingPayment": "Sending payment…",
+    "sent": "Payment sent",
+    "backToWallet": "Back to wallet",
+    "failed": "Payment failed",
+    "genericError": "Something went wrong. Please try again.",
+    "tryAgain": "Try Again",
+    "destinationKind": {
+      "bolt11": "Lightning invoice",
+      "bolt12": "BOLT12 offer",
+      "bitcoinAddress": "Bitcoin address",
+      "sparkAddress": "Spark address",
+      "sparkInvoice": "Spark invoice",
+      "bip21": "BIP21 payment request",
+      "lnurlPay": "Lightning address ({{domain}})"
+    },
+    "unsupported": {
+      "lnurlAuth": "LNURL-auth is for logging in, not paying. Use it elsewhere.",
+      "lnurlWithdraw": "LNURL-withdraw is for receiving, not sending.",
+      "url": "That looks like a web link, not a payment destination.",
+      "silentPayment": "Silent payment addresses aren't supported yet."
+    }
+  },
+  "receive": {
+    "title": "Receive",
+    "methods": {
+      "lightning": "Lightning",
+      "lightningSubtitle": "Instant",
+      "bitcoin": "Bitcoin",
+      "bitcoinSubtitle": "Added to your wallet on confirmation"
+    },
+    "lightning": {
+      "settingUp": "Setting up your Lightning address…",
+      "setupFailed": "Couldn't set up Lightning address",
+      "addressTitle": "Your Lightning address",
+      "addressSubtitle": "Share this with anyone who wants to pay you over Lightning.",
+      "editUsername": "Edit username"
+    },
+    "invoice": {
+      "openLink": "Or create a one-time invoice for a specific amount",
+      "title": "One-time invoice",
+      "expired": "Invoice expired. Generate a new one.",
+      "timeLeft": "{{time}} left",
+      "addressAmountLabel": "Amount (sats)",
+      "addressAmountPlaceholder": "1000",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "What is this payment for?",
+      "amountInvalid": "Enter a valid amount",
+      "generate": "Generate invoice",
+      "generateFailed": "Failed to generate invoice",
+      "shareTitle": "Lightning invoice",
+      "newInvoice": "New invoice"
+    },
+    "bitcoin": {
+      "title": "One-time Bitcoin address",
+      "subtitle": "Pay from any Bitcoin wallet. Funds are added to your wallet automatically once confirmed.",
+      "generating": "Generating Bitcoin address…",
+      "addressFailed": "Failed to generate address",
+      "copyAddress": "Copy address"
+    },
+    "success": {
+      "title": "Payment received",
+      "method": "Method",
+      "fees": "Fees",
+      "time": "Time"
+    }
+  },
+  "recovery": {
+    "title": "Get refund",
+    "nothing": "Nothing needs a refund. All incoming Bitcoin is being added to your wallet automatically.",
+    "explainer": "These Bitcoin transfers couldn't be added to your wallet automatically — usually because network fees were higher than the wallet's configured cap. You can refund them to a Bitcoin address you control.",
+    "amount": "Amount",
+    "refundButton": "Refund to Bitcoin",
+    "addressLabel": "Bitcoin address",
+    "addressPlaceholder": "bc1...",
+    "feeRate": "Fee rate",
+    "feeSlow": "Slow",
+    "feeMedium": "Medium",
+    "feeFast": "Fast",
+    "customRate": "Custom rate",
+    "orCustomRate": "Or set a custom rate",
+    "customPlaceholder": "sat/vB",
+    "addressRequired": "Enter a Bitcoin address",
+    "feeRequired": "Pick a fee rate",
+    "sendRefund": "Send refund",
+    "refundFailed": "Failed to send refund"
+  },
   "settings": {
     "title": "Settings",
     "lightningAddress": {
@@ -207,5 +367,57 @@
     "registeredAddress": {
       "editUsername": "Edit username"
     }
+  },
+  "transactions": {
+    "empty": "No transactions yet",
+    "emptyHint": "Your Lightning payments will appear here.",
+    "receivedDefault": "Received payment",
+    "sentDefault": "Sent payment",
+    "statusPending": "Pending",
+    "statusFailed": "Failed"
+  },
+  "paymentDetail": {
+    "title": "Payment details",
+    "direction": "Direction",
+    "received": "Received",
+    "sent": "Sent",
+    "fee": "Fee",
+    "time": "Time",
+    "description": "Description",
+    "paymentId": "Payment ID",
+    "invoice": "Invoice",
+    "preimage": "Preimage",
+    "statusPending": "Pending",
+    "statusComplete": "Complete",
+    "statusFailed": "Failed",
+    "copyAria": "Copy {{label}}"
+  },
+  "editUsername": {
+    "title": "Edit Lightning address",
+    "description": "Changing your username releases {{address}}. Anyone who has it saved will see payments fail and need the new one.",
+    "newLabel": "New username",
+    "checking": "Checking availability…",
+    "available": "Available",
+    "taken": "Taken — pick another",
+    "invalid": "Use lowercase letters, numbers, dots, underscores, hyphens (max 32).",
+    "failed": "Failed to update address",
+    "replace": "Replace address"
+  },
+  "buyBitcoin": {
+    "select": "Buy Bitcoin",
+    "amount": "Buy with Cash App",
+    "qr": "Pay with Cash App",
+    "moonpaySubtitle": "Card, Apple/Google Pay, bank transfer",
+    "moonpayRedirecting": "Redirecting…",
+    "cashAppSubtitle": "US/UK only · pays a Lightning invoice",
+    "amountLabel": "Amount (sats)",
+    "amountPlaceholder": "Enter amount in satoshis",
+    "amountTooLow": "Amount must be at least {{min}} sats",
+    "cashAppInfo": "Cash App will show the equivalent in your local currency and charge your Cash or BTC balance.",
+    "moonpayFailed": "Failed to open MoonPay",
+    "cashAppFailed": "Failed to create Cash App invoice",
+    "qrInstructions": "Scan this code with Cash App, or open the link on a device with Cash App installed.",
+    "copyLink": "Copy Cash App link",
+    "autoRefresh": "This dialog will refresh automatically once the payment lands."
   }
 }

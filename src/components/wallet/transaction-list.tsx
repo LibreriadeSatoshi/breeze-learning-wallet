@@ -5,6 +5,7 @@ import { Payment } from "@/lib/lightning/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
+import { useT } from "@/lib/i18n/hook";
 
 interface TransactionListProps {
   payments: Payment[];
@@ -15,17 +16,18 @@ export function TransactionList({
   payments,
   onPaymentClick,
 }: TransactionListProps) {
+  const t = useT();
   if (payments.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <h3 className="font-semibold">Recent activity</h3>
+          <h3 className="font-semibold">{t("home.recent.title")}</h3>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <p>No transactions yet</p>
+            <p>{t("transactions.empty")}</p>
             <p className="text-sm mt-1">
-              Your Lightning payments will appear here.
+              {t("transactions.emptyHint")}
             </p>
           </div>
         </CardContent>
@@ -36,7 +38,7 @@ export function TransactionList({
   return (
     <Card>
       <CardHeader>
-        <h3 className="font-semibold">Recent Activity</h3>
+        <h3 className="font-semibold">{t("home.recent.title")}</h3>
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -59,6 +61,7 @@ interface TransactionItemProps {
 }
 
 function TransactionItem({ payment, onClick }: TransactionItemProps) {
+  const t = useT();
   const sats = payment.amountSat;
   const date = new Date(payment.paymentTime * 1000);
   const isReceived = payment.paymentType === "received";
@@ -72,11 +75,11 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
     failed: "text-red-600 dark:text-red-400",
   };
 
-  const statusLabels = {
-    pending: "Pending",
+  const statusLabels: Record<typeof payment.status, string> = {
+    pending: t("transactions.statusPending"),
     complete: "",
-    failed: "Failed",
-  } as const;
+    failed: t("transactions.statusFailed"),
+  };
 
   return (
     <div
@@ -98,7 +101,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
             <div className="flex items-center gap-2">
               <div className="font-medium truncate">
                 {payment.description ||
-                  (isReceived ? "Received payment" : "Sent payment")}
+                  (isReceived ? t("transactions.receivedDefault") : t("transactions.sentDefault"))}
               </div>
               {statusLabels[payment.status] && (
                 <span className={`text-xs font-medium ${statusColors[payment.status]}`}>
