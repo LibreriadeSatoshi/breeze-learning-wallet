@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Cloud, Copy as CopyIcon, Eye, Lightbulb, Shield, TriangleAlert } from 'lucide-react';
+import { Cloud, Eye, Lightbulb, Shield, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -54,7 +54,6 @@ export default function CreateWalletPage() {
   >([]);
   const [picks, setPicks] = useState<number[]>([]);
   const [verifyError, setVerifyError] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [driveBusy, setDriveBusy] = useState(false);
   const [driveError, setDriveError] = useState('');
@@ -81,16 +80,6 @@ export default function CreateWalletPage() {
 
   const handleReveal = () => {
     setStep('shown');
-  };
-
-  const handleCopySeed = async () => {
-    try {
-      await navigator.clipboard.writeText(mnemonic);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard blocked, ignore
-    }
   };
 
   const handleProceedToVerify = () => {
@@ -300,15 +289,14 @@ export default function CreateWalletPage() {
                   </div>
                 ) : (
                   <div>
+                    <div className="mb-4 p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 flex items-start gap-2">
+                      <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <p className="text-sm text-amber-900 dark:text-amber-200">
+                        <strong className="font-semibold">{t('create.orderMatters.title')}</strong>{' '}
+                        {t('create.orderMatters.body')}
+                      </p>
+                    </div>
                     <MnemonicDisplay words={words} revealed />
-                    <Button
-                      variant="outline"
-                      onClick={handleCopySeed}
-                      className="mt-4 w-full inline-flex items-center justify-center gap-2"
-                    >
-                      {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-                      <span>{copied ? t('common.copied') : t('common.copy')}</span>
-                    </Button>
                     <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
                       <div className="flex items-start gap-2">
                         <Lightbulb className="w-4 h-4 mt-0.5 text-blue-700 dark:text-blue-300 shrink-0" />

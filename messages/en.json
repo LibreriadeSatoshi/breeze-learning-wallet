@@ -80,6 +80,10 @@
       }
     },
     "tip": "Tip: Write these words on paper in the exact order shown, or paste them into a password manager you trust. Avoid screenshots and cloud-synced plaintext notes.",
+    "orderMatters": {
+      "title": "Order matters.",
+      "body": "These 12 words only recover your wallet in the exact sequence shown. A different order leads to a different wallet — and lost funds."
+    },
     "writtenDown": "I've written it down — verify",
     "verify": {
       "selectInOrder": "Select words #{{slots}} in order",

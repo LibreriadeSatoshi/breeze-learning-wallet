@@ -80,6 +80,10 @@
       }
     },
     "tip": "Tip: Escribí estas palabras en papel en el orden exacto, o pegalas en un administrador de contraseñas confiable. Evitá capturas de pantalla y notas en la nube en texto plano.",
+    "orderMatters": {
+      "title": "El orden importa.",
+      "body": "Estas 12 palabras solo recuperan tu billetera en la secuencia exacta que se muestra. Un orden distinto lleva a otra billetera — y a fondos perdidos."
+    },
     "writtenDown": "La anoté — verificar",
     "verify": {
       "selectInOrder": "Seleccioná las palabras #{{slots}} en orden",
