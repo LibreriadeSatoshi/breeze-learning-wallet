@@ -81,8 +81,8 @@
     },
     "tip": "Tip: Write these words on paper in the exact order shown and keep the paper somewhere safe. Don't take a screenshot, don't save them in a notes app, and don't send them anywhere.",
     "orderMatters": {
-      "title": "Order matters.",
-      "body": "These 12 words only recover your wallet in the exact sequence shown. A different order leads to a different wallet, and lost funds."
+      "title": "Order and exact wording matter.",
+      "body": "These 12 words only recover your wallet in the exact sequence shown, written in English. Translating them or changing the order means you won't be able to recover your wallet."
     },
     "writtenDown": "I've written it down",
     "verify": {

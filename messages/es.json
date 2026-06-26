@@ -81,8 +81,8 @@
     },
     "tip": "Tip: Escribe estas palabras en papel en el orden exacto y guarda el papel en un lugar seguro. No tomes una captura, no las guardes en una app de notas, y no las envíes a ningún lado.",
     "orderMatters": {
-      "title": "El orden importa.",
-      "body": "Estas 12 palabras solo recuperan tu billetera en la secuencia exacta que se muestra. Un orden distinto lleva a otra billetera, y a fondos perdidos."
+      "title": "El orden y la escritura exacta importan.",
+      "body": "Estas 12 palabras solo recuperan tu billetera en la secuencia exacta que se muestra, escritas en inglés. Traducirlas o cambiar el orden significa que no vas a poder recuperar tu billetera."
     },
     "writtenDown": "Ya las anoté",
     "verify": {
