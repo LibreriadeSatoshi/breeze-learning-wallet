@@ -55,7 +55,7 @@
       "phrase": "Write down these 12 words in order and keep them safe. You'll need them to recover your wallet.",
       "verify": "Tap the words in the order they appear in your phrase. This proves you have a working backup.",
       "password": "This password encrypts your wallet on this device. You will need it every time you unlock.",
-      "driveOffer": "Optional: add an encrypted backup to your own Google Drive so you can restore on other devices without typing the 12 words."
+      "driveOffer": "Optional: save an encrypted copy of your 12-word recovery phrase to your own Google Drive so you can restore on other devices without typing the 12 words."
     },
     "security": {
       "title": "Important security information",
@@ -106,8 +106,8 @@
       "failed": "Failed to create wallet"
     },
     "drive": {
-      "blurbCiphertext": "Stores the same encrypted file as the one on this device. Your wallet password is still required to use it.",
-      "blurbConvenience": "Your recovery phrase remains the master backup. Drive is a convenience for switching devices.",
+      "blurbCiphertext": "What gets saved: your 12-word recovery phrase, encrypted with your wallet password. Google sees an unreadable file. Without your password, the file can't be used.",
+      "blurbConvenience": "Your written-down phrase is still the master backup. Drive just lets you restore on another device without typing the 12 words.",
       "backup": "Back up to Google Drive",
       "failed": "Failed to start Google Drive backup"
     }

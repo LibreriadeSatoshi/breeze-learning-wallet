@@ -55,7 +55,7 @@
       "phrase": "Anota estas 12 palabras en orden y guárdalas en un lugar seguro. Las necesitas para recuperar tu billetera.",
       "verify": "Toca las palabras en el orden en que aparecen en tu frase. Esto demuestra que tienes una copia funcional.",
       "password": "Esta contraseña cifra tu billetera en este dispositivo. La vas a necesitar cada vez que la desbloquees.",
-      "driveOffer": "Opcional: agrega una copia cifrada en tu propio Google Drive para restaurar en otros dispositivos sin escribir las 12 palabras."
+      "driveOffer": "Opcional: guarda una copia cifrada de tu frase de recuperación de 12 palabras en tu propio Google Drive para restaurar en otros dispositivos sin escribir las 12 palabras."
     },
     "security": {
       "title": "Información de seguridad importante",
@@ -106,8 +106,8 @@
       "failed": "No se pudo crear la billetera"
     },
     "drive": {
-      "blurbCiphertext": "Guarda el mismo archivo cifrado que está en este dispositivo. Tu contraseña sigue siendo necesaria para usarlo.",
-      "blurbConvenience": "Tu frase de recuperación sigue siendo la copia maestra. Drive es una comodidad para cambiar de dispositivo.",
+      "blurbCiphertext": "Qué se guarda: tu frase de recuperación de 12 palabras, cifrada con la contraseña de tu billetera. Google ve un archivo ilegible. Sin tu contraseña, el archivo no se puede usar.",
+      "blurbConvenience": "Tu frase escrita en papel sigue siendo la copia maestra. Drive solo te permite restaurar en otro dispositivo sin escribir las 12 palabras.",
       "backup": "Hacer copia en Google Drive",
       "failed": "No se pudo iniciar la copia en Google Drive"
     }
