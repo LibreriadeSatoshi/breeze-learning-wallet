@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { APP_NAME } from "@/lib/config";
 import { useWalletStore } from "@/store/wallet-store";
+import { useT } from "@/lib/i18n/hook";
 
 export default function WelcomePage() {
+  const t = useT();
   const router = useRouter();
   const hasVault = useWalletStore((s) => s.hasVault);
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
@@ -43,7 +45,7 @@ export default function WelcomePage() {
 
   const handleUnlock = async () => {
     if (!password) {
-      setError("Enter your wallet password");
+      setError(t("welcome.unlock.passwordRequired"));
       return;
     }
     setError("");
@@ -52,7 +54,7 @@ export default function WelcomePage() {
       await unlock(password);
       router.push("/wallet/home");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to unlock wallet");
+      setError(err instanceof Error ? err.message : t("welcome.unlock.failed"));
       setUnlocking(false);
       setPassword("");
     }
@@ -74,7 +76,7 @@ export default function WelcomePage() {
   if (!isBootstrapped) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
       </div>
     );
   }
@@ -89,7 +91,7 @@ export default function WelcomePage() {
           {APP_NAME}
         </h1>
         <p className="text-center text-gray-600 dark:text-gray-400 max-w-sm px-4">
-          A non-custodial Bitcoin & Lightning wallet. Your keys, your coins.
+          {t("welcome.tagline")}
         </p>
       </div>
 
@@ -98,16 +100,16 @@ export default function WelcomePage() {
           <Card className="shadow-lg">
             <CardContent className="pt-6 space-y-4">
               <div>
-                <h2 className="text-xl font-semibold mb-1">Unlock wallet</h2>
+                <h2 className="text-xl font-semibold mb-1">{t("welcome.unlock.title")}</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Enter your wallet password to continue.
+                  {t("welcome.unlock.subtitle")}
                 </p>
               </div>
               <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Wallet password"
+                placeholder={t("welcome.unlock.passwordPlaceholder")}
                 disabled={unlocking}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleUnlock();
@@ -127,19 +129,19 @@ export default function WelcomePage() {
                 disabled={unlocking}
                 className="w-full"
               >
-                {unlocking ? "Unlocking…" : "Unlock"}
+                {unlocking ? t("welcome.unlock.submitting") : t("welcome.unlock.submit")}
               </Button>
               <button
                 onClick={() => router.push("/wallet/restore")}
                 className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               >
-                Forgot password? Restore from recovery phrase
+                {t("welcome.unlock.forgotPassword")}
               </button>
               <button
                 onClick={() => setShowForget(true)}
                 className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
               >
-                Forget this wallet on this device
+                {t("welcome.unlock.forget")}
               </button>
             </CardContent>
           </Card>
@@ -152,7 +154,7 @@ export default function WelcomePage() {
               loading={creatingWallet}
               className="w-full shadow-lg hover:shadow-xl transition-shadow"
             >
-              {creatingWallet ? "Creating wallet..." : "Create new wallet"}
+              {creatingWallet ? t("welcome.noVault.creating") : t("welcome.noVault.create")}
             </Button>
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center">
@@ -160,7 +162,7 @@ export default function WelcomePage() {
               </div>
               <div className="relative flex justify-center text-xs">
                 <span className="px-2 bg-white dark:bg-gray-900 text-gray-400">
-                  Already have a wallet?
+                  {t("welcome.noVault.haveWallet")}
                 </span>
               </div>
             </div>
@@ -171,7 +173,7 @@ export default function WelcomePage() {
               disabled={creatingWallet}
               className="w-full hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              Restore wallet
+              {t("welcome.noVault.restore")}
             </Button>
           </>
         )}
@@ -179,7 +181,7 @@ export default function WelcomePage() {
 
       <div className="text-center pb-6">
         <p className="text-xs text-gray-500 dark:text-gray-400 px-8">
-          By continuing, you agree to our Terms of Service and Privacy Policy
+          {t("welcome.footer")}
         </p>
       </div>
 
@@ -191,15 +193,15 @@ export default function WelcomePage() {
           setForgetConfirm("");
         }}
         dismissable={!forgetting}
-        title="Forget this wallet?"
-        description="This erases the encrypted wallet from this browser. Funds remain controlled by your recovery phrase — without it, anything in this wallet is gone for good."
+        title={t("forgetWallet.title")}
+        description={t("forgetWallet.description")}
       >
         <div className="space-y-4">
           <Input
-            label='Type "forget" to confirm'
+            label={t("forgetWallet.confirmLabel")}
             value={forgetConfirm}
             onChange={(e) => setForgetConfirm(e.target.value)}
-            placeholder="forget"
+            placeholder={t("forgetWallet.confirmPlaceholder")}
             disabled={forgetting}
             autoFocus
           />
@@ -214,7 +216,7 @@ export default function WelcomePage() {
               disabled={forgetting}
               className="flex-1"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="primary"
@@ -222,11 +224,11 @@ export default function WelcomePage() {
               onClick={handleForget}
               loading={forgetting}
               disabled={
-                forgetting || forgetConfirm.trim().toLowerCase() !== "forget"
+                forgetting || forgetConfirm.trim().toLowerCase() !== t("forgetWallet.confirmWord")
               }
               className="flex-1 bg-red-600 hover:bg-red-700"
             >
-              Forget wallet
+              {t("forgetWallet.submit")}
             </Button>
           </div>
         </div>

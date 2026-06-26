@@ -1,0 +1,211 @@
+{
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "save": "Save",
+    "copy": "Copy",
+    "copied": "Copied",
+    "loading": "Loading…",
+    "retry": "Try again",
+    "goBack": "Go back",
+    "close": "Close",
+    "skip": "Skip for now"
+  },
+  "welcome": {
+    "tagline": "A non-custodial Bitcoin & Lightning wallet. Your keys, your coins.",
+    "unlock": {
+      "title": "Unlock wallet",
+      "subtitle": "Enter your wallet password to continue.",
+      "passwordPlaceholder": "Wallet password",
+      "submit": "Unlock",
+      "submitting": "Unlocking…",
+      "passwordRequired": "Enter your wallet password",
+      "failed": "Failed to unlock wallet",
+      "forgotPassword": "Forgot password? Restore from recovery phrase",
+      "forget": "Forget this wallet on this device"
+    },
+    "noVault": {
+      "create": "Create new wallet",
+      "creating": "Creating wallet...",
+      "haveWallet": "Already have a wallet?",
+      "restore": "Restore wallet"
+    },
+    "footer": "By continuing, you agree to our Terms of Service and Privacy Policy"
+  },
+  "forgetWallet": {
+    "title": "Forget this wallet?",
+    "description": "This erases the encrypted wallet from this browser. Funds remain controlled by your recovery phrase — without it, anything in this wallet is gone for good.",
+    "confirmLabel": "Type \"forget\" to confirm",
+    "confirmPlaceholder": "forget",
+    "confirmWord": "forget",
+    "submit": "Forget wallet"
+  },
+  "create": {
+    "heading": {
+      "phrase": "Your Recovery Phrase",
+      "verify": "Verify Your Recovery Phrase",
+      "password": "Set a Wallet Password",
+      "driveOffer": "Back up to Google Drive?"
+    },
+    "subheading": {
+      "phrase": "Write down these 12 words in order and keep them safe. You'll need them to recover your wallet.",
+      "verify": "Tap the words in the order they appear in your phrase. This proves you have a working backup.",
+      "password": "This password encrypts your wallet on this device. You will need it every time you unlock.",
+      "driveOffer": "Optional: add an encrypted backup to your own Google Drive so you can restore on other devices without typing the 12 words."
+    },
+    "security": {
+      "title": "Important security information",
+      "neverShare": "Never share your recovery phrase with anyone.",
+      "storeOffline": "Store it offline in a secure location.",
+      "anyoneCanAccess": "Anyone with these words can access your funds."
+    },
+    "reveal": {
+      "title": "Reveal your recovery phrase",
+      "subtitle": "Make sure no one is looking at your screen.",
+      "button": "Reveal recovery phrase"
+    },
+    "tip": "Tip: Write these words on paper in the exact order shown, or paste them into a password manager you trust. Avoid screenshots and cloud-synced plaintext notes.",
+    "writtenDown": "I've written it down — verify",
+    "verify": {
+      "selectInOrder": "Select words #{{slots}} in order",
+      "incorrect": "Incorrect order. Tap the words again in the order they appear in your phrase.",
+      "tapInOrder": "Tap words in order",
+      "viewAgain": "View phrase again",
+      "submit": "Verify"
+    },
+    "password": {
+      "label": "Wallet password",
+      "placeholder": "At least 8 characters",
+      "confirmLabel": "Confirm password",
+      "confirmPlaceholder": "Re-enter password",
+      "show": "Show passwords",
+      "noRecovery": "There is no password recovery. If you forget this password, restore the wallet from your recovery phrase.",
+      "tooShort": "Password must be at least 8 characters",
+      "mismatch": "Passwords do not match",
+      "submit": "Create wallet",
+      "creating": "Encrypting…",
+      "failed": "Failed to create wallet"
+    },
+    "drive": {
+      "blurbCiphertext": "Stores the same encrypted file as the one on this device. Your wallet password is still required to use it.",
+      "blurbConvenience": "Your recovery phrase remains the master backup. Drive is a convenience for switching devices.",
+      "backup": "Back up to Google Drive",
+      "failed": "Failed to start Google Drive backup"
+    }
+  },
+  "restore": {
+    "title": "Restore Wallet",
+    "subtitle": {
+      "method": "Choose how you want to restore your wallet",
+      "phrase": "Enter your 12-word recovery phrase",
+      "password": "Set a wallet password to encrypt this device"
+    },
+    "methods": {
+      "phrase": {
+        "title": "From recovery phrase",
+        "subtitle": "Type your 12 words to restore the wallet on this device."
+      },
+      "drive": {
+        "title": "From Google Drive",
+        "subtitle": "Sign in to your Google account to download your encrypted vault.",
+        "notConfigured": "Not configured for this build.",
+        "startFailed": "Failed to start Google Drive sign-in"
+      }
+    },
+    "phrase": {
+      "title": "Recovery Phrase",
+      "wordCount": "{{count}}/12 words",
+      "placeholder": "word1 word2 word3 ... word12",
+      "invalid": "Invalid recovery phrase. Please check the words and try again.",
+      "paste": "Paste from clipboard",
+      "pasteFailed": "Failed to access clipboard. Please paste manually.",
+      "chooseDifferent": "Choose a different method",
+      "overwriteWarning": "Restoring will replace the existing wallet on this device. Make sure you still have its recovery phrase before continuing."
+    },
+    "password": {
+      "submit": "Restore wallet",
+      "submitting": "Restoring…",
+      "failed": "Failed to restore wallet"
+    },
+    "overwrite": {
+      "title": "Replace the wallet on this device?",
+      "description": "Restoring erases the existing encrypted wallet from this browser. Funds in the existing wallet remain controlled by its recovery phrase — make sure you still have it before continuing.",
+      "confirm": "Replace wallet"
+    }
+  },
+  "driveCallback": {
+    "signingIn": "Finishing Google sign-in…",
+    "uploading": "Uploading encrypted backup…",
+    "downloading": "Downloading your encrypted vault…",
+    "saving": "Saving to this device…",
+    "noBackup": "No backup found in your Google Drive. Did you back up from this app before?",
+    "noVault": "No wallet to back up.",
+    "operationFailed": "Drive operation failed."
+  },
+  "settings": {
+    "title": "Settings",
+    "lightningAddress": {
+      "title": "Lightning address",
+      "subtitle": "A human-readable address (like an email) that anyone can pay over Lightning.",
+      "loading": "Loading…"
+    },
+    "network": {
+      "title": "Network",
+      "active": "Active: "
+    },
+    "driveBackup": {
+      "title": "Google Drive backup",
+      "subtitle": "Stores an encrypted copy of your wallet in your own Google Drive (hidden app folder). Your recovery phrase is still the master backup.",
+      "connect": "Connect Google Drive",
+      "connectStartFailed": "Failed to start Google Drive sign-in",
+      "backupStartFailed": "Failed to start backup",
+      "account": "Account",
+      "lastBackup": "Last backed up",
+      "backupNow": "Back up now",
+      "disconnect": "Disconnect",
+      "disconnectFailed": "Failed to disconnect",
+      "disconnectConfirmTitle": "Disconnect and delete the backup?",
+      "disconnectConfirmDescription": "This removes the encrypted file from your Google Drive. To restore on another device you'll need your recovery phrase, not Google Drive.",
+      "disconnectWarning": "The wallet on this device is not affected. Only the Drive copy is deleted.",
+      "disconnectSubmit": "Disconnect & delete"
+    },
+    "currency": {
+      "title": "Display currency",
+      "subtitle": "Used for fiat equivalents shown alongside sats.",
+      "loading": "Loading currencies…"
+    },
+    "language": {
+      "title": "Language",
+      "subtitle": "Used for the wallet interface."
+    },
+    "claimLeeway": {
+      "title": "Auto-claim deposits",
+      "subtitle": "On-chain deposits are claimed automatically when the network fee rate is at most recommended + leeway sat/vB. Higher leeway means more claims succeed but you may overpay during quiet periods.",
+      "label": "Leeway (sat/vB)",
+      "helper": "Default {{default}}. Takes effect after the next wallet restart.",
+      "saved": "Saved"
+    },
+    "dangerZone": {
+      "title": "Danger zone",
+      "subtitle": "Erase the encrypted wallet from this browser. Funds remain controlled by your recovery phrase.",
+      "button": "Forget this wallet"
+    },
+    "claimUsername": {
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "alice",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "What senders will see",
+      "checking": "Checking availability…",
+      "available": "Available",
+      "taken": "Taken — pick another",
+      "invalid": "Use lowercase letters, numbers, dots, underscores, hyphens (max 32).",
+      "claim": "Claim address",
+      "failed": "Failed to register address",
+      "breezDefault": "<breez default>"
+    },
+    "registeredAddress": {
+      "editUsername": "Edit username"
+    }
+  }
+}

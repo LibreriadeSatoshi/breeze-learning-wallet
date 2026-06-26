@@ -1,0 +1,211 @@
+{
+  "common": {
+    "back": "Atrás",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "save": "Guardar",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "goBack": "Volver",
+    "close": "Cerrar",
+    "skip": "Omitir por ahora"
+  },
+  "welcome": {
+    "tagline": "Una billetera Bitcoin y Lightning no custodial. Tus claves, tus monedas.",
+    "unlock": {
+      "title": "Desbloquear billetera",
+      "subtitle": "Ingresá tu contraseña para continuar.",
+      "passwordPlaceholder": "Contraseña de la billetera",
+      "submit": "Desbloquear",
+      "submitting": "Desbloqueando…",
+      "passwordRequired": "Ingresá la contraseña de tu billetera",
+      "failed": "No se pudo desbloquear la billetera",
+      "forgotPassword": "¿Olvidaste la contraseña? Restaurar desde la frase de recuperación",
+      "forget": "Olvidar esta billetera en este dispositivo"
+    },
+    "noVault": {
+      "create": "Crear billetera nueva",
+      "creating": "Creando billetera...",
+      "haveWallet": "¿Ya tenés una billetera?",
+      "restore": "Restaurar billetera"
+    },
+    "footer": "Al continuar, aceptás nuestros Términos del Servicio y Política de Privacidad"
+  },
+  "forgetWallet": {
+    "title": "¿Olvidar esta billetera?",
+    "description": "Esto borra la billetera cifrada de este navegador. Los fondos siguen controlados por tu frase de recuperación — sin ella, todo lo que esté en esta billetera se pierde.",
+    "confirmLabel": "Escribí \"olvidar\" para confirmar",
+    "confirmPlaceholder": "olvidar",
+    "confirmWord": "olvidar",
+    "submit": "Olvidar billetera"
+  },
+  "create": {
+    "heading": {
+      "phrase": "Tu frase de recuperación",
+      "verify": "Verificá tu frase de recuperación",
+      "password": "Definí una contraseña",
+      "driveOffer": "¿Hacer copia en Google Drive?"
+    },
+    "subheading": {
+      "phrase": "Anotá estas 12 palabras en orden y guardalas en un lugar seguro. Las necesitás para recuperar tu billetera.",
+      "verify": "Tocá las palabras en el orden en que aparecen en tu frase. Esto demuestra que tenés una copia funcional.",
+      "password": "Esta contraseña cifra tu billetera en este dispositivo. La vas a necesitar cada vez que la desbloquees.",
+      "driveOffer": "Opcional: agregá una copia cifrada en tu propio Google Drive para restaurar en otros dispositivos sin tipear las 12 palabras."
+    },
+    "security": {
+      "title": "Información de seguridad importante",
+      "neverShare": "Nunca compartas tu frase de recuperación con nadie.",
+      "storeOffline": "Guardala fuera de línea en un lugar seguro.",
+      "anyoneCanAccess": "Cualquiera con estas palabras puede acceder a tus fondos."
+    },
+    "reveal": {
+      "title": "Mostrar tu frase de recuperación",
+      "subtitle": "Asegurate de que nadie esté mirando tu pantalla.",
+      "button": "Mostrar frase de recuperación"
+    },
+    "tip": "Tip: Escribí estas palabras en papel en el orden exacto, o pegalas en un administrador de contraseñas confiable. Evitá capturas de pantalla y notas en la nube en texto plano.",
+    "writtenDown": "La anoté — verificar",
+    "verify": {
+      "selectInOrder": "Seleccioná las palabras #{{slots}} en orden",
+      "incorrect": "Orden incorrecto. Tocá las palabras nuevamente en el orden en que aparecen en tu frase.",
+      "tapInOrder": "Tocá las palabras en orden",
+      "viewAgain": "Ver frase otra vez",
+      "submit": "Verificar"
+    },
+    "password": {
+      "label": "Contraseña de la billetera",
+      "placeholder": "Al menos 8 caracteres",
+      "confirmLabel": "Confirmar contraseña",
+      "confirmPlaceholder": "Repetir contraseña",
+      "show": "Mostrar contraseñas",
+      "noRecovery": "No hay recuperación de contraseña. Si la olvidás, restaurá la billetera desde tu frase de recuperación.",
+      "tooShort": "La contraseña debe tener al menos 8 caracteres",
+      "mismatch": "Las contraseñas no coinciden",
+      "submit": "Crear billetera",
+      "creating": "Cifrando…",
+      "failed": "No se pudo crear la billetera"
+    },
+    "drive": {
+      "blurbCiphertext": "Guarda el mismo archivo cifrado que está en este dispositivo. Tu contraseña sigue siendo necesaria para usarlo.",
+      "blurbConvenience": "Tu frase de recuperación sigue siendo la copia maestra. Drive es una comodidad para cambiar de dispositivo.",
+      "backup": "Hacer copia en Google Drive",
+      "failed": "No se pudo iniciar la copia en Google Drive"
+    }
+  },
+  "restore": {
+    "title": "Restaurar billetera",
+    "subtitle": {
+      "method": "Elegí cómo querés restaurar tu billetera",
+      "phrase": "Ingresá tu frase de recuperación de 12 palabras",
+      "password": "Definí una contraseña para cifrar este dispositivo"
+    },
+    "methods": {
+      "phrase": {
+        "title": "Desde frase de recuperación",
+        "subtitle": "Tipeá tus 12 palabras para restaurar la billetera en este dispositivo."
+      },
+      "drive": {
+        "title": "Desde Google Drive",
+        "subtitle": "Iniciá sesión en tu cuenta de Google para descargar tu bóveda cifrada.",
+        "notConfigured": "No configurado para esta build.",
+        "startFailed": "No se pudo iniciar el inicio de sesión con Google Drive"
+      }
+    },
+    "phrase": {
+      "title": "Frase de recuperación",
+      "wordCount": "{{count}}/12 palabras",
+      "placeholder": "palabra1 palabra2 palabra3 ... palabra12",
+      "invalid": "Frase de recuperación inválida. Revisá las palabras e intentá de nuevo.",
+      "paste": "Pegar desde portapapeles",
+      "pasteFailed": "No se pudo acceder al portapapeles. Pegalo manualmente.",
+      "chooseDifferent": "Elegir otro método",
+      "overwriteWarning": "Restaurar va a reemplazar la billetera existente en este dispositivo. Asegurate de seguir teniendo su frase de recuperación antes de continuar."
+    },
+    "password": {
+      "submit": "Restaurar billetera",
+      "submitting": "Restaurando…",
+      "failed": "No se pudo restaurar la billetera"
+    },
+    "overwrite": {
+      "title": "¿Reemplazar la billetera en este dispositivo?",
+      "description": "Restaurar borra la billetera cifrada existente en este navegador. Los fondos en la billetera existente siguen controlados por su frase de recuperación — asegurate de seguir teniéndola antes de continuar.",
+      "confirm": "Reemplazar billetera"
+    }
+  },
+  "driveCallback": {
+    "signingIn": "Finalizando inicio de sesión con Google…",
+    "uploading": "Subiendo copia cifrada…",
+    "downloading": "Descargando tu bóveda cifrada…",
+    "saving": "Guardando en este dispositivo…",
+    "noBackup": "No se encontró ninguna copia en tu Google Drive. ¿Hiciste una copia desde esta app antes?",
+    "noVault": "No hay billetera para respaldar.",
+    "operationFailed": "La operación de Drive falló."
+  },
+  "settings": {
+    "title": "Configuración",
+    "lightningAddress": {
+      "title": "Dirección Lightning",
+      "subtitle": "Una dirección legible (como un correo) que cualquiera puede pagar por Lightning.",
+      "loading": "Cargando…"
+    },
+    "network": {
+      "title": "Red",
+      "active": "Activa: "
+    },
+    "driveBackup": {
+      "title": "Copia en Google Drive",
+      "subtitle": "Guarda una copia cifrada de tu billetera en tu propio Google Drive (carpeta oculta de la app). Tu frase de recuperación sigue siendo la copia maestra.",
+      "connect": "Conectar Google Drive",
+      "connectStartFailed": "No se pudo iniciar el inicio de sesión con Google Drive",
+      "backupStartFailed": "No se pudo iniciar la copia",
+      "account": "Cuenta",
+      "lastBackup": "Última copia",
+      "backupNow": "Hacer copia ahora",
+      "disconnect": "Desconectar",
+      "disconnectFailed": "No se pudo desconectar",
+      "disconnectConfirmTitle": "¿Desconectar y borrar la copia?",
+      "disconnectConfirmDescription": "Esto elimina el archivo cifrado de tu Google Drive. Para restaurar en otro dispositivo vas a necesitar tu frase de recuperación, no Google Drive.",
+      "disconnectWarning": "La billetera en este dispositivo no se ve afectada. Solo se borra la copia de Drive.",
+      "disconnectSubmit": "Desconectar y borrar"
+    },
+    "currency": {
+      "title": "Moneda de visualización",
+      "subtitle": "Usada para los equivalentes fiat que se muestran junto a los sats.",
+      "loading": "Cargando monedas…"
+    },
+    "language": {
+      "title": "Idioma",
+      "subtitle": "Usado para la interfaz de la billetera."
+    },
+    "claimLeeway": {
+      "title": "Auto-reclamo de depósitos",
+      "subtitle": "Los depósitos on-chain se reclaman automáticamente cuando la tarifa de red es como máximo recomendada + margen sat/vB. Más margen significa que más reclamos tienen éxito pero podés pagar de más en períodos calmos.",
+      "label": "Margen (sat/vB)",
+      "helper": "Por defecto {{default}}. Tiene efecto luego del próximo reinicio de la billetera.",
+      "saved": "Guardado"
+    },
+    "dangerZone": {
+      "title": "Zona de peligro",
+      "subtitle": "Borrá la billetera cifrada de este navegador. Los fondos siguen controlados por tu frase de recuperación.",
+      "button": "Olvidar esta billetera"
+    },
+    "claimUsername": {
+      "usernameLabel": "Nombre de usuario",
+      "usernamePlaceholder": "alice",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "Lo que verán los pagadores",
+      "checking": "Verificando disponibilidad…",
+      "available": "Disponible",
+      "taken": "Ya tomado — elegí otro",
+      "invalid": "Usá letras minúsculas, números, puntos, guiones bajos y medios (máx 32).",
+      "claim": "Reclamar dirección",
+      "failed": "No se pudo registrar la dirección",
+      "breezDefault": "<predeterminado de breez>"
+    },
+    "registeredAddress": {
+      "editUsername": "Editar nombre de usuario"
+    }
+  }
+}

@@ -39,6 +39,8 @@ import {
   getLastSyncIso,
   getDriveEmail,
 } from "@/lib/backup/drive-client";
+import { useT, useLocale } from "@/lib/i18n/hook";
+import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n/types";
 import { formatRelativeTime } from "@/lib/wallet/relative-time";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
@@ -46,6 +48,7 @@ import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
 const USERNAME_RE = /^[a-z0-9._-]{1,32}$/;
 
 export default function SettingsPage() {
+  const t = useT();
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
   const destroyVault = useWalletStore((s) => s.destroyVault);
@@ -75,25 +78,24 @@ export default function SettingsPage() {
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={() => router.push("/wallet/home")}
-            aria-label="Back"
+            aria-label={t("common.back")}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold">Settings</h1>
+          <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">Lightning address</h2>
+            <h2 className="text-lg font-semibold">{t("settings.lightningAddress.title")}</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              A human-readable address (like an email) that anyone can pay over
-              Lightning.
+              {t("settings.lightningAddress.subtitle")}
             </p>
           </CardHeader>
           <CardContent>
             {loadingAddress ? (
-              <p className="text-sm text-gray-500">Loading…</p>
+              <p className="text-sm text-gray-500">{t("settings.lightningAddress.loading")}</p>
             ) : lightningAddress ? (
               <RegisteredAddress
                 info={lightningAddress}
@@ -107,11 +109,11 @@ export default function SettingsPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">Network</h2>
+            <h2 className="text-lg font-semibold">{t("settings.network.title")}</h2>
           </CardHeader>
           <CardContent>
             <p className="text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Active: </span>
+              <span className="text-gray-600 dark:text-gray-400">{t("settings.network.active")}</span>
               <span className="font-medium capitalize">
                 {SELECTED_BITCOIN_NETWORK}
               </span>
@@ -122,11 +124,9 @@ export default function SettingsPage() {
         {isDriveBackupConfigured() && (
           <Card className="mb-6">
             <CardHeader>
-              <h2 className="text-lg font-semibold">Google Drive backup</h2>
+              <h2 className="text-lg font-semibold">{t("settings.driveBackup.title")}</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Stores an encrypted copy of your wallet in your own Google
-                Drive (hidden app folder). Your recovery phrase is still the
-                master backup.
+                {t("settings.driveBackup.subtitle")}
               </p>
             </CardHeader>
             <CardContent>
@@ -137,9 +137,9 @@ export default function SettingsPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">Display currency</h2>
+            <h2 className="text-lg font-semibold">{t("settings.currency.title")}</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Used for fiat equivalents shown alongside sats.
+              {t("settings.currency.subtitle")}
             </p>
           </CardHeader>
           <CardContent>
@@ -149,11 +149,21 @@ export default function SettingsPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">Auto-claim deposits</h2>
+            <h2 className="text-lg font-semibold">{t("settings.language.title")}</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              On-chain deposits are claimed automatically when the network fee
-              rate is at most <em>recommended + leeway</em> sat/vB. Higher leeway
-              means more claims succeed but you may overpay during quiet periods.
+              {t("settings.language.subtitle")}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <LanguagePickerSection />
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <h2 className="text-lg font-semibold">{t("settings.claimLeeway.title")}</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {t("settings.claimLeeway.subtitle")}
             </p>
           </CardHeader>
           <CardContent>
@@ -164,7 +174,7 @@ export default function SettingsPage() {
         <Card className="mb-6 border-red-200 dark:border-red-900">
           <CardHeader>
             <h2 className="text-lg font-semibold text-red-700 dark:text-red-300">
-              Danger zone
+              {t("settings.dangerZone.title")}
             </h2>
           </CardHeader>
           <CardContent>
@@ -182,6 +192,7 @@ export default function SettingsPage() {
 }
 
 function DriveBackupSection() {
+  const t = useT();
   const [connected, setConnected] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
@@ -202,7 +213,7 @@ function DriveBackupSection() {
       startDriveAuthFlow({ type: "connect", returnTo: "/wallet/settings" });
     } catch (e) {
       setBusy(false);
-      setError(e instanceof Error ? e.message : "Failed to start Google Drive sign-in");
+      setError(e instanceof Error ? e.message : t("settings.driveBackup.connectStartFailed"));
     }
   };
 
@@ -213,7 +224,7 @@ function DriveBackupSection() {
       startDriveAuthFlow({ type: "backup", returnTo: "/wallet/settings" });
     } catch (e) {
       setBusy(false);
-      setError(e instanceof Error ? e.message : "Failed to start backup");
+      setError(e instanceof Error ? e.message : t("settings.driveBackup.backupStartFailed"));
     }
   };
 
@@ -226,7 +237,7 @@ function DriveBackupSection() {
       setLastSync(null);
       setEmail(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to disconnect");
+      setError(e instanceof Error ? e.message : t("settings.driveBackup.disconnectFailed"));
     } finally {
       setBusy(false);
     }
@@ -242,7 +253,7 @@ function DriveBackupSection() {
           disabled={busy}
           className="w-full"
         >
-          Connect Google Drive
+          {t("settings.driveBackup.connect")}
         </Button>
         {error && (
           <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
@@ -257,12 +268,12 @@ function DriveBackupSection() {
     <div className="space-y-3">
       {email && (
         <div className="text-sm flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Account</span>
+          <span className="text-gray-600 dark:text-gray-400">{t("settings.driveBackup.account")}</span>
           <span className="font-medium">{email}</span>
         </div>
       )}
       <div className="text-sm flex justify-between">
-        <span className="text-gray-600 dark:text-gray-400">Last backed up</span>
+        <span className="text-gray-600 dark:text-gray-400">{t("settings.driveBackup.lastBackup")}</span>
         <span className="font-medium">{lastSyncLabel}</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -272,14 +283,14 @@ function DriveBackupSection() {
           loading={busy}
           disabled={busy}
         >
-          Back up now
+          {t("settings.driveBackup.backupNow")}
         </Button>
         <Button
           variant="outline"
           onClick={() => setConfirmDisconnect(true)}
           disabled={busy}
         >
-          Disconnect
+          {t("settings.driveBackup.disconnect")}
         </Button>
       </div>
       {error && (
@@ -290,15 +301,14 @@ function DriveBackupSection() {
         open={confirmDisconnect}
         onClose={() => setConfirmDisconnect(false)}
         dismissable={!busy}
-        title="Disconnect and delete the backup?"
-        description="This removes the encrypted file from your Google Drive. To restore on another device you'll need your recovery phrase, not Google Drive."
+        title={t("settings.driveBackup.disconnectConfirmTitle")}
+        description={t("settings.driveBackup.disconnectConfirmDescription")}
       >
         <div className="space-y-4">
           <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
             <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>
-              The wallet on this device is not affected. Only the Drive copy is
-              deleted.
+              {t("settings.driveBackup.disconnectWarning")}
             </span>
           </div>
           <div className="flex gap-3">
@@ -309,7 +319,7 @@ function DriveBackupSection() {
               disabled={busy}
               className="flex-1"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="primary"
@@ -322,7 +332,7 @@ function DriveBackupSection() {
               disabled={busy}
               className="flex-1 bg-red-600 hover:bg-red-700"
             >
-              Disconnect & delete
+              {t("settings.driveBackup.disconnectSubmit")}
             </Button>
           </div>
         </div>
@@ -331,7 +341,25 @@ function DriveBackupSection() {
   );
 }
 
+function LanguagePickerSection() {
+  const { locale, setLocale } = useLocale();
+  return (
+    <select
+      value={locale}
+      onChange={(e) => setLocale(e.target.value as Locale)}
+      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+    >
+      {LOCALES.map((code) => (
+        <option key={code} value={code}>
+          {LOCALE_LABELS[code]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function CurrencyPickerSection() {
+  const t = useT();
   const { data: currencies = [], isLoading } = useFiatCurrencies();
   const [selected, setSelected] = useState(() => getSelectedCurrency());
 
@@ -341,7 +369,7 @@ function CurrencyPickerSection() {
   };
 
   if (isLoading) {
-    return <p className="text-sm text-gray-500">Loading currencies…</p>;
+    return <p className="text-sm text-gray-500">{t("settings.currency.loading")}</p>;
   }
 
   const sorted = [...currencies].sort((a, b) => a.id.localeCompare(b.id));
@@ -362,6 +390,7 @@ function CurrencyPickerSection() {
 }
 
 function ClaimLeewaySection() {
+  const t = useT();
   const [value, setValue] = useState(() => String(getClaimLeeway()));
   const [saved, setSaved] = useState(false);
 
@@ -379,14 +408,14 @@ function ClaimLeewaySection() {
   return (
     <div className="space-y-3">
       <Input
-        label="Leeway (sat/vB)"
+        label={t("settings.claimLeeway.label")}
         value={value}
         onChange={(e) => {
           setValue(e.target.value.replace(/[^0-9]/g, ""));
           setSaved(false);
         }}
         inputMode="numeric"
-        helperText={`Default ${DEFAULT_CLAIM_LEEWAY}. Takes effect after the next wallet restart.`}
+        helperText={t("settings.claimLeeway.helper", { default: DEFAULT_CLAIM_LEEWAY })}
       />
       <Button
         variant="primary"
@@ -394,13 +423,14 @@ function ClaimLeewaySection() {
         disabled={!dirty || invalid}
         className="w-full"
       >
-        {saved ? "Saved" : "Save"}
+        {saved ? t("settings.claimLeeway.saved") : t("common.save")}
       </Button>
     </div>
   );
 }
 
 function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
+  const t = useT();
   const [username, setUsername] = useState("");
   const [description, setDescription] = useState("");
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -435,7 +465,7 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
     setError("");
     const trimmed = username.trim().toLowerCase();
     if (!USERNAME_RE.test(trimmed)) {
-      setError("Use lowercase letters, numbers, dots, underscores, hyphens (max 32).");
+      setError(t("settings.claimUsername.invalid"));
       return;
     }
     try {
@@ -445,7 +475,7 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
       });
       onClaimed();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to register address");
+      setError(e instanceof Error ? e.message : t("settings.claimUsername.failed"));
     }
   };
 
@@ -457,8 +487,8 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
     <div className="space-y-4">
       <div>
         <Input
-          label="Username"
-          placeholder="alice"
+          label={t("settings.claimUsername.usernameLabel")}
+          placeholder={t("settings.claimUsername.usernamePlaceholder")}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoCapitalize="none"
@@ -467,26 +497,26 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
         />
         {trimmed && (
           <p className="mt-2 text-sm font-mono text-gray-600 dark:text-gray-400">
-            {trimmed}@{LNURL_DOMAIN ?? "<breez default>"}
+            {trimmed}@{LNURL_DOMAIN ?? t("settings.claimUsername.breezDefault")}
           </p>
         )}
         {showAvailability && checkMutation.isPending && (
-          <p className="mt-1 text-xs text-gray-500">Checking availability…</p>
+          <p className="mt-1 text-xs text-gray-500">{t("settings.claimUsername.checking")}</p>
         )}
         {showAvailability && !checkMutation.isPending && available === true && (
           <p className="mt-1 text-xs text-green-700 dark:text-green-400">
-            Available
+            {t("settings.claimUsername.available")}
           </p>
         )}
         {showAvailability && !checkMutation.isPending && available === false && (
           <p className="mt-1 text-xs text-red-700 dark:text-red-400">
-            Taken — pick another
+            {t("settings.claimUsername.taken")}
           </p>
         )}
       </div>
       <Input
-        label="Description (optional)"
-        placeholder="What senders will see"
+        label={t("settings.claimUsername.descriptionLabel")}
+        placeholder={t("settings.claimUsername.descriptionPlaceholder")}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         maxLength={100}
@@ -508,7 +538,7 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
         }
         className="w-full"
       >
-        Claim address
+        {t("settings.claimUsername.claim")}
       </Button>
     </div>
   );
@@ -521,6 +551,7 @@ function RegisteredAddress({
   info: LightningAddressInfo;
   onAfterChange: () => void;
 }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -564,7 +595,7 @@ function RegisteredAddress({
           className="inline-flex items-center justify-center gap-2"
         >
           {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-          <span>{copied ? "Copied" : "Copy"}</span>
+          <span>{copied ? t("common.copied") : t("common.copy")}</span>
         </Button>
         <Button
           variant="outline"
@@ -572,7 +603,7 @@ function RegisteredAddress({
           className="inline-flex items-center justify-center gap-2"
         >
           <Pencil className="w-4 h-4" />
-          <span>Edit username</span>
+          <span>{t("settings.registeredAddress.editUsername")}</span>
         </Button>
       </div>
 
@@ -590,6 +621,7 @@ function RegisteredAddress({
 }
 
 function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [forgetting, setForgetting] = useState(false);
@@ -606,15 +638,14 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
   return (
     <>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-        Erase the encrypted wallet from this browser. Funds remain controlled
-        by your recovery phrase.
+        {t("settings.dangerZone.subtitle")}
       </p>
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
         className="border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
       >
-        Forget this wallet
+        {t("settings.dangerZone.button")}
       </Button>
 
       <Modal
@@ -625,15 +656,15 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
           setConfirmText("");
         }}
         dismissable={!forgetting}
-        title="Forget this wallet?"
-        description="This erases the encrypted wallet from this browser. Without your recovery phrase, anything in this wallet is gone for good."
+        title={t("forgetWallet.title")}
+        description={t("forgetWallet.description")}
       >
         <div className="space-y-4">
           <Input
-            label='Type "forget" to confirm'
+            label={t("forgetWallet.confirmLabel")}
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="forget"
+            placeholder={t("forgetWallet.confirmPlaceholder")}
             disabled={forgetting}
             autoFocus
           />
@@ -648,7 +679,7 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
               disabled={forgetting}
               className="flex-1"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="primary"
@@ -656,11 +687,11 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
               onClick={handle}
               loading={forgetting}
               disabled={
-                forgetting || confirmText.trim().toLowerCase() !== "forget"
+                forgetting || confirmText.trim().toLowerCase() !== t("forgetWallet.confirmWord")
               }
               className="flex-1 bg-red-600 hover:bg-red-700"
             >
-              Forget wallet
+              {t("forgetWallet.submit")}
             </Button>
           </div>
         </div>
