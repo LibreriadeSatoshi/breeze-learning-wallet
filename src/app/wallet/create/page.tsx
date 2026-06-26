@@ -13,6 +13,7 @@ import {
   startDriveAuthFlow,
   isDriveBackupConfigured,
 } from '@/lib/backup/drive-client';
+import { useT } from '@/lib/i18n/hook';
 
 type Step = 'reveal' | 'shown' | 'verify' | 'password' | 'creating' | 'drive-offer';
 
@@ -37,6 +38,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default function CreateWalletPage() {
+  const t = useT();
   const router = useRouter();
   const [mnemonic, setMnemonic] = useState<string>('');
   const [words, setWords] = useState<string[]>([]);
@@ -126,11 +128,11 @@ export default function CreateWalletPage() {
   const handleCreate = async () => {
     setError('');
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('create.password.tooShort'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('create.password.mismatch'));
       return;
     }
     setStep('creating');
@@ -142,7 +144,7 @@ export default function CreateWalletPage() {
         router.push('/wallet/home');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create wallet');
+      setError(err instanceof Error ? err.message : t('create.password.failed'));
       setStep('password');
     }
   };
@@ -154,7 +156,7 @@ export default function CreateWalletPage() {
       startDriveAuthFlow({ type: 'backup', returnTo: '/wallet/home' });
     } catch (err) {
       setDriveBusy(false);
-      setDriveError(err instanceof Error ? err.message : 'Failed to start Google Drive backup');
+      setDriveError(err instanceof Error ? err.message : t('create.drive.failed'));
     }
   };
 
@@ -166,31 +168,31 @@ export default function CreateWalletPage() {
     switch (step) {
       case 'reveal':
       case 'shown':
-        return 'Your Recovery Phrase';
+        return t('create.heading.phrase');
       case 'verify':
-        return 'Verify Your Recovery Phrase';
+        return t('create.heading.verify');
       case 'password':
       case 'creating':
-        return 'Set a Wallet Password';
+        return t('create.heading.password');
       case 'drive-offer':
-        return 'Back up to Google Drive?';
+        return t('create.heading.driveOffer');
     }
-  }, [step]);
+  }, [step, t]);
 
   const subheading = useMemo(() => {
     switch (step) {
       case 'reveal':
       case 'shown':
-        return 'Write down these 12 words in order and keep them safe. You’ll need them to recover your wallet.';
+        return t('create.subheading.phrase');
       case 'verify':
-        return 'Tap the words in the order they appear in your phrase. This proves you have a working backup.';
+        return t('create.subheading.verify');
       case 'password':
       case 'creating':
-        return 'This password encrypts your wallet on this device. You will need it every time you unlock.';
+        return t('create.subheading.password');
       case 'drive-offer':
-        return 'Optional: add an encrypted backup to your own Google Drive so you can restore on other devices without typing the 12 words.';
+        return t('create.subheading.driveOffer');
     }
-  }, [step]);
+  }, [step, t]);
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
@@ -214,13 +216,13 @@ export default function CreateWalletPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   <h3 className="font-semibold text-amber-900 dark:text-amber-200">
-                    Important security information
+                    {t('create.security.title')}
                   </h3>
                 </div>
                 <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1 list-disc pl-5">
-                  <li>Never share your recovery phrase with anyone.</li>
-                  <li>Store it offline in a secure location.</li>
-                  <li>Anyone with these words can access your funds.</li>
+                  <li>{t('create.security.neverShare')}</li>
+                  <li>{t('create.security.storeOffline')}</li>
+                  <li>{t('create.security.anyoneCanAccess')}</li>
                 </ul>
               </CardHeader>
             </Card>
@@ -229,9 +231,9 @@ export default function CreateWalletPage() {
               <CardContent className="pt-6">
                 {step === 'reveal' ? (
                   <div className="text-center py-12">
-                    <h3 className="text-xl font-semibold mb-2">Reveal your recovery phrase</h3>
+                    <h3 className="text-xl font-semibold mb-2">{t('create.reveal.title')}</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      Make sure no one is looking at your screen.
+                      {t('create.reveal.subtitle')}
                     </p>
                     <Button
                       onClick={handleReveal}
@@ -240,7 +242,7 @@ export default function CreateWalletPage() {
                       className="inline-flex items-center gap-2"
                     >
                       <Eye className="w-5 h-5" />
-                      <span>Reveal recovery phrase</span>
+                      <span>{t('create.reveal.button')}</span>
                     </Button>
                   </div>
                 ) : (
@@ -252,15 +254,13 @@ export default function CreateWalletPage() {
                       className="mt-4 w-full inline-flex items-center justify-center gap-2"
                     >
                       {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-                      <span>{copied ? 'Copied' : 'Copy to clipboard'}</span>
+                      <span>{copied ? t('common.copied') : t('common.copy')}</span>
                     </Button>
                     <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
                       <div className="flex items-start gap-2">
                         <Lightbulb className="w-4 h-4 mt-0.5 text-blue-700 dark:text-blue-300 shrink-0" />
                         <p className="text-sm text-blue-900 dark:text-blue-200">
-                          <strong>Tip:</strong> Write these words on paper in the exact order shown,
-                          or paste them into a password manager you trust. Avoid screenshots and
-                          cloud-synced plaintext notes.
+                          {t('create.tip')}
                         </p>
                       </div>
                     </div>
@@ -277,10 +277,10 @@ export default function CreateWalletPage() {
                   onClick={handleProceedToVerify}
                   className="w-full shadow-lg hover:shadow-xl transition-shadow"
                 >
-                  I&apos;ve written it down — verify
+                  {t('create.writtenDown')}
                 </Button>
                 <Button variant="ghost" size="lg" onClick={() => router.back()} className="w-full">
-                  ← Back
+                  ← {t('common.back')}
                 </Button>
               </div>
             )}
@@ -292,7 +292,7 @@ export default function CreateWalletPage() {
             <Card className="mb-6">
               <CardHeader>
                 <h3 className="font-semibold">
-                  Select words #{verifySlots.map((i) => i + 1).join(', ')} in order
+                  {t('create.verify.selectInOrder', { slots: verifySlots.map((i) => i + 1).join(', ') })}
                 </h3>
               </CardHeader>
               <CardContent>
@@ -316,7 +316,7 @@ export default function CreateWalletPage() {
                 {verifyError && (
                   <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
                     <p className="text-sm text-red-800 dark:text-red-200">
-                      Incorrect order. Tap the words again in the order they appear in your phrase.
+                      {t('create.verify.incorrect')}
                     </p>
                   </div>
                 )}
@@ -325,7 +325,7 @@ export default function CreateWalletPage() {
 
             <Card className="mb-6">
               <CardHeader>
-                <h3 className="font-semibold">Tap words in order</h3>
+                <h3 className="font-semibold">{t('create.verify.tapInOrder')}</h3>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
@@ -354,7 +354,7 @@ export default function CreateWalletPage() {
                 onClick={handleBackToPhrase}
                 className="flex-1"
               >
-                ← View phrase again
+                ← {t('create.verify.viewAgain')}
               </Button>
               <Button
                 variant="primary"
@@ -363,7 +363,7 @@ export default function CreateWalletPage() {
                 disabled={picks.length !== VERIFY_SLOTS}
                 className="flex-1"
               >
-                Verify
+                {t('create.verify.submit')}
               </Button>
             </div>
           </>
@@ -373,20 +373,20 @@ export default function CreateWalletPage() {
           <Card className="mb-6 shadow-lg">
             <CardContent className="pt-6 space-y-4">
               <Input
-                label="Wallet password"
+                label={t('create.password.label')}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
+                placeholder={t('create.password.placeholder')}
                 disabled={step === 'creating'}
                 autoFocus
               />
               <Input
-                label="Confirm password"
+                label={t('create.password.confirmLabel')}
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
+                placeholder={t('create.password.confirmPlaceholder')}
                 disabled={step === 'creating'}
               />
               <label className="flex items-center gap-2 cursor-pointer">
@@ -396,7 +396,7 @@ export default function CreateWalletPage() {
                   onChange={(e) => setShowPassword(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300"
                 />
-                <span className="text-sm">Show passwords</span>
+                <span className="text-sm">{t('create.password.show')}</span>
               </label>
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
@@ -404,7 +404,7 @@ export default function CreateWalletPage() {
                 </div>
               )}
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                There is no password recovery. If you forget this password, restore the wallet from your recovery phrase.
+                {t('create.password.noRecovery')}
               </p>
               <Button
                 variant="primary"
@@ -414,7 +414,7 @@ export default function CreateWalletPage() {
                 disabled={step === 'creating'}
                 className="w-full shadow-lg hover:shadow-xl transition-shadow"
               >
-                {step === 'creating' ? 'Encrypting…' : 'Create wallet'}
+                {step === 'creating' ? t('create.password.creating') : t('create.password.submit')}
               </Button>
             </CardContent>
           </Card>
@@ -427,14 +427,8 @@ export default function CreateWalletPage() {
                 <Cloud className="w-12 h-12 mx-auto" />
               </div>
               <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
-                <p>
-                  Stores the <strong>same encrypted file</strong> as the one on
-                  this device. Your wallet password is still required to use it.
-                </p>
-                <p>
-                  Your recovery phrase remains the master backup. Drive is a
-                  convenience for switching devices.
-                </p>
+                <p>{t('create.drive.blurbCiphertext')}</p>
+                <p>{t('create.drive.blurbConvenience')}</p>
               </div>
               {driveError && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
@@ -450,7 +444,7 @@ export default function CreateWalletPage() {
                 className="w-full inline-flex items-center justify-center gap-2"
               >
                 <Cloud className="w-4 h-4" />
-                <span>Back up to Google Drive</span>
+                <span>{t('create.drive.backup')}</span>
               </Button>
               <Button
                 variant="ghost"
@@ -459,7 +453,7 @@ export default function CreateWalletPage() {
                 disabled={driveBusy}
                 className="w-full"
               >
-                Skip for now
+                {t('common.skip')}
               </Button>
             </CardContent>
           </Card>

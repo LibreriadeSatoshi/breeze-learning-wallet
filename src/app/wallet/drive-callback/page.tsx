@@ -13,17 +13,19 @@ import {
 } from "@/lib/backup/drive-client";
 import { loadVault, saveVault } from "@/lib/storage/vault-storage";
 import { useWalletStore } from "@/store/wallet-store";
+import { useT } from "@/lib/i18n/hook";
 
 type Status =
   | { kind: "working"; label: string }
   | { kind: "error"; message: string; returnTo: string | null };
 
 export default function DriveCallbackPage() {
+  const t = useT();
   const router = useRouter();
   const refreshHasVault = useWalletStore((s) => s.refreshHasVault);
   const [status, setStatus] = useState<Status>({
     kind: "working",
-    label: "Finishing Google sign-in…",
+    label: t("driveCallback.signingIn"),
   });
 
   useEffect(() => {
@@ -43,14 +45,14 @@ export default function DriveCallbackPage() {
       }
 
       try {
-        await runIntent(result.intent, result.token, refreshHasVault, setStatus);
+        await runIntent(result.intent, result.token, refreshHasVault, setStatus, t);
         if (cancelled) return;
         router.replace(result.intent.returnTo);
       } catch (e) {
         if (cancelled) return;
         setStatus({
           kind: "error",
-          message: e instanceof Error ? e.message : "Drive operation failed.",
+          message: e instanceof Error ? e.message : t("driveCallback.operationFailed"),
           returnTo: result.intent.returnTo,
         });
       }
@@ -58,7 +60,7 @@ export default function DriveCallbackPage() {
     return () => {
       cancelled = true;
     };
-  }, [router, refreshHasVault]);
+  }, [router, refreshHasVault, t]);
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900 flex items-center">
@@ -86,7 +88,7 @@ export default function DriveCallbackPage() {
                   onClick={() => router.replace(status.returnTo ?? "/welcome")}
                   className="w-full"
                 >
-                  Go back
+                  {t("common.goBack")}
                 </Button>
               </>
             )}
@@ -102,25 +104,24 @@ async function runIntent(
   token: string,
   refreshHasVault: () => Promise<void>,
   setStatus: (s: Status) => void,
+  t: (key: string) => string,
 ): Promise<void> {
   switch (intent.type) {
     case "connect":
     case "backup": {
-      setStatus({ kind: "working", label: "Uploading encrypted backup…" });
+      setStatus({ kind: "working", label: t("driveCallback.uploading") });
       const blob = await loadVault();
-      if (!blob) throw new Error("No wallet to back up.");
+      if (!blob) throw new Error(t("driveCallback.noVault"));
       await uploadVault(token, blob);
       return;
     }
     case "restore": {
-      setStatus({ kind: "working", label: "Downloading your encrypted vault…" });
+      setStatus({ kind: "working", label: t("driveCallback.downloading") });
       const blob = await fetchVault(token);
       if (!blob) {
-        throw new Error(
-          "No backup found in your Google Drive. Did you back up from this app before?",
-        );
+        throw new Error(t("driveCallback.noBackup"));
       }
-      setStatus({ kind: "working", label: "Saving to this device…" });
+      setStatus({ kind: "working", label: t("driveCallback.saving") });
       await saveVault(blob);
       await refreshHasVault();
       return;

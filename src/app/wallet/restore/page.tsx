@@ -13,10 +13,12 @@ import {
   startDriveAuthFlow,
   isDriveBackupConfigured,
 } from '@/lib/backup/drive-client';
+import { useT } from '@/lib/i18n/hook';
 
 type Step = 'method' | 'phrase' | 'password' | 'restoring';
 
 export default function RestoreWalletPage() {
+  const t = useT();
   const router = useRouter();
   const [step, setStep] = useState<Step>('method');
   const [mnemonic, setMnemonic] = useState('');
@@ -48,7 +50,7 @@ export default function RestoreWalletPage() {
         setError('');
       }
     } catch {
-      setError('Failed to access clipboard. Please paste manually.');
+      setError(t('restore.phrase.pasteFailed'));
     }
   };
 
@@ -60,7 +62,7 @@ export default function RestoreWalletPage() {
     }
     const cleaned = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
     if (!validateMnemonic(cleaned)) {
-      setError('Invalid recovery phrase. Please check the words and try again.');
+      setError(t('restore.phrase.invalid'));
       return;
     }
     setMnemonic(cleaned);
@@ -70,11 +72,11 @@ export default function RestoreWalletPage() {
   const handleRestore = async () => {
     setError('');
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('create.password.tooShort'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('create.password.mismatch'));
       return;
     }
     setStep('restoring');
@@ -82,7 +84,7 @@ export default function RestoreWalletPage() {
       await createVault(mnemonic, password);
       router.push('/wallet/home');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to restore wallet');
+      setError(err instanceof Error ? err.message : t('restore.password.failed'));
       setStep('password');
     }
   };
@@ -96,7 +98,7 @@ export default function RestoreWalletPage() {
     try {
       startDriveAuthFlow({ type: 'restore', returnTo: '/welcome' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start Google Drive sign-in');
+      setError(err instanceof Error ? err.message : t('restore.methods.drive.startFailed'));
     }
   };
 
@@ -109,19 +111,19 @@ export default function RestoreWalletPage() {
             className="mb-4 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors inline-flex items-center gap-2 text-gray-600 dark:text-gray-400"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back</span>
+            <span>{t('common.back')}</span>
           </button>
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl mb-4 shadow-lg">
               <span className="text-3xl font-bold text-white">₿</span>
             </div>
             <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Restore Wallet
+              {t('restore.title')}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              {step === 'method' && 'Choose how you want to restore your wallet'}
-              {step === 'phrase' && 'Enter your 12-word recovery phrase'}
-              {(step === 'password' || step === 'restoring') && 'Set a wallet password to encrypt this device'}
+              {step === 'method' && t('restore.subtitle.method')}
+              {step === 'phrase' && t('restore.subtitle.phrase')}
+              {(step === 'password' || step === 'restoring') && t('restore.subtitle.password')}
             </p>
           </div>
         </div>
@@ -134,9 +136,9 @@ export default function RestoreWalletPage() {
             >
               <KeyRound className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1" />
               <div>
-                <div className="font-semibold">From recovery phrase</div>
+                <div className="font-semibold">{t('restore.methods.phrase.title')}</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Type your 12 words to restore the wallet on this device.
+                  {t('restore.methods.phrase.subtitle')}
                 </div>
               </div>
             </button>
@@ -147,11 +149,11 @@ export default function RestoreWalletPage() {
             >
               <Cloud className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1" />
               <div>
-                <div className="font-semibold">From Google Drive</div>
+                <div className="font-semibold">{t('restore.methods.drive.title')}</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   {driveAvailable
-                    ? 'Sign in to your Google account to download your encrypted vault.'
-                    : 'Not configured for this build.'}
+                    ? t('restore.methods.drive.subtitle')
+                    : t('restore.methods.drive.notConfigured')}
                 </div>
               </div>
             </button>
@@ -164,8 +166,7 @@ export default function RestoreWalletPage() {
               <div className="mb-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
                 <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
                 <span>
-                  Restoring will replace the existing wallet on this device. Make sure
-                  you still have its recovery phrase before continuing.
+                  {t('restore.phrase.overwriteWarning')}
                 </span>
               </div>
             )}
@@ -173,13 +174,13 @@ export default function RestoreWalletPage() {
             <Card className="mb-6 shadow-lg">
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recovery Phrase</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('restore.phrase.title')}</h2>
                   <span className={`text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
                     wordCount === 12
                       ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                   }`}>
-                    {wordCount}/12 words
+                    {t('restore.phrase.wordCount', { count: wordCount })}
                   </span>
                 </div>
               </CardHeader>
@@ -190,7 +191,7 @@ export default function RestoreWalletPage() {
                     setMnemonic(e.target.value);
                     setError('');
                   }}
-                  placeholder="word1 word2 word3 ... word12"
+                  placeholder={t('restore.phrase.placeholder')}
                   className="w-full min-h-[140px] px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm transition-colors"
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -207,7 +208,7 @@ export default function RestoreWalletPage() {
                   className="w-full inline-flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   <Clipboard className="w-4 h-4" />
-                  <span>Paste from clipboard</span>
+                  <span>{t('restore.phrase.paste')}</span>
                 </Button>
                 <Button
                   variant="primary"
@@ -216,7 +217,7 @@ export default function RestoreWalletPage() {
                   disabled={wordCount !== 12}
                   className="w-full shadow-lg hover:shadow-xl transition-shadow"
                 >
-                  Continue
+                  {t('common.continue')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -225,7 +226,7 @@ export default function RestoreWalletPage() {
                   className="w-full inline-flex items-center justify-center gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span>Choose a different method</span>
+                  <span>{t('restore.phrase.chooseDifferent')}</span>
                 </Button>
               </CardContent>
             </Card>
@@ -236,20 +237,20 @@ export default function RestoreWalletPage() {
           <Card className="mb-6 shadow-lg">
             <CardContent className="pt-6 space-y-4">
               <Input
-                label="Wallet password"
+                label={t('create.password.label')}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
+                placeholder={t('create.password.placeholder')}
                 disabled={step === 'restoring'}
                 autoFocus
               />
               <Input
-                label="Confirm password"
+                label={t('create.password.confirmLabel')}
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
+                placeholder={t('create.password.confirmPlaceholder')}
                 disabled={step === 'restoring'}
               />
               <label className="flex items-center gap-2 cursor-pointer">
@@ -259,7 +260,7 @@ export default function RestoreWalletPage() {
                   onChange={(e) => setShowPassword(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300"
                 />
-                <span className="text-sm">Show passwords</span>
+                <span className="text-sm">{t('create.password.show')}</span>
               </label>
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
@@ -274,7 +275,7 @@ export default function RestoreWalletPage() {
                 disabled={step === 'restoring'}
                 className="w-full shadow-lg hover:shadow-xl transition-shadow"
               >
-                {step === 'restoring' ? 'Restoring…' : 'Restore wallet'}
+                {step === 'restoring' ? t('restore.password.submitting') : t('restore.password.submit')}
               </Button>
               <Button
                 variant="ghost"
@@ -284,7 +285,7 @@ export default function RestoreWalletPage() {
                 className="w-full inline-flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
+                <span>{t('common.back')}</span>
               </Button>
             </CardContent>
           </Card>
@@ -298,8 +299,8 @@ export default function RestoreWalletPage() {
           setShowOverwriteModal(false);
           if (!overwriteAcknowledged) router.back();
         }}
-        title="Replace the wallet on this device?"
-        description="Restoring erases the existing encrypted wallet from this browser. Funds in the existing wallet remain controlled by its recovery phrase — make sure you still have it before continuing."
+        title={t('restore.overwrite.title')}
+        description={t('restore.overwrite.description')}
       >
         <div className="flex gap-3">
           <Button
@@ -311,7 +312,7 @@ export default function RestoreWalletPage() {
             }}
             className="flex-1"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -322,7 +323,7 @@ export default function RestoreWalletPage() {
             }}
             className="flex-1 bg-amber-600 hover:bg-amber-700"
           >
-            Replace wallet
+            {t('restore.overwrite.confirm')}
           </Button>
         </div>
       </Modal>
