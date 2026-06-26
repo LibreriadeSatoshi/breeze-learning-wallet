@@ -38,7 +38,7 @@
   },
   "forgetWallet": {
     "title": "Forget this wallet?",
-    "description": "This erases the encrypted wallet from this browser. Funds remain controlled by your recovery phrase — without it, anything in this wallet is gone for good.",
+    "description": "This erases the encrypted wallet from this browser. Funds remain controlled by your recovery phrase. Without it, anything in this wallet is gone for good.",
     "confirmLabel": "Type \"forget\" to confirm",
     "confirmPlaceholder": "forget",
     "confirmWord": "forget",
@@ -79,12 +79,12 @@
         "body": "Your transactions go straight to the Bitcoin network. No one can block, reverse, or approve them."
       }
     },
-    "tip": "Tip: Write these words on paper in the exact order shown, or paste them into a password manager you trust. Avoid screenshots and cloud-synced plaintext notes.",
+    "tip": "Tip: Write these words on paper in the exact order shown and keep the paper somewhere safe. Don't take a screenshot, don't save them in a notes app, and don't send them anywhere.",
     "orderMatters": {
       "title": "Order matters.",
-      "body": "These 12 words only recover your wallet in the exact sequence shown. A different order leads to a different wallet — and lost funds."
+      "body": "These 12 words only recover your wallet in the exact sequence shown. A different order leads to a different wallet, and lost funds."
     },
-    "writtenDown": "I've written it down — verify",
+    "writtenDown": "I've written it down",
     "verify": {
       "selectInOrder": "Select words #{{slots}} in order",
       "incorrect": "Incorrect order. Tap the words again in the order they appear in your phrase.",
@@ -148,7 +148,7 @@
     },
     "overwrite": {
       "title": "Replace the wallet on this device?",
-      "description": "Restoring erases the existing encrypted wallet from this browser. Funds in the existing wallet remain controlled by its recovery phrase — make sure you still have it before continuing.",
+      "description": "Restoring erases the existing encrypted wallet from this browser. Funds in the existing wallet remain controlled by its recovery phrase. Make sure you still have it before continuing.",
       "confirm": "Replace wallet"
     }
   },
@@ -301,7 +301,7 @@
   "recovery": {
     "title": "Get refund",
     "nothing": "Nothing needs a refund. All incoming Bitcoin is being added to your wallet automatically.",
-    "explainer": "These Bitcoin transfers couldn't be added to your wallet automatically — usually because network fees were higher than the wallet's configured cap. You can refund them to a Bitcoin address you control.",
+    "explainer": "These Bitcoin transfers couldn't be added to your wallet automatically. Usually that's because network fees were higher than the wallet's configured cap. You can refund them to a Bitcoin address you control.",
     "amount": "Amount",
     "refundButton": "Refund to Bitcoin",
     "addressLabel": "Bitcoin address",
@@ -373,7 +373,7 @@
       "descriptionPlaceholder": "What senders will see",
       "checking": "Checking availability…",
       "available": "Available",
-      "taken": "Taken — pick another",
+      "taken": "Taken. Pick another",
       "invalid": "Use lowercase letters, numbers, dots, underscores, hyphens (max 32).",
       "claim": "Claim address",
       "failed": "Failed to register address",
@@ -413,7 +413,7 @@
     "newLabel": "New username",
     "checking": "Checking availability…",
     "available": "Available",
-    "taken": "Taken — pick another",
+    "taken": "Taken. Pick another",
     "invalid": "Use lowercase letters, numbers, dots, underscores, hyphens (max 32).",
     "failed": "Failed to update address",
     "replace": "Replace address"
