@@ -64,9 +64,20 @@
       "anyoneCanAccess": "Cualquiera con estas palabras puede acceder a tus fondos."
     },
     "reveal": {
-      "title": "Mostrar tu frase de recuperación",
       "subtitle": "Asegurate de que nadie esté mirando tu pantalla.",
-      "button": "Mostrar frase de recuperación"
+      "acceptTerms": "Entiendo y acepto estos términos",
+      "accept": "Aceptar"
+    },
+    "whyMatters": {
+      "title": "Por qué importa",
+      "selfCustody": {
+        "title": "Auto-custodia.",
+        "body": "Vos tenés tus claves directamente. Ningún banco, exchange ni empresa puede congelar, confiscar ni perder tu Bitcoin."
+      },
+      "censorshipResistant": {
+        "title": "Resistente a la censura.",
+        "body": "Tus transacciones van directo a la red Bitcoin. Nadie puede bloquearlas, revertirlas ni aprobarlas."
+      }
     },
     "tip": "Tip: Escribí estas palabras en papel en el orden exacto, o pegalas en un administrador de contraseñas confiable. Evitá capturas de pantalla y notas en la nube en texto plano.",
     "writtenDown": "La anoté — verificar",

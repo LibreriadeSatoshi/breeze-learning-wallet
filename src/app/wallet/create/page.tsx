@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Cloud, Copy as CopyIcon, Eye, Lightbulb, TriangleAlert } from 'lucide-react';
+import { Check, Cloud, Copy as CopyIcon, Eye, Lightbulb, Shield, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,6 +55,7 @@ export default function CreateWalletPage() {
   const [picks, setPicks] = useState<number[]>([]);
   const [verifyError, setVerifyError] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [accepted, setAccepted] = useState(false);
   const [driveBusy, setDriveBusy] = useState(false);
   const [driveError, setDriveError] = useState('');
 
@@ -227,22 +228,54 @@ export default function CreateWalletPage() {
               </CardHeader>
             </Card>
 
+            {step === 'reveal' && (
+              <Card className="mb-6 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20">
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-200">
+                      {t('create.whyMatters.title')}
+                    </h3>
+                  </div>
+                  <div className="text-sm text-blue-800 dark:text-blue-300 space-y-2 pl-7">
+                    <p>
+                      <strong className="font-semibold">{t('create.whyMatters.selfCustody.title')}</strong>{' '}
+                      {t('create.whyMatters.selfCustody.body')}
+                    </p>
+                    <p>
+                      <strong className="font-semibold">{t('create.whyMatters.censorshipResistant.title')}</strong>{' '}
+                      {t('create.whyMatters.censorshipResistant.body')}
+                    </p>
+                  </div>
+                </CardHeader>
+              </Card>
+            )}
+
             <Card className="mb-6">
               <CardContent className="pt-6">
                 {step === 'reveal' ? (
-                  <div className="text-center py-12">
-                    <h3 className="text-xl font-semibold mb-2">{t('create.reveal.title')}</h3>
+                  <div className="text-center py-8">
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
                       {t('create.reveal.subtitle')}
                     </p>
+                    <label className="flex items-start sm:items-center justify-center gap-2 mb-6 cursor-pointer text-left sm:text-center max-w-md mx-auto">
+                      <input
+                        type="checkbox"
+                        checked={accepted}
+                        onChange={(e) => setAccepted(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 mt-0.5 sm:mt-0 shrink-0"
+                      />
+                      <span className="text-sm">{t('create.reveal.acceptTerms')}</span>
+                    </label>
                     <Button
                       onClick={handleReveal}
                       variant="primary"
                       size="lg"
+                      disabled={!accepted}
                       className="inline-flex items-center gap-2"
                     >
                       <Eye className="w-5 h-5" />
-                      <span>{t('create.reveal.button')}</span>
+                      <span>{t('create.reveal.accept')}</span>
                     </Button>
                   </div>
                 ) : (

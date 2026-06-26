@@ -64,9 +64,20 @@
       "anyoneCanAccess": "Anyone with these words can access your funds."
     },
     "reveal": {
-      "title": "Reveal your recovery phrase",
       "subtitle": "Make sure no one is looking at your screen.",
-      "button": "Reveal recovery phrase"
+      "acceptTerms": "I understand and accept these terms",
+      "accept": "Accept"
+    },
+    "whyMatters": {
+      "title": "Why this matters",
+      "selfCustody": {
+        "title": "Self-custody.",
+        "body": "You hold your keys directly. No bank, exchange, or company can freeze, seize, or lose your Bitcoin for you."
+      },
+      "censorshipResistant": {
+        "title": "Censorship resistant.",
+        "body": "Your transactions go straight to the Bitcoin network. No one can block, reverse, or approve them."
+      }
     },
     "tip": "Tip: Write these words on paper in the exact order shown, or paste them into a password manager you trust. Avoid screenshots and cloud-synced plaintext notes.",
     "writtenDown": "I've written it down — verify",
