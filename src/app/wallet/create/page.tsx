@@ -195,70 +195,90 @@ export default function CreateWalletPage() {
     }
   }, [step, t]);
 
+  const isReveal = step === 'reveal';
+
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl mb-4 shadow-lg">
-            <span className="text-3xl font-bold text-white">₿</span>
+    <div className="min-h-screen p-4 md:p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
+      <div className={`mx-auto ${isReveal ? 'max-w-4xl' : 'max-w-2xl'}`}>
+        <div className={`text-center ${isReveal ? 'mb-4' : 'mb-8'}`}>
+          <div className={`inline-flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl shadow-lg ${isReveal ? 'w-12 h-12 mb-2' : 'w-16 h-16 mb-4'}`}>
+            <span className={`font-bold text-white ${isReveal ? 'text-2xl' : 'text-3xl'}`}>₿</span>
           </div>
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+          <h1 className={`font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent ${isReveal ? 'text-2xl md:text-3xl mb-1' : 'text-4xl mb-3'}`}>
             {heading}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
+          <p className={`text-gray-600 dark:text-gray-400 max-w-lg mx-auto ${isReveal ? 'text-sm' : ''}`}>
             {subheading}
           </p>
         </div>
 
         {(step === 'reveal' || step === 'shown') && (
           <>
-            <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
-              <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                  <h3 className="font-semibold text-amber-900 dark:text-amber-200">
-                    {t('create.security.title')}
-                  </h3>
-                </div>
-                <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1 list-disc pl-5">
-                  <li>{t('create.security.neverShare')}</li>
-                  <li>{t('create.security.storeOffline')}</li>
-                  <li>{t('create.security.anyoneCanAccess')}</li>
-                </ul>
-              </CardHeader>
-            </Card>
+            {isReveal ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <Card className="border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                      <h3 className="font-semibold text-amber-900 dark:text-amber-200">
+                        {t('create.security.title')}
+                      </h3>
+                    </div>
+                    <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1 list-disc pl-5">
+                      <li>{t('create.security.neverShare')}</li>
+                      <li>{t('create.security.storeOffline')}</li>
+                      <li>{t('create.security.anyoneCanAccess')}</li>
+                    </ul>
+                  </CardHeader>
+                </Card>
 
-            {step === 'reveal' && (
-              <Card className="mb-6 border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20">
+                <Card className="border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20">
+                  <CardHeader>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-200">
+                        {t('create.whyMatters.title')}
+                      </h3>
+                    </div>
+                    <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1.5 pl-7">
+                      <p>
+                        <strong className="font-semibold">{t('create.whyMatters.selfCustody.title')}</strong>{' '}
+                        {t('create.whyMatters.selfCustody.body')}
+                      </p>
+                      <p>
+                        <strong className="font-semibold">{t('create.whyMatters.censorshipResistant.title')}</strong>{' '}
+                        {t('create.whyMatters.censorshipResistant.body')}
+                      </p>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </div>
+            ) : (
+              <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
                 <CardHeader>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <h3 className="font-semibold text-blue-900 dark:text-blue-200">
-                      {t('create.whyMatters.title')}
+                  <div className="flex items-center gap-2 mb-2">
+                    <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    <h3 className="font-semibold text-amber-900 dark:text-amber-200">
+                      {t('create.security.title')}
                     </h3>
                   </div>
-                  <div className="text-sm text-blue-800 dark:text-blue-300 space-y-2 pl-7">
-                    <p>
-                      <strong className="font-semibold">{t('create.whyMatters.selfCustody.title')}</strong>{' '}
-                      {t('create.whyMatters.selfCustody.body')}
-                    </p>
-                    <p>
-                      <strong className="font-semibold">{t('create.whyMatters.censorshipResistant.title')}</strong>{' '}
-                      {t('create.whyMatters.censorshipResistant.body')}
-                    </p>
-                  </div>
+                  <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1 list-disc pl-5">
+                    <li>{t('create.security.neverShare')}</li>
+                    <li>{t('create.security.storeOffline')}</li>
+                    <li>{t('create.security.anyoneCanAccess')}</li>
+                  </ul>
                 </CardHeader>
               </Card>
             )}
 
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                {step === 'reveal' ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <Card className={isReveal ? '' : 'mb-6'}>
+              <CardContent className={isReveal ? 'pt-4 pb-4' : 'pt-6'}>
+                {isReveal ? (
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                       {t('create.reveal.subtitle')}
                     </p>
-                    <label className="flex items-start sm:items-center justify-center gap-2 mb-6 cursor-pointer text-left sm:text-center max-w-md mx-auto">
+                    <label className="flex items-start sm:items-center justify-center gap-2 mb-3 cursor-pointer text-left sm:text-center max-w-md mx-auto">
                       <input
                         type="checkbox"
                         checked={accepted}
