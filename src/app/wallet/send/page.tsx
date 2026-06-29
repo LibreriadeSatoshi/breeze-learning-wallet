@@ -441,6 +441,8 @@ function readFeeSat(prep: PrepareResult): number {
     case "sparkAddress":
     case "sparkInvoice":
       return Number(m.fee);
+    case "crossChainAddress":
+      return Number(m.feeAmount) + m.sourceTransferFeeSats;
   }
 }
 

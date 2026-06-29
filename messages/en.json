@@ -34,6 +34,19 @@
       "haveWallet": "Already have a wallet?",
       "restore": "Restore wallet"
     },
+    "passkey": {
+      "createWith": "Create with passkey",
+      "createFailed": "Couldn't create a passkey. Try again or use the password flow.",
+      "signIn": "Sign in with passkey",
+      "signInFailed": "Couldn't sign in with passkey. Try again.",
+      "unlockTitle": "Sign in with passkey",
+      "unlockSubtitle": "Use your fingerprint, face, or device PIN to unlock.",
+      "useRecoveryPhrase": "Use recovery phrase instead",
+      "backupTitle": "Write down your recovery phrase",
+      "backupDescription": "Optional but recommended. These words let you restore your wallet if you ever lose access to your passkey on every device.",
+      "backupHint": "Anyone with these words can spend your funds. Keep the paper somewhere safe and don't take a screenshot.",
+      "backupContinue": "I've saved it"
+    },
     "footer": "By continuing, you agree to our Terms of Service and Privacy Policy"
   },
   "forgetWallet": {

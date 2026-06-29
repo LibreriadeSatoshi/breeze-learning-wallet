@@ -7,12 +7,15 @@ import { disconnectBreez } from "@/lib/lightning/breez-service";
 let mnemonicInMemory: string | null = null;
 
 const SESSION_KEY_MNEMONIC = "scholar-wallet:session-mnemonic";
+const STORAGE_KEY_AUTH_MODE = "scholar-wallet:auth-mode";
 
 const LEGACY_STORAGE_KEYS = [
   "etta-wallet-storage",
   "etta-auth-storage",
   "scholar-wallet-prefs",
 ];
+
+export type AuthMode = "password" | "passkey";
 
 function persistMnemonic(mnemonic: string) {
   mnemonicInMemory = mnemonic;
@@ -33,8 +36,21 @@ function readSessionMnemonic(): string | null {
   return window.sessionStorage.getItem(SESSION_KEY_MNEMONIC);
 }
 
+function readAuthMode(): AuthMode | null {
+  if (typeof window === "undefined") return null;
+  const v = window.localStorage.getItem(STORAGE_KEY_AUTH_MODE);
+  return v === "password" || v === "passkey" ? v : null;
+}
+
+function setAuthMode(mode: AuthMode | null) {
+  if (typeof window === "undefined") return;
+  if (mode) window.localStorage.setItem(STORAGE_KEY_AUTH_MODE, mode);
+  else window.localStorage.removeItem(STORAGE_KEY_AUTH_MODE);
+}
+
 interface WalletStore {
   hasVault: boolean | null;
+  authMode: AuthMode | null;
   isUnlocked: boolean;
   isBootstrapped: boolean;
 
@@ -42,6 +58,7 @@ interface WalletStore {
   refreshHasVault: () => Promise<void>;
   createVault: (mnemonic: string, password: string) => Promise<void>;
   unlock: (password: string) => Promise<void>;
+  adoptPasskeyWallet: (mnemonic: string) => void;
   lock: () => void;
   destroyVault: () => Promise<void>;
   getMnemonic: () => string | null;
@@ -51,6 +68,7 @@ interface WalletStore {
 
 export const useWalletStore = create<WalletStore>()((set, get) => ({
   hasVault: null,
+  authMode: null,
   isUnlocked: false,
   isBootstrapped: false,
 
@@ -63,26 +81,31 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     }
     const blob = await loadVault();
     const session = readSessionMnemonic();
-    if (session && blob) {
+    const mode = readAuthMode();
+    const hasVault = blob !== null || mode === "passkey";
+    if (session && hasVault) {
       mnemonicInMemory = session;
     }
     set({
-      hasVault: blob !== null,
-      isUnlocked: session !== null && blob !== null,
+      hasVault,
+      authMode: mode,
+      isUnlocked: session !== null && hasVault,
       isBootstrapped: true,
     });
   },
 
   refreshHasVault: async () => {
     const blob = await loadVault();
-    set({ hasVault: blob !== null });
+    const mode = readAuthMode();
+    set({ hasVault: blob !== null || mode === "passkey", authMode: mode });
   },
 
   createVault: async (mnemonic, password) => {
     const blob = await encryptMnemonic(mnemonic, password);
     await saveVault(blob);
+    setAuthMode("password");
     persistMnemonic(mnemonic);
-    set({ hasVault: true, isUnlocked: true });
+    set({ hasVault: true, authMode: "password", isUnlocked: true });
   },
 
   unlock: async (password) => {
@@ -91,6 +114,12 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     const plaintext = await decryptMnemonic(blob, password);
     persistMnemonic(plaintext);
     set({ isUnlocked: true });
+  },
+
+  adoptPasskeyWallet: (mnemonic) => {
+    setAuthMode("passkey");
+    persistMnemonic(mnemonic);
+    set({ hasVault: true, authMode: "passkey", isUnlocked: true });
   },
 
   lock: () => {
@@ -102,8 +131,9 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     await disconnectBreez();
     await clearVault();
     clearLocalDriveState();
+    setAuthMode(null);
     clearMnemonic();
-    set({ hasVault: false, isUnlocked: false });
+    set({ hasVault: false, authMode: null, isUnlocked: false });
   },
 
   getMnemonic: () => mnemonicInMemory,

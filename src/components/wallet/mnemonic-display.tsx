@@ -6,8 +6,8 @@ interface MnemonicDisplayProps {
 }
 
 export function MnemonicDisplay({ words, revealed = true }: MnemonicDisplayProps) {
-  if (words.length !== 12) {
-    throw new Error('Mnemonic must have exactly 12 words');
+  if (words.length !== 12 && words.length !== 24) {
+    throw new Error('Mnemonic must have 12 or 24 words');
   }
 
   return (

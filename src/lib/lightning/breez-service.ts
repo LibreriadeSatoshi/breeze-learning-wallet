@@ -207,7 +207,7 @@ export async function prepareSend(
 ): Promise<PrepareSendResult> {
   if (!sdk) throw new Error("Wallet not ready.");
   return sdk.prepareSendPayment({
-    paymentRequest: destination,
+    paymentRequest: { type: "input", input: destination },
     amount: amountSat ? BigInt(amountSat) : undefined,
   });
 }

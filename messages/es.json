@@ -34,6 +34,19 @@
       "haveWallet": "¿Ya tienes una billetera?",
       "restore": "Restaurar billetera"
     },
+    "passkey": {
+      "createWith": "Crear con passkey",
+      "createFailed": "No se pudo crear la passkey. Intenta de nuevo o usa el flujo con contraseña.",
+      "signIn": "Iniciar sesión con passkey",
+      "signInFailed": "No se pudo iniciar sesión con la passkey. Intenta de nuevo.",
+      "unlockTitle": "Iniciar sesión con passkey",
+      "unlockSubtitle": "Usa tu huella, rostro o PIN del dispositivo para desbloquear.",
+      "useRecoveryPhrase": "Usar frase de recuperación en su lugar",
+      "backupTitle": "Anota tu frase de recuperación",
+      "backupDescription": "Opcional pero recomendado. Estas palabras te permiten recuperar tu billetera si pierdes acceso a tu passkey en todos los dispositivos.",
+      "backupHint": "Cualquiera con estas palabras puede gastar tus fondos. Guarda el papel en un lugar seguro y no tomes una captura.",
+      "backupContinue": "Ya la guardé"
+    },
     "footer": "Al continuar, aceptas nuestros Términos del Servicio y Política de Privacidad"
   },
   "forgetWallet": {
