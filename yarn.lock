@@ -27,6 +27,51 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@capacitor/app@npm:^8.1.0":
+  version: 8.1.0
+  resolution: "@capacitor/app@npm:8.1.0"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/670a5bc3f0c1706f9d09ad03873836ac9b56e1ca6c9853e283d43b4ff04c7295b30801d49f563206aadcf882245025be1ecdc12c22c7d479c636b34123e9a0d3
+  languageName: node
+  linkType: hard
+
+"@capacitor/browser@npm:^8.0.3":
+  version: 8.0.3
+  resolution: "@capacitor/browser@npm:8.0.3"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/c4dea47e4035a54f4697f062f176285d66015812fd544c18f39b6c2f4fdfb327011c603abc6fafee6af5a1399777e5cf1e0c5c19e6e6c1a2f4af8bdaf9b5d2cf
+  languageName: node
+  linkType: hard
+
+"@capacitor/clipboard@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "@capacitor/clipboard@npm:8.0.1"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/94471a4930f61e840ff118b663fd8f28e33d9988bca61b61c3143fa9cdc51e70293fe45dfdf61ea9c146c7e191a2503f2ec216a1dc0b71a98a97739f9ad01918
+  languageName: node
+  linkType: hard
+
+"@capacitor/core@npm:^8.4.1":
+  version: 8.4.1
+  resolution: "@capacitor/core@npm:8.4.1"
+  dependencies:
+    tslib: "npm:^2.1.0"
+  checksum: 10c0/c5c733865544d20c884d577120d5429a3dd19696387b515d916b6b8c3456eac543f60a8bfa01e8fc3bd4df4e3d387c4b079e9f247ecc5942aa52f4030a5e3817
+  languageName: node
+  linkType: hard
+
+"@capacitor/share@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "@capacitor/share@npm:8.0.1"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/a615b85c79bbd3bfeb5e2ee2ac119e7ba8b8184ebcaad3b019467103e4ffc24130e1c1af42910498342fb495e0e297edf72169fa801963e34883d8bd4a42e514
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:^1.4.3":
   version: 1.7.1
   resolution: "@emnapi/core@npm:1.7.1"
@@ -2137,6 +2182,11 @@ __metadata:
   resolution: "etta-wallet-web@workspace:."
   dependencies:
     "@breeztech/breez-sdk-spark": "npm:^0.17.1"
+    "@capacitor/app": "npm:^8.1.0"
+    "@capacitor/browser": "npm:^8.0.3"
+    "@capacitor/clipboard": "npm:^8.0.1"
+    "@capacitor/core": "npm:^8.4.1"
+    "@capacitor/share": "npm:^8.0.1"
     "@tanstack/react-query": "npm:^5.90.10"
     "@types/node": "npm:^22"
     "@types/react": "npm:^18"
@@ -4851,7 +4901,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.4.0, tslib@npm:^2.8.0":
+"tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.8.0":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
