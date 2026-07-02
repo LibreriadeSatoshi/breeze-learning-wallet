@@ -86,10 +86,10 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
       className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 flex-1">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
               isReceived
                 ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
                 : "bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
@@ -98,18 +98,18 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
             {isReceived ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <div className="font-medium truncate">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="font-medium truncate min-w-0">
                 {payment.description ||
                   (isReceived ? t("transactions.receivedDefault") : t("transactions.sentDefault"))}
               </div>
               {statusLabels[payment.status] && (
-                <span className={`text-xs font-medium ${statusColors[payment.status]}`}>
+                <span className={`text-xs font-medium shrink-0 ${statusColors[payment.status]}`}>
                   {statusLabels[payment.status]}
                 </span>
               )}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
               {date.toLocaleDateString()}{" "}
               {date.toLocaleTimeString([], {
                 hour: "2-digit",
@@ -118,7 +118,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
             </div>
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-right shrink-0">
           <div
             className={`font-semibold ${
               isReceived

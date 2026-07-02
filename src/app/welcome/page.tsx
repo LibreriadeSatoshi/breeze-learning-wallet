@@ -145,15 +145,15 @@ export default function WelcomePage() {
   const showPasswordUnlock = hasVault && authMode !== "passkey";
 
   return (
-    <div className="min-h-screen flex flex-col justify-between px-6 py-10">
-      <div className="flex-1 flex flex-col items-center justify-end pb-20">
-        <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl mb-8">
-          <span className="text-5xl font-bold text-white">₿</span>
+    <div className="min-h-screen flex flex-col justify-between px-6 py-6 sm:py-10">
+      <div className="flex flex-col items-center pb-6 sm:flex-1 sm:justify-end sm:pb-20">
+        <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl mb-4 sm:mb-8">
+          <span className="text-3xl sm:text-5xl font-bold text-white">₿</span>
         </div>
-        <h1 className="text-5xl font-bold mb-3 text-center bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+        <h1 className="text-3xl sm:text-5xl font-bold mb-2 sm:mb-3 text-center bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
           {APP_NAME}
         </h1>
-        <p className="text-center text-gray-600 dark:text-gray-400 max-w-sm px-4">
+        <p className="text-center text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-sm px-4">
           {t("welcome.tagline")}
         </p>
       </div>

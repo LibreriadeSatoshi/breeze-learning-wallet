@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Cloud, Clipboard, KeyRound, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Cloud, KeyRound, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -41,18 +41,6 @@ export default function RestoreWalletPage() {
   const wordCount = mnemonic.trim().split(/\s+/).filter(Boolean).length;
 
   const driveAvailable = isDriveBackupConfigured();
-
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        setMnemonic(text);
-        setError('');
-      }
-    } catch {
-      setError(t('restore.phrase.pasteFailed'));
-    }
-  };
 
   const handlePhraseSubmit = () => {
     setError('');
@@ -202,14 +190,6 @@ export default function RestoreWalletPage() {
                     <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
                   </div>
                 )}
-                <Button
-                  variant="outline"
-                  onClick={handlePaste}
-                  className="w-full inline-flex items-center justify-center gap-2 border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  <Clipboard className="w-4 h-4" />
-                  <span>{t('restore.phrase.paste')}</span>
-                </Button>
                 <Button
                   variant="primary"
                   size="lg"

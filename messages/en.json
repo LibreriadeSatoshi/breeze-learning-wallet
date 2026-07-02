@@ -146,11 +146,9 @@
     },
     "phrase": {
       "title": "Recovery Phrase",
-      "wordCount": "{{count}}/12 words",
+      "wordCount": "{{count}}/12",
       "placeholder": "word1 word2 word3 ... word12",
       "invalid": "Invalid recovery phrase. Please check the words and try again.",
-      "paste": "Paste from clipboard",
-      "pasteFailed": "Failed to access clipboard. Please paste manually.",
       "chooseDifferent": "Choose a different method",
       "overwriteWarning": "Restoring will replace the existing wallet on this device. Make sure you still have its recovery phrase before continuing."
     },
@@ -230,7 +228,7 @@
       "placeholder": "0",
       "helper": "Optional for invoices that already encode an amount"
     },
-    "paste": "Paste from clipboard",
+    "paste": "Paste",
     "pasteFailed": "Failed to access clipboard",
     "destinationRequired": "Enter a destination",
     "lnurlAmountRequired": "Enter an amount to send to this Lightning address",

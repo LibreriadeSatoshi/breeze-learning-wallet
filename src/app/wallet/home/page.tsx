@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
-  Check,
-  Copy as CopyIcon,
   CreditCard,
   Key,
   Lock,
@@ -68,7 +66,6 @@ export default function WalletHomePage() {
   const [seedError, setSeedError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [revealedSeed, setRevealedSeed] = useState<string[] | null>(null);
-  const [seedCopied, setSeedCopied] = useState(false);
 
 
   const { data: balance, isLoading: balanceLoading } = useBalance(isReady);
@@ -155,7 +152,6 @@ export default function WalletHomePage() {
     setSeedPassword("");
     setSeedError("");
     setRevealedSeed(null);
-    setSeedCopied(false);
   };
 
   const handleVerifyPassword = async () => {
@@ -176,17 +172,6 @@ export default function WalletHomePage() {
     }
   };
 
-  const handleCopySeed = async () => {
-    if (!revealedSeed) return;
-    try {
-      await navigator.clipboard.writeText(revealedSeed.join(" "));
-      setSeedCopied(true);
-      setTimeout(() => setSeedCopied(false), 2000);
-    } catch {
-      // clipboard blocked, ignore
-    }
-  };
-
   if (!mounted || !isUnlocked) return null;
 
   const isLoading = balanceLoading || paymentsLoading;
@@ -195,39 +180,39 @@ export default function WalletHomePage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 text-white px-6 pt-6 pb-20">
         <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+          <div className="flex justify-between items-center gap-2 mb-8">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0">
                 <span className="text-xl font-bold">₿</span>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold">{t("home.title")}</h1>
-                <p className="text-sm text-blue-100">{t("home.tagline")}</p>
+              <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-full text-sm shrink-0">
+                <div className={`w-2 h-2 rounded-full ${CONN_DOT[conn]}`} />
+                <span className="hidden sm:inline">{t(`home.connection.${conn}`)}</span>
+              </div>
+              <div className="min-w-0 hidden sm:block">
+                <h1 className="text-2xl font-bold truncate">{t("home.title")}</h1>
+                <p className="text-sm text-blue-100 truncate">{t("home.tagline")}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-sm">
-                <div className={`w-2 h-2 rounded-full ${CONN_DOT[conn]}`} />
-                <span>{t(`home.connection.${conn}`)}</span>
-              </div>
+            <div className="flex items-center gap-2 shrink-0">
               {SELECTED_BITCOIN_NETWORK === "mainnet" && (
                 <button
                   onClick={() => setShowBuyModal(true)}
                   disabled={!isReady}
-                  className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label={t("home.buyAria")}
                 >
-                  <CreditCard className="w-3.5 h-3.5" />
-                  <span>{t("home.buy")}</span>
+                  <CreditCard className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t("home.buy")}</span>
                 </button>
               )}
               <button
                 onClick={() => setShowSeedModal(true)}
-                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
                 aria-label={t("home.phraseAria")}
               >
-                <Key className="w-3.5 h-3.5" />
-                <span>{t("home.phrase")}</span>
+                <Key className="w-4 h-4" />
+                <span className="hidden sm:inline">{t("home.phrase")}</span>
               </button>
               <button
                 onClick={() => router.push("/wallet/settings")}
@@ -238,10 +223,11 @@ export default function WalletHomePage() {
               </button>
               <button
                 onClick={handleLock}
-                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors"
+                aria-label={t("home.lock")}
+                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
               >
-                <Lock className="w-3.5 h-3.5" />
-                <span>{t("home.lock")}</span>
+                <Lock className="w-4 h-4" />
+                <span className="hidden sm:inline">{t("home.lock")}</span>
               </button>
             </div>
           </div>
@@ -301,27 +287,22 @@ export default function WalletHomePage() {
           </Button>
         </div>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t("home.recent.title")}</h3>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8 text-gray-500">
-                {t("home.recent.loading")}
-              </div>
-            ) : payments.length > 0 ? (
-              <TransactionList
-                payments={payments}
-                onPaymentClick={(payment) => setSelectedPayment(payment)}
-              />
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>{t("home.recent.empty")}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="mb-6">
+          {isLoading ? (
+            <Card>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  {t("home.recent.loading")}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <TransactionList
+              payments={payments}
+              onPaymentClick={(payment) => setSelectedPayment(payment)}
+            />
+          )}
+        </div>
 
         <div className="mt-8 pb-6"></div>
       </div>
@@ -343,14 +324,6 @@ export default function WalletHomePage() {
         {revealedSeed ? (
           <div className="space-y-4">
             <MnemonicDisplay words={revealedSeed} revealed />
-            <Button
-              variant="outline"
-              onClick={handleCopySeed}
-              className="w-full inline-flex items-center justify-center gap-2"
-            >
-              {seedCopied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-              <span>{seedCopied ? t("common.copied") : t("common.copy")}</span>
-            </Button>
             <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
               <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
               <span>{t("home.seed.warning")}</span>

@@ -193,7 +193,7 @@ export default function CreateWalletPage() {
           <div className={`inline-flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl shadow-lg ${isReveal ? 'w-12 h-12 mb-2' : 'w-16 h-16 mb-4'}`}>
             <span className={`font-bold text-white ${isReveal ? 'text-2xl' : 'text-3xl'}`}>₿</span>
           </div>
-          <h1 className={`font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent ${isReveal ? 'text-2xl md:text-3xl mb-1' : 'text-4xl mb-3'}`}>
+          <h1 className={`font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent ${isReveal ? 'text-2xl md:text-3xl mb-1' : 'text-2xl sm:text-3xl md:text-4xl mb-2 md:mb-3'}`}>
             {heading}
           </h1>
           <p className={`text-gray-600 dark:text-gray-400 max-w-lg mx-auto ${isReveal ? 'text-sm' : ''}`}>

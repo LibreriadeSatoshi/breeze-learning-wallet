@@ -102,7 +102,7 @@
       "selectInOrder": "Selecciona las palabras #{{slots}} en orden",
       "incorrect": "Orden incorrecto. Toca las palabras nuevamente en el orden en que aparecen en tu frase.",
       "tapInOrder": "Toca las palabras en orden",
-      "viewAgain": "Ver frase otra vez",
+      "viewAgain": "Ver frase",
       "submit": "Verificar"
     },
     "password": {
@@ -121,7 +121,7 @@
     "drive": {
       "blurbCiphertext": "Qué se guarda: tu frase de recuperación de 12 palabras, cifrada con la contraseña de tu billetera. Google ve un archivo ilegible. Sin tu contraseña, el archivo no se puede usar.",
       "blurbConvenience": "Tu frase escrita en papel sigue siendo la copia maestra. Drive solo te permite restaurar en otro dispositivo sin escribir las 12 palabras.",
-      "backup": "Hacer copia en Google Drive",
+      "backup": "Hacer copia en Drive",
       "failed": "No se pudo iniciar la copia en Google Drive"
     }
   },
@@ -146,11 +146,9 @@
     },
     "phrase": {
       "title": "Frase de recuperación",
-      "wordCount": "{{count}}/12 palabras",
+      "wordCount": "{{count}}/12",
       "placeholder": "palabra1 palabra2 palabra3 ... palabra12",
       "invalid": "Frase de recuperación inválida. Revisa las palabras e intenta de nuevo.",
-      "paste": "Pegar desde portapapeles",
-      "pasteFailed": "No se pudo acceder al portapapeles. Pégalo manualmente.",
       "chooseDifferent": "Elegir otro método",
       "overwriteWarning": "Restaurar va a reemplazar la billetera existente en este dispositivo. Asegúrate de seguir teniendo su frase de recuperación antes de continuar."
     },
@@ -230,7 +228,7 @@
       "placeholder": "0",
       "helper": "Opcional para invoices que ya tienen un monto codificado"
     },
-    "paste": "Pegar desde portapapeles",
+    "paste": "Pegar",
     "pasteFailed": "No se pudo acceder al portapapeles",
     "destinationRequired": "Introduce un destino",
     "lnurlAmountRequired": "Introduce un monto para enviar a esta dirección Lightning",
@@ -280,7 +278,7 @@
       "setupFailed": "No se pudo configurar la dirección Lightning",
       "addressTitle": "Tu dirección Lightning",
       "addressSubtitle": "Compártela con cualquiera que quiera pagarte por Lightning.",
-      "editUsername": "Editar nombre de usuario"
+      "editUsername": "Editar"
     },
     "invoice": {
       "openLink": "O crea un invoice de un solo uso por un monto específico",
@@ -393,7 +391,7 @@
       "breezDefault": "<predeterminado de breez>"
     },
     "registeredAddress": {
-      "editUsername": "Editar nombre de usuario"
+      "editUsername": "Editar"
     }
   },
   "transactions": {
