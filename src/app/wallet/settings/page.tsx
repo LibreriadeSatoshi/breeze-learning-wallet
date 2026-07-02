@@ -41,7 +41,7 @@ import {
 } from "@/lib/backup/drive-client";
 import { useT, useLocale } from "@/lib/i18n/hook";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n/types";
-import { formatRelativeTime } from "@/lib/wallet/relative-time";
+import { useFormatRelativeTime } from "@/lib/wallet/relative-time";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
 
@@ -193,6 +193,7 @@ export default function SettingsPage() {
 
 function DriveBackupSection() {
   const t = useT();
+  const formatRelativeTime = useFormatRelativeTime();
   const [connected, setConnected] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);

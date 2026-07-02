@@ -13,7 +13,9 @@
     "skip": "Omitir por ahora",
     "done": "Listo",
     "hide": "Ocultar",
-    "share": "Compartir"
+    "share": "Compartir",
+    "never": "Nunca",
+    "justNow": "hace un momento"
   },
   "welcome": {
     "tagline": "Una billetera Bitcoin y Lightning no custodial. Tus claves, tus monedas.",

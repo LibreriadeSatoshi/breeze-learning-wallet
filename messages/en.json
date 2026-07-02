@@ -13,7 +13,9 @@
     "skip": "Skip for now",
     "done": "Done",
     "hide": "Hide",
-    "share": "Share"
+    "share": "Share",
+    "never": "Never",
+    "justNow": "just now"
   },
   "welcome": {
     "tagline": "A non-custodial Bitcoin & Lightning wallet. Your keys, your coins.",
