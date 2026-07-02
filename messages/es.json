@@ -99,7 +99,7 @@
     },
     "writtenDown": "Ya las anoté",
     "verify": {
-      "selectInOrder": "Selecciona las palabras #{{slots}} en orden",
+      "selectInOrder": "Selecciona las palabras {{slots}} en orden",
       "incorrect": "Orden incorrecto. Toca las palabras nuevamente en el orden en que aparecen en tu frase.",
       "tapInOrder": "Toca las palabras en orden",
       "viewAgain": "Ver frase",
@@ -348,7 +348,7 @@
       "backupStartFailed": "No se pudo iniciar la copia",
       "account": "Cuenta",
       "lastBackup": "Última copia",
-      "backupNow": "Hacer copia ahora",
+      "backupNow": "Copiar ahora",
       "disconnect": "Desconectar",
       "disconnectFailed": "No se pudo desconectar",
       "disconnectConfirmTitle": "¿Desconectar y borrar la copia?",
@@ -427,7 +427,7 @@
     "taken": "Ya tomado. Elige otro",
     "invalid": "Usa letras minúsculas, números, puntos, guiones bajos y medios (máx 32).",
     "failed": "No se pudo actualizar la dirección",
-    "replace": "Reemplazar dirección"
+    "replace": "Reemplazar"
   },
   "buyBitcoin": {
     "select": "Comprar Bitcoin",

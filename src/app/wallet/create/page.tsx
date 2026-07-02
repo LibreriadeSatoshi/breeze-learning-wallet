@@ -333,19 +333,19 @@ export default function CreateWalletPage() {
             <Card className="mb-6">
               <CardHeader>
                 <h3 className="font-semibold">
-                  {t('create.verify.selectInOrder', { slots: verifySlots.map((i) => i + 1).join(', ') })}
+                  {t('create.verify.selectInOrder', { slots: verifySlots.map((i) => `#${i + 1}`).join(', ') })}
                 </h3>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-3 mb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                   {verifySlots.map((wordIndex, slotIndex) => (
                     <div
                       key={wordIndex}
-                      className="p-4 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 text-center"
+                      className="p-4 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 text-center min-w-0"
                     >
                       <div className="text-xs text-gray-500 mb-1">#{wordIndex + 1}</div>
                       {picks[slotIndex] !== undefined ? (
-                        <div className="font-mono font-medium">
+                        <div className="font-mono font-medium truncate">
                           {shuffledChoices[picks[slotIndex]].word}
                         </div>
                       ) : (
@@ -388,12 +388,12 @@ export default function CreateWalletPage() {
               </CardContent>
             </Card>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
               <Button
                 variant="ghost"
                 size="lg"
                 onClick={handleBackToPhrase}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 ← {t('create.verify.viewAgain')}
               </Button>
@@ -402,7 +402,7 @@ export default function CreateWalletPage() {
                 size="lg"
                 onClick={handleSubmitVerify}
                 disabled={picks.length !== VERIFY_SLOTS}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 {t('create.verify.submit')}
               </Button>

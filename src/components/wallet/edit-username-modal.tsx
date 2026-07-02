@@ -111,25 +111,25 @@ export function EditUsernameModal({
             <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
           </div>
         )}
-        <div className="flex gap-3">
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={onClose}
-            disabled={registerMutation.isPending}
-            className="flex-1"
-          >
-            {t("common.cancel")}
-          </Button>
+        <div className="flex flex-col sm:flex-row gap-3">
           <Button
             variant="primary"
             size="lg"
             onClick={save}
             loading={registerMutation.isPending}
             disabled={registerMutation.isPending || available !== true}
-            className="flex-1"
+            className="w-full sm:flex-1"
           >
             {t("editUsername.replace")}
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={onClose}
+            disabled={registerMutation.isPending}
+            className="w-full sm:flex-1"
+          >
+            {t("common.cancel")}
           </Button>
         </div>
       </div>
