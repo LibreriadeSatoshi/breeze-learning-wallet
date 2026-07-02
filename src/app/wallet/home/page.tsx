@@ -185,9 +185,8 @@ export default function WalletHomePage() {
               <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0">
                 <span className="text-xl font-bold">₿</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-full text-sm shrink-0">
+              <div className="flex sm:hidden items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-full text-sm shrink-0">
                 <div className={`w-2 h-2 rounded-full ${CONN_DOT[conn]}`} />
-                <span className="hidden sm:inline">{t(`home.connection.${conn}`)}</span>
               </div>
               <div className="min-w-0 hidden sm:block">
                 <h1 className="text-2xl font-bold truncate">{t("home.title")}</h1>
@@ -195,6 +194,10 @@ export default function WalletHomePage() {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <div className="hidden sm:flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-full text-sm">
+                <div className={`w-2 h-2 rounded-full ${CONN_DOT[conn]}`} />
+                <span>{t(`home.connection.${conn}`)}</span>
+              </div>
               {SELECTED_BITCOIN_NETWORK === "mainnet" && (
                 <button
                   onClick={() => setShowBuyModal(true)}

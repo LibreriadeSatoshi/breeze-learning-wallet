@@ -427,7 +427,7 @@
     "taken": "Taken. Pick another",
     "invalid": "Use lowercase letters, numbers, dots, underscores, hyphens (max 32).",
     "failed": "Failed to update address",
-    "replace": "Replace address"
+    "replace": "Replace"
   },
   "buyBitcoin": {
     "select": "Buy Bitcoin",
