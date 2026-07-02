@@ -29,16 +29,3 @@ export function MnemonicDisplay({ words, revealed = true }: MnemonicDisplayProps
   );
 }
 
-interface MnemonicWordProps {
-  word: string;
-  index: number;
-}
-
-export function MnemonicWord({ word, index }: MnemonicWordProps) {
-  return (
-    <div className="flex items-center gap-2 p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-      <span className="text-xs font-medium text-gray-400 w-4">{index}.</span>
-      <span className="font-mono text-sm font-medium">{word}</span>
-    </div>
-  );
-}

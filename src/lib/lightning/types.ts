@@ -11,16 +11,3 @@ export interface Payment {
   preimage?: string;
   method: "lightning" | "spark" | "token" | "deposit" | "withdraw" | "unknown";
 }
-
-export interface WalletBalance {
-  totalSat: number;
-  identityPubkey: string;
-}
-
-export interface NodeInfo {
-  id?: string;
-  isReady: boolean;
-  isConnected: boolean;
-  isSyncing: boolean;
-  lastSyncTime: number | null;
-}

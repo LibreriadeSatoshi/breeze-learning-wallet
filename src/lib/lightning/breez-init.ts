@@ -45,22 +45,3 @@ export async function initializeBreezWallet(): Promise<InitResult> {
   }
 }
 
-export async function syncBreezWallet(): Promise<InitResult> {
-  try {
-    const nodeState = await getNodeState();
-    const balance = await getBalance();
-    const payments = await listPayments();
-
-    return {
-      success: true,
-      nodeId: nodeState?.id,
-      balance,
-      payments,
-    };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to sync Breez wallet";
-    console.error("Breez sync failed:", message);
-    return { success: false, error: message };
-  }
-}

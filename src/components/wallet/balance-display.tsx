@@ -27,26 +27,3 @@ export function BalanceDisplay({ balanceSat, fiatRate, fiatCurrency }: BalanceDi
   );
 }
 
-interface BalanceCardProps {
-  label: string;
-  amountSat: number;
-  variant?: 'default' | 'primary' | 'success';
-}
-
-export function BalanceCard({ label, amountSat, variant = 'default' }: BalanceCardProps) {
-  const sats = amountSat;
-
-  const variants = {
-    default: 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700',
-    primary: 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900',
-    success: 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900',
-  };
-
-  return (
-    <div className={`p-4 rounded-lg border ${variants[variant]}`}>
-      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{label}</div>
-      <div className="text-2xl font-bold">{sats.toLocaleString()}</div>
-      <div className="text-xs text-gray-500">sats</div>
-    </div>
-  );
-}

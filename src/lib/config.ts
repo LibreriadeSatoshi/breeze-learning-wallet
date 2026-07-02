@@ -1,5 +1,4 @@
 export const APP_NAME = 'Satoshi Scholar';
-export const APP_TAGLINE = 'Learn Bitcoin, Earn Rewards';
 
 export type SparkNetwork = 'mainnet' | 'regtest';
 
