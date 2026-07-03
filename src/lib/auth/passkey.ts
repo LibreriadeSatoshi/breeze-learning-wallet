@@ -35,10 +35,14 @@ export async function isPasskeySupported(): Promise<boolean> {
   try {
     const client = await getClient();
     const availability = await client.checkAvailability();
-    if (availability.type !== "available") {
-      console.warn("[passkey] not available:", availability);
+    // "skipped" means the provider couldn't verify domain association, not
+    // that passkeys are unusable — the browser enforces rpId scope at
+    // ceremony time, and our rpId always equals the current hostname.
+    if (availability.type === "available" || availability.type === "skipped") {
+      return true;
     }
-    return availability.type === "available";
+    console.warn("[passkey] not available:", availability);
+    return false;
   } catch (e) {
     console.warn("[passkey] availability check threw:", e);
     return false;
