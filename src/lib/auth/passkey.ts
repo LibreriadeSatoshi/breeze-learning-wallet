@@ -28,12 +28,19 @@ async function getClient(): Promise<PasskeyClient> {
 }
 
 export async function isPasskeySupported(): Promise<boolean> {
-  if (typeof window === "undefined" || !window.PublicKeyCredential) return false;
+  if (typeof window === "undefined" || !window.PublicKeyCredential) {
+    console.warn("[passkey] PublicKeyCredential unavailable (insecure context?)");
+    return false;
+  }
   try {
     const client = await getClient();
     const availability = await client.checkAvailability();
+    if (availability.type !== "available") {
+      console.warn("[passkey] not available:", availability);
+    }
     return availability.type === "available";
-  } catch {
+  } catch (e) {
+    console.warn("[passkey] availability check threw:", e);
     return false;
   }
 }
