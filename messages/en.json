@@ -401,6 +401,9 @@
     },
     "registeredAddress": {
       "editUsername": "Edit username"
+    },
+    "help": {
+      "title": "Help"
     }
   },
   "transactions": {
@@ -454,5 +457,55 @@
     "qrInstructions": "Scan this code with Cash App, or open the link on a device with Cash App installed.",
     "copyLink": "Copy Cash App link",
     "autoRefresh": "This dialog will refresh automatically once the payment lands."
+  },
+  "legal": {
+    "title": "Terms & Privacy",
+    "termsTitle": "Terms of Service",
+    "privacyTitle": "Privacy Policy",
+    "terms": {
+      "s1t": "About this service",
+      "s1b": "Satoshi Scholar is a non-custodial Bitcoin and Lightning wallet that runs entirely in your browser. We provide software, not a financial service: we never hold your funds, your keys, or any account on your behalf.",
+      "s2t": "You are in control, and responsible",
+      "s2b": "Your recovery phrase (and your passkey, if you use one) is the only way to access your funds. If you lose it, nobody, including us, can recover your wallet, and your funds will be permanently lost. Transactions on Bitcoin and Lightning are irreversible.",
+      "s3t": "How payments work",
+      "s3b": "Payments are executed by the Breez SDK over the Spark and Lightning networks. Your Lightning address is provided by Breez's LNURL service. Network fees are paid to the network operators; we charge no fees and receive no part of them.",
+      "s4t": "Acceptable use",
+      "s4b": "You may only use the wallet where it is legal to do so, and you are solely responsible for complying with your local laws, including tax obligations.",
+      "s5t": "No warranty",
+      "s5b": "The wallet is provided \"as is\", without warranties of any kind. Bitcoin and Lightning are experimental technologies and the value of bitcoin is volatile. To the maximum extent permitted by law, we are not liable for any loss of funds, profits, or data arising from your use of the wallet.",
+      "s6t": "Changes",
+      "s6b": "We may update these terms from time to time. Continued use of the wallet after an update means you accept the new terms."
+    },
+    "privacy": {
+      "p1t": "No accounts, no personal data",
+      "p1b": "The wallet has no sign-up and no user accounts. We do not collect, store, or process your name, email, or any other personal information.",
+      "p2t": "Your keys never leave your device",
+      "p2b": "Your recovery phrase is generated in your browser and stored there encrypted with your password or passkey. It is never sent to any server in any form.",
+      "p3t": "What leaves your browser",
+      "p3b": "To operate, the wallet exchanges payment data (such as invoices and node operations) directly with Breez and Spark infrastructure, and registers your chosen Lightning-address username with the LNURL service. This data identifies your wallet on the network, not your person.",
+      "p4t": "Optional Google Drive backup",
+      "p4b": "If you enable it, your already-encrypted vault is uploaded to a hidden app folder in your own Google Drive. Your browser talks to Google directly; we never see your Drive, your data, or your Google credentials. Google's own privacy policy applies to your Drive.",
+      "p5t": "No analytics or tracking",
+      "p5b": "The wallet contains no analytics, trackers, or ads. Preferences such as language and currency are stored locally in your browser."
+    }
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "q1": "Who holds my bitcoin?",
+    "a1": "You do. This wallet is non-custodial: your keys are generated and stored only on your device, and payments are signed there. Nobody else, including us, can move your funds.",
+    "q2": "What is Lightning?",
+    "a2": "A payment network built on top of Bitcoin that makes payments near-instant and very cheap. Your wallet uses it for everyday payments and falls back to regular Bitcoin when needed.",
+    "q3": "What if I lose my recovery phrase?",
+    "a3": "While you can still unlock the wallet on this device, you can reveal the phrase again from the home screen and write it down. If you lose the phrase and access to every device (or your passkey), your funds are permanently lost. There is no reset.",
+    "q4": "What's the difference between a password and a passkey wallet?",
+    "a4": "A password wallet stores your phrase on the device, encrypted with a password you type. A passkey wallet derives the wallet from a passkey (fingerprint, face, or device PIN), so there is no password to remember. Both give you a 12-word recovery phrase as the master backup.",
+    "q5": "What is my Lightning address?",
+    "a5": "An email-like address (name@domain) that others can use to pay you. You get one automatically and can change the name in settings; payments to it arrive straight into your wallet.",
+    "q6": "What fees do I pay?",
+    "a6": "Only network fees: Lightning routing fees (usually a fraction of a percent) and Bitcoin miner fees for on-chain operations. The wallet itself charges nothing.",
+    "q7": "Can I use my wallet on another device?",
+    "a7": "Yes. Restore it with your 12-word phrase on the new device. If you created it with a passkey, signing in with the same passkey (synced by your platform) opens the same wallet.",
+    "q8": "What happens if this website goes offline?",
+    "a8": "Your funds live on the Bitcoin and Spark networks, not on this site. With your 12-word phrase you can restore your wallet in any compatible wallet built on the same technology."
   }
 }

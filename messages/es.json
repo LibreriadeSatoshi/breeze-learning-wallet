@@ -401,6 +401,9 @@
     },
     "registeredAddress": {
       "editUsername": "Editar"
+    },
+    "help": {
+      "title": "Ayuda"
     }
   },
   "transactions": {
@@ -454,5 +457,55 @@
     "qrInstructions": "Escanea este código con Cash App, o abre el enlace en un dispositivo con Cash App instalada.",
     "copyLink": "Copiar enlace de Cash App",
     "autoRefresh": "Este diálogo se actualizará automáticamente cuando llegue el pago."
+  },
+  "legal": {
+    "title": "Términos y Privacidad",
+    "termsTitle": "Términos del Servicio",
+    "privacyTitle": "Política de Privacidad",
+    "terms": {
+      "s1t": "Sobre este servicio",
+      "s1b": "Satoshi Scholar es una billetera Bitcoin y Lightning no custodial que funciona completamente en tu navegador. Ofrecemos software, no un servicio financiero: nunca tenemos tus fondos, tus claves ni ninguna cuenta a tu nombre.",
+      "s2t": "Tú tienes el control, y la responsabilidad",
+      "s2b": "Tu frase de recuperación (y tu passkey, si usas una) es la única forma de acceder a tus fondos. Si la pierdes, nadie, ni siquiera nosotros, puede recuperar tu billetera, y tus fondos se perderán para siempre. Las transacciones en Bitcoin y Lightning son irreversibles.",
+      "s3t": "Cómo funcionan los pagos",
+      "s3b": "Los pagos se ejecutan con el Breez SDK sobre las redes Spark y Lightning. Tu dirección Lightning la provee el servicio LNURL de Breez. Las comisiones de red se pagan a los operadores de la red; no cobramos comisiones ni recibimos parte de ellas.",
+      "s4t": "Uso aceptable",
+      "s4b": "Solo puedes usar la billetera donde sea legal hacerlo, y eres el único responsable de cumplir las leyes de tu país, incluidas las obligaciones fiscales.",
+      "s5t": "Sin garantía",
+      "s5b": "La billetera se ofrece \"tal cual\", sin garantías de ningún tipo. Bitcoin y Lightning son tecnologías experimentales y el valor de bitcoin es volátil. En la máxima medida permitida por la ley, no somos responsables de pérdidas de fondos, ganancias o datos derivadas del uso de la billetera.",
+      "s6t": "Cambios",
+      "s6b": "Podemos actualizar estos términos ocasionalmente. Seguir usando la billetera después de una actualización significa que aceptas los nuevos términos."
+    },
+    "privacy": {
+      "p1t": "Sin cuentas ni datos personales",
+      "p1b": "La billetera no tiene registro ni cuentas de usuario. No recopilamos, almacenamos ni procesamos tu nombre, correo ni ninguna otra información personal.",
+      "p2t": "Tus claves nunca salen de tu dispositivo",
+      "p2b": "Tu frase de recuperación se genera en tu navegador y se guarda ahí cifrada con tu contraseña o passkey. Nunca se envía a ningún servidor de ninguna forma.",
+      "p3t": "Qué sale de tu navegador",
+      "p3b": "Para funcionar, la billetera intercambia datos de pago (como facturas y operaciones del nodo) directamente con la infraestructura de Breez y Spark, y registra el nombre de usuario de tu dirección Lightning en el servicio LNURL. Estos datos identifican a tu billetera en la red, no a tu persona.",
+      "p4t": "Respaldo opcional en Google Drive",
+      "p4b": "Si lo activas, tu bóveda ya cifrada se sube a una carpeta oculta de aplicación en tu propio Google Drive. Tu navegador se comunica directamente con Google; nunca vemos tu Drive, tus datos ni tus credenciales de Google. A tu Drive aplica la política de privacidad de Google.",
+      "p5t": "Sin analítica ni rastreo",
+      "p5b": "La billetera no contiene analítica, rastreadores ni publicidad. Preferencias como idioma y moneda se guardan localmente en tu navegador."
+    }
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "q1": "¿Quién tiene mis bitcoin?",
+    "a1": "Tú. Esta billetera es no custodial: tus claves se generan y se guardan solo en tu dispositivo, y los pagos se firman ahí. Nadie más, ni siquiera nosotros, puede mover tus fondos.",
+    "q2": "¿Qué es Lightning?",
+    "a2": "Una red de pagos construida sobre Bitcoin que hace los pagos casi instantáneos y muy baratos. Tu billetera la usa para los pagos del día a día y recurre a Bitcoin normal cuando hace falta.",
+    "q3": "¿Qué pasa si pierdo mi frase de recuperación?",
+    "a3": "Mientras puedas desbloquear la billetera en este dispositivo, puedes volver a ver la frase desde la pantalla principal y anotarla. Si pierdes la frase y el acceso a todos tus dispositivos (o tu passkey), tus fondos se pierden para siempre. No hay forma de restablecerla.",
+    "q4": "¿Cuál es la diferencia entre una billetera con contraseña y una con passkey?",
+    "a4": "Una billetera con contraseña guarda tu frase en el dispositivo, cifrada con una contraseña que escribes. Una billetera con passkey deriva la billetera desde una passkey (huella, rostro o PIN del dispositivo), así no hay contraseña que recordar. Ambas te dan una frase de recuperación de 12 palabras como respaldo maestro.",
+    "q5": "¿Qué es mi dirección Lightning?",
+    "a5": "Una dirección parecida a un correo (nombre@dominio) que otros pueden usar para pagarte. Recibes una automáticamente y puedes cambiar el nombre en ajustes; los pagos llegan directo a tu billetera.",
+    "q6": "¿Qué comisiones pago?",
+    "a6": "Solo comisiones de red: las de enrutamiento de Lightning (normalmente una fracción de un porcentaje) y las de los mineros de Bitcoin para operaciones on-chain. La billetera en sí no cobra nada.",
+    "q7": "¿Puedo usar mi billetera en otro dispositivo?",
+    "a7": "Sí. Restáurala con tus 12 palabras en el nuevo dispositivo. Si la creaste con una passkey, iniciar sesión con la misma passkey (sincronizada por tu plataforma) abre la misma billetera.",
+    "q8": "¿Qué pasa si este sitio deja de funcionar?",
+    "a8": "Tus fondos viven en las redes de Bitcoin y Spark, no en este sitio. Con tus 12 palabras puedes restaurar tu billetera en cualquier billetera compatible construida sobre la misma tecnología."
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -168,6 +169,26 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <ClaimLeewaySection />
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <h2 className="text-lg font-semibold">{t("settings.help.title")}</h2>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Link
+              href="/faq"
+              className="block text-sm text-blue-600 dark:text-blue-400 hover:underline underline-offset-2"
+            >
+              {t("faq.title")}
+            </Link>
+            <Link
+              href="/legal"
+              className="block text-sm text-blue-600 dark:text-blue-400 hover:underline underline-offset-2"
+            >
+              {t("legal.title")}
+            </Link>
           </CardContent>
         </Card>
 

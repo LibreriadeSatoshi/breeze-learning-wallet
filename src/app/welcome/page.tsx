@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -342,10 +343,19 @@ export default function WelcomePage() {
         )}
       </div>
 
-      <div className="text-center pb-6">
-        <p className="text-xs text-gray-500 dark:text-gray-400 px-8">
+      <div className="text-center pb-6 space-y-2">
+        <Link
+          href="/legal"
+          className="block text-xs text-gray-500 dark:text-gray-400 px-8 hover:underline underline-offset-2"
+        >
           {t("welcome.footer")}
-        </p>
+        </Link>
+        <Link
+          href="/faq"
+          className="block text-xs text-gray-500 dark:text-gray-400 px-8 hover:underline underline-offset-2"
+        >
+          {t("faq.title")}
+        </Link>
       </div>
 
       <Modal
