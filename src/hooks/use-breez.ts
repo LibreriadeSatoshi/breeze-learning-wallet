@@ -29,7 +29,7 @@ import type {
 } from "@breeztech/breez-sdk-spark";
 import type { Payment } from "@/lib/lightning/types";
 
-export const breezKeys = {
+const breezKeys = {
   all: ["breez"] as const,
   balance: () => [...breezKeys.all, "balance"] as const,
   nodeState: () => [...breezKeys.all, "nodeState"] as const,
@@ -47,14 +47,6 @@ export function useBalance(enabled: boolean = true) {
     enabled,
     refetchInterval: enabled ? 60000 : false,
     staleTime: 10000,
-  });
-}
-
-export function useNodeState() {
-  return useQuery({
-    queryKey: breezKeys.nodeState(),
-    queryFn: getNodeState,
-    refetchInterval: 30000,
   });
 }
 
@@ -158,26 +150,6 @@ export function useRecommendedFees(enabled: boolean = true) {
   });
 }
 
-export function useClaimDeposit() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      txid,
-      vout,
-      maxFee,
-    }: {
-      txid: string;
-      vout: number;
-      maxFee?: Fee;
-    }) => claimDeposit(txid, vout, maxFee),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: breezKeys.unclaimedDeposits() });
-      queryClient.invalidateQueries({ queryKey: breezKeys.balance() });
-      queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
-    },
-  });
-}
-
 export function useRefundDeposit() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -249,16 +221,6 @@ export function useRegisterLightningAddress() {
       username: string;
       description?: string;
     }) => registerLightningAddress(username, description),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: breezKeys.lightningAddress() });
-    },
-  });
-}
-
-export function useDeleteLightningAddress() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteLightningAddress,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.lightningAddress() });
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowDownToLine,
@@ -56,7 +56,7 @@ export default function WalletHomePage() {
   const verifyPasswordAndReveal = useWalletStore((s) => s.verifyPasswordAndReveal);
 
   const [isReady, setIsReady] = useState(false);
-  const [initializing, setInitializing] = useState(false);
+  const initializingRef = useRef(false);
   const [conn, setConn] = useState<"offline" | "syncing" | "synced" | "failed">("offline");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 
@@ -90,38 +90,33 @@ export default function WalletHomePage() {
   }, [mounted, isBootstrapped, isUnlocked, router]);
 
   useEffect(() => {
-    if (!isUnlocked || isReady || initializing) return;
+    if (!isUnlocked || isReady || initializingRef.current) return;
 
-    const initialize = async () => {
-      setInitializing(true);
+    initializingRef.current = true;
+    setConn("syncing");
+
+    (async () => {
       try {
         const result = await initializeBreezWallet();
         if (result.success) {
           setIsReady(true);
+          setConn("synced");
           await refresh();
         } else {
+          setConn("failed");
           console.error("Failed to initialize:", result.error);
         }
       } catch (error) {
+        setConn("failed");
         console.error("Initialization error:", error);
       } finally {
-        setInitializing(false);
+        initializingRef.current = false;
       }
-    };
-
-    initialize();
-  }, [isUnlocked, isReady, initializing, refresh]);
+    })();
+  }, [isUnlocked, isReady, refresh]);
 
   useEffect(() => {
-    if (initializing) {
-      setConn("syncing");
-      return;
-    }
-    if (!isReady) {
-      setConn("offline");
-      return;
-    }
-    setConn("synced");
+    if (!isReady) return;
 
     const handleEvent = async (event: SdkEvent) => {
       if (event.type === "synced") setConn("synced");
@@ -140,7 +135,7 @@ export default function WalletHomePage() {
     };
 
     return onSdkEvent(handleEvent);
-  }, [isReady, initializing, refresh]);
+  }, [isReady, refresh]);
 
   const handleLock = () => {
     lock();
@@ -199,7 +194,7 @@ export default function WalletHomePage() {
                 <span>{t(`home.connection.${conn}`)}</span>
               </div>
               {SELECTED_BITCOIN_NETWORK === "mainnet" && (
-                <button
+                <button type="button"
                   onClick={() => setShowBuyModal(true)}
                   disabled={!isReady}
                   className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -209,7 +204,7 @@ export default function WalletHomePage() {
                   <span className="hidden sm:inline">{t("home.buy")}</span>
                 </button>
               )}
-              <button
+              <button type="button"
                 onClick={() => setShowSeedModal(true)}
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
                 aria-label={t("home.phraseAria")}
@@ -217,14 +212,14 @@ export default function WalletHomePage() {
                 <Key className="w-4 h-4" />
                 <span className="hidden sm:inline">{t("home.phrase")}</span>
               </button>
-              <button
+              <button type="button"
                 onClick={() => router.push("/wallet/settings")}
                 aria-label={t("home.settingsAria")}
                 className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
               >
                 <SettingsIcon className="w-4 h-4" />
               </button>
-              <button
+              <button type="button"
                 onClick={handleLock}
                 aria-label={t("home.lock")}
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
@@ -315,7 +310,7 @@ export default function WalletHomePage() {
         onClose={() => setSelectedPayment(null)}
       />
 
-      <BuyBitcoinModal open={showBuyModal} onClose={() => setShowBuyModal(false)} />
+      {showBuyModal && <BuyBitcoinModal onClose={() => setShowBuyModal(false)} />}
 
       <Modal
         open={showSeedModal}

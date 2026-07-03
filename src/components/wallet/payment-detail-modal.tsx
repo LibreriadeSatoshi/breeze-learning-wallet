@@ -9,6 +9,12 @@ import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 
+const statusStyles = {
+  pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
+  complete: "text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30",
+  failed: "text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30",
+} as const;
+
 interface PaymentDetailModalProps {
   payment: Payment | null;
   onClose: () => void;
@@ -42,12 +48,6 @@ function PaymentDetailContent({
     fiatRate !== undefined && feeSats > 0
       ? formatFiat(feeSats, fiatRate, fiatCurrency)
       : null;
-
-  const statusStyles = {
-    pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
-    complete: "text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30",
-    failed: "text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30",
-  } as const;
 
   return (
     <div className="space-y-5">
@@ -157,7 +157,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="py-3 flex items-center gap-4">
       <dt className="text-gray-500 dark:text-gray-400 shrink-0">{label}</dt>
-      <button
+      <button type="button"
         onClick={copy}
         className="ml-auto inline-flex items-center gap-2 font-mono text-xs text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1.5 py-0.5"
         aria-label={t("paymentDetail.copyAria", { label: label.toLowerCase() })}

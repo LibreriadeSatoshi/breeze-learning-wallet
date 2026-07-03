@@ -18,11 +18,10 @@ const CASH_APP_QUICK_AMOUNTS = [10_000, 50_000, 100_000];
 const MIN_CASH_APP_SATS = 1;
 
 interface BuyBitcoinModalProps {
-  open: boolean;
   onClose: () => void;
 }
 
-export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
+export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
   const t = useT();
   const [step, setStep] = useState<Step>("select");
   const [redirecting, setRedirecting] = useState<Provider | null>(null);
@@ -32,25 +31,14 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { rate: fiatRate, currency: fiatCurrency } = useFiat(open);
+  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
 
   useEffect(() => {
-    if (open) return;
-    setStep("select");
-    setRedirecting(null);
-    setAmountInput("");
-    setCashAppUrl(null);
-    setGenerating(false);
-    setError(null);
-    setCopied(false);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || step !== "qr") return;
+    if (step !== "qr") return;
     return onSdkEvent((event) => {
       if (event.type === "paymentSucceeded") onClose();
     });
-  }, [open, step, onClose]);
+  }, [step, onClose]);
 
   const amountSats = useMemo(() => {
     if (!amountInput) return null;
@@ -141,10 +129,10 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
         : t("buyBitcoin.qr");
 
   return (
-    <Modal open={open} onClose={onClose} title={title} dismissable={!generating && !redirecting}>
+    <Modal open onClose={onClose} title={title} dismissable={!generating && !redirecting}>
       {step === "select" && (
         <div className="space-y-3">
-          <button
+          <button type="button"
             onClick={handleMoonPay}
             disabled={redirecting !== null}
             className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all text-left disabled:opacity-50"
@@ -160,7 +148,7 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
             </div>
             <ExternalLink className="w-4 h-4 text-gray-400" />
           </button>
-          <button
+          <button type="button"
             onClick={() => setStep("amount")}
             disabled={redirecting !== null}
             className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50/50 dark:hover:bg-green-950/20 transition-all text-left disabled:opacity-50"
@@ -254,7 +242,7 @@ export function BuyBitcoinModal({ open, onClose }: BuyBitcoinModalProps) {
               <QRCodeSVG value={cashAppUrl} size={220} level="M" />
             </div>
           </div>
-          <button
+          <button type="button"
             onClick={handleCopy}
             className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
           >

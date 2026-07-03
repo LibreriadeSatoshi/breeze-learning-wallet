@@ -94,7 +94,7 @@ export default function RestoreWalletPage() {
     <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <button
+          <button type="button"
             onClick={() => router.back()}
             className="mb-4 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors inline-flex items-center gap-2 text-gray-600 dark:text-gray-400"
           >
@@ -118,7 +118,7 @@ export default function RestoreWalletPage() {
 
         {step === 'method' && (
           <div className="grid grid-cols-1 gap-3 mb-6">
-            <button
+            <button type="button"
               onClick={() => setStep('phrase')}
               className="p-5 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 bg-white dark:bg-gray-900 text-left transition-colors flex items-start gap-4"
             >
@@ -130,7 +130,7 @@ export default function RestoreWalletPage() {
                 </div>
               </div>
             </button>
-            <button
+            <button type="button"
               onClick={handleDriveRestore}
               disabled={!driveAvailable}
               className="p-5 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-900 text-left transition-colors flex items-start gap-4"

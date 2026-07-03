@@ -371,8 +371,8 @@ export default function CreateWalletPage() {
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
                   {shuffledChoices.map((item, index) => (
-                    <button
-                      key={index}
+                    <button type="button"
+                      key={item.originalIndex}
                       onClick={() => handlePickChoice(index)}
                       disabled={picks.includes(index)}
                       className={`p-4 rounded-lg border-2 font-mono font-medium transition-all ${

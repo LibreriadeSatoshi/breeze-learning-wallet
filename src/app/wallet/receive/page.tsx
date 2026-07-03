@@ -80,7 +80,7 @@ export default function ReceivePage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-2xl mx-auto px-6 py-6">
         <div className="flex items-center gap-4 mb-6">
-          <button
+          <button type="button"
             onClick={() => router.back()}
             aria-label={t("common.back")}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
@@ -93,7 +93,7 @@ export default function ReceivePage() {
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 gap-3">
-              <button
+              <button type="button"
                 onClick={() => setPaymentMethod("lightning")}
                 className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
                   paymentMethod === "lightning"
@@ -105,7 +105,7 @@ export default function ReceivePage() {
                 <div className="font-medium">{t("receive.methods.lightning")}</div>
                 <div className="text-xs text-gray-500">{t("receive.methods.lightningSubtitle")}</div>
               </button>
-              <button
+              <button type="button"
                 onClick={() => setPaymentMethod("bitcoin")}
                 className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
                   paymentMethod === "bitcoin"
@@ -205,15 +205,16 @@ function LightningPanel({
     <>
       <AddressCard info={lnAddress} onEdit={() => setEditOpen(true)} />
       <InvoiceCreator onReceived={onReceived} />
-      <EditUsernameModal
-        open={editOpen}
-        currentAddress={lnAddress.lightningAddress}
-        onClose={() => setEditOpen(false)}
-        onChanged={() => {
-          setEditOpen(false);
-          refetch();
-        }}
-      />
+      {editOpen && (
+        <EditUsernameModal
+          currentAddress={lnAddress.lightningAddress}
+          onClose={() => setEditOpen(false)}
+          onChanged={() => {
+            setEditOpen(false);
+            refetch();
+          }}
+        />
+      )}
     </>
   );
 }
@@ -398,7 +399,7 @@ function InvoiceCreator({
   if (!open) {
     return (
       <div className="text-center">
-        <button
+        <button type="button"
           onClick={() => setOpen(true)}
           className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
@@ -482,7 +483,7 @@ function InvoiceCreator({
       <CardHeader>
         <div className="flex justify-between items-center">
           <h3 className="font-semibold">{t("receive.invoice.title")}</h3>
-          <button
+          <button type="button"
             onClick={() => setOpen(false)}
             className="text-sm text-gray-500 hover:text-gray-700"
           >

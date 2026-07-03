@@ -37,7 +37,7 @@ export default function RecoveryPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-2xl mx-auto px-6 py-6">
         <div className="flex items-center gap-4 mb-6">
-          <button
+          <button type="button"
             onClick={() => router.back()}
             aria-label={t("common.back")}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
@@ -196,7 +196,7 @@ function RefundItem({
                   disabled={refundMutation.isPending}
                 />
               </div>
-              <button
+              <button type="button"
                 onClick={() => setChoice("custom")}
                 className={`text-xs ${
                   choice === "custom"
@@ -266,7 +266,7 @@ function FeePreset({
   disabled?: boolean;
 }) {
   return (
-    <button
+    <button type="button"
       onClick={onClick}
       disabled={disabled || rate === 0}
       className={`p-3 rounded-lg border-2 text-center transition-all disabled:opacity-50 ${

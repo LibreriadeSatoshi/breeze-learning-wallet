@@ -13,14 +13,12 @@ import { useT } from "@/lib/i18n/hook";
 const USERNAME_RE = /^[a-z0-9._-]{1,32}$/;
 
 interface EditUsernameModalProps {
-  open: boolean;
   currentAddress: string;
   onClose: () => void;
   onChanged: () => void;
 }
 
 export function EditUsernameModal({
-  open,
   currentAddress,
   onClose,
   onChanged,
@@ -31,14 +29,6 @@ export function EditUsernameModal({
   const [error, setError] = useState("");
   const checkMutation = useCheckLightningAddressAvailable();
   const registerMutation = useRegisterLightningAddress();
-
-  useEffect(() => {
-    if (!open) {
-      setUsername("");
-      setAvailable(null);
-      setError("");
-    }
-  }, [open]);
 
   useEffect(() => {
     setAvailable(null);
@@ -81,7 +71,7 @@ export function EditUsernameModal({
 
   return (
     <Modal
-      open={open}
+      open
       onClose={onClose}
       dismissable={!registerMutation.isPending}
       title={t("editUsername.title")}

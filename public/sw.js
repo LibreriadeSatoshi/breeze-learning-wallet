@@ -30,13 +30,13 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name)),
-      ),
-    ),
+    caches.keys().then((names) => {
+      const deletions = [];
+      for (const name of names) {
+        if (name !== CACHE_NAME) deletions.push(caches.delete(name));
+      }
+      return Promise.all(deletions);
+    }),
   );
   self.clients.claim();
 });

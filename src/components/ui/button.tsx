@@ -7,6 +7,21 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
 }
 
+const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
+
+const variantStyles = {
+  primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600',
+  secondary: 'bg-gray-900 text-white hover:bg-gray-800 focus-visible:ring-gray-900',
+  outline: 'border-2 border-gray-300 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:ring-gray-300',
+  ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-gray-300',
+};
+
+const sizeStyles = {
+  sm: 'h-9 px-3 text-sm',
+  md: 'h-11 px-6 text-base',
+  lg: 'h-14 px-8 text-lg',
+};
+
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -16,23 +31,8 @@ export function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
-
-  const variantStyles = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600',
-    secondary: 'bg-gray-900 text-white hover:bg-gray-800 focus-visible:ring-gray-900',
-    outline: 'border-2 border-gray-300 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:ring-gray-300',
-    ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-gray-300',
-  };
-
-  const sizeStyles = {
-    sm: 'h-9 px-3 text-sm',
-    md: 'h-11 px-6 text-base',
-    lg: 'h-14 px-8 text-lg',
-  };
-
   return (
-    <button
+    <button type="button"
       className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       disabled={disabled || loading}
       {...props}

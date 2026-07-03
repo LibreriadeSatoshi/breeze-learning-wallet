@@ -175,7 +175,7 @@ export default function SendPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-2xl mx-auto px-6 py-6">
           <div className="flex items-center gap-4 mb-6">
-            <button
+            <button type="button"
               onClick={handleBack}
               aria-label={t("common.back")}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
@@ -276,7 +276,7 @@ export default function SendPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-2xl mx-auto px-6 py-6">
           <div className="flex items-center gap-4 mb-6">
-            <button
+            <button type="button"
               onClick={handleBack}
               aria-label={t("common.back")}
               className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"

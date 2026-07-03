@@ -376,6 +376,3 @@ export async function disconnectBreez(): Promise<void> {
   }
 }
 
-export function isBreezInitialized(): boolean {
-  return sdk !== null;
-}
