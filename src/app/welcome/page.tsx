@@ -194,13 +194,13 @@ export default function WelcomePage() {
               >
                 {unlocking ? t("welcome.unlock.submitting") : t("welcome.unlock.submit")}
               </Button>
-              <button
+              <button type="button"
                 onClick={() => router.push("/wallet/restore")}
                 className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               >
                 {t("welcome.unlock.forgotPassword")}
               </button>
-              <button
+              <button type="button"
                 onClick={() => setShowForget(true)}
                 className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
               >
@@ -236,13 +236,13 @@ export default function WelcomePage() {
                 <Fingerprint className="w-5 h-5" />
                 <span>{t("welcome.passkey.signIn")}</span>
               </Button>
-              <button
+              <button type="button"
                 onClick={() => router.push("/wallet/restore")}
                 className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               >
                 {t("welcome.passkey.useRecoveryPhrase")}
               </button>
-              <button
+              <button type="button"
                 onClick={() => setShowForget(true)}
                 className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
               >

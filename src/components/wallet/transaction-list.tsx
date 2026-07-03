@@ -7,6 +7,12 @@ import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 
+const statusColors = {
+  pending: "text-yellow-600 dark:text-yellow-400",
+  complete: "text-green-600 dark:text-green-400",
+  failed: "text-red-600 dark:text-red-400",
+};
+
 interface TransactionListProps {
   payments: Payment[];
   onPaymentClick?: (payment: Payment) => void;
@@ -69,12 +75,6 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
   const fiat =
     fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
 
-  const statusColors = {
-    pending: "text-yellow-600 dark:text-yellow-400",
-    complete: "text-green-600 dark:text-green-400",
-    failed: "text-red-600 dark:text-red-400",
-  };
-
   const statusLabels: Record<typeof payment.status, string> = {
     pending: t("transactions.statusPending"),
     complete: "",
@@ -82,8 +82,9 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
   };
 
   return (
-    <div
-      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+    <button
+      type="button"
+      className="w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
       onClick={onClick}
     >
       <div className="flex items-center justify-between gap-3">
@@ -137,6 +138,6 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 }
