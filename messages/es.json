@@ -40,7 +40,7 @@
     "passkey": {
       "createWith": "Crear con passkey",
       "createFailed": "No se pudo crear la passkey. Intenta de nuevo o usa el flujo con contraseña.",
-      "signIn": "Iniciar sesión con passkey",
+      "signIn": "Iniciar sesión",
       "signInFailed": "No se pudo iniciar sesión con la passkey. Intenta de nuevo.",
       "unlockTitle": "Iniciar sesión con passkey",
       "unlockSubtitle": "Usa tu huella, rostro o PIN del dispositivo para desbloquear.",
@@ -216,7 +216,7 @@
       "warning": "Cualquiera con estas palabras puede vaciar tu billetera. Nunca las compartas y evita guardarlas en la nube en texto plano.",
       "reveal": "Mostrar",
       "passkeyDescription": "Verifica con tu passkey para mostrar las 12 palabras.",
-      "verifyWithPasskey": "Verificar con passkey",
+      "verifyWithPasskey": "Verificar",
       "passkeyFailed": "No se pudo verificar con la passkey. Intenta de nuevo.",
       "passkeyMismatch": "Esa passkey pertenece a otra billetera. Usa la passkey con la que creaste esta billetera."
     }

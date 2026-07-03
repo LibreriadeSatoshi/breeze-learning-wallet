@@ -40,7 +40,7 @@
     "passkey": {
       "createWith": "Create with passkey",
       "createFailed": "Couldn't create a passkey. Try again or use the password flow.",
-      "signIn": "Sign in with passkey",
+      "signIn": "Sign in",
       "signInFailed": "Couldn't sign in with passkey. Try again.",
       "unlockTitle": "Sign in with passkey",
       "unlockSubtitle": "Use your fingerprint, face, or device PIN to unlock.",
@@ -216,7 +216,7 @@
       "warning": "Anyone with these words can drain your wallet. Never share them and avoid cloud-synced plaintext storage.",
       "reveal": "Reveal",
       "passkeyDescription": "Verify with your passkey to reveal the 12 words.",
-      "verifyWithPasskey": "Verify with passkey",
+      "verifyWithPasskey": "Verify",
       "passkeyFailed": "Couldn't verify with passkey. Try again.",
       "passkeyMismatch": "That passkey belongs to a different wallet. Use the passkey you created this wallet with."
     }
