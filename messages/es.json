@@ -214,7 +214,11 @@
       "passwordRequired": "Introduce la contraseña de tu billetera",
       "wrongPassword": "Contraseña incorrecta",
       "warning": "Cualquiera con estas palabras puede vaciar tu billetera. Nunca las compartas y evita guardarlas en la nube en texto plano.",
-      "reveal": "Mostrar"
+      "reveal": "Mostrar",
+      "passkeyDescription": "Verifica con tu passkey para mostrar las 12 palabras.",
+      "verifyWithPasskey": "Verificar con passkey",
+      "passkeyFailed": "No se pudo verificar con la passkey. Intenta de nuevo.",
+      "passkeyMismatch": "Esa passkey pertenece a otra billetera. Usa la passkey con la que creaste esta billetera."
     }
   },
   "send": {

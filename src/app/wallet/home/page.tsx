@@ -26,6 +26,7 @@ import { BuyBitcoinModal } from "@/components/wallet/buy-bitcoin-modal";
 import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import { onSdkEvent } from "@/lib/lightning/breez-service";
+import { signInWithPasskey, seedToMnemonic } from "@/lib/auth/passkey";
 import {
   useBalance,
   usePayments,
@@ -54,6 +55,8 @@ export default function WalletHomePage() {
   const bootstrap = useWalletStore((s) => s.bootstrap);
   const isBootstrapped = useWalletStore((s) => s.isBootstrapped);
   const verifyPasswordAndReveal = useWalletStore((s) => s.verifyPasswordAndReveal);
+  const authMode = useWalletStore((s) => s.authMode);
+  const getMnemonic = useWalletStore((s) => s.getMnemonic);
 
   const [isReady, setIsReady] = useState(false);
   const initializingRef = useRef(false);
@@ -162,6 +165,24 @@ export default function WalletHomePage() {
       setSeedPassword("");
     } catch {
       setSeedError(t("home.seed.wrongPassword"));
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleVerifyPasskey = async () => {
+    setSeedError("");
+    setVerifying(true);
+    try {
+      const seed = await signInWithPasskey();
+      const mnemonic = seedToMnemonic(seed);
+      if (mnemonic !== getMnemonic()) {
+        setSeedError(t("home.seed.passkeyMismatch"));
+        return;
+      }
+      setRevealedSeed(mnemonic.split(" "));
+    } catch (err) {
+      setSeedError(err instanceof Error ? err.message : t("home.seed.passkeyFailed"));
     } finally {
       setVerifying(false);
     }
@@ -316,7 +337,11 @@ export default function WalletHomePage() {
         open={showSeedModal}
         onClose={closeSeedModal}
         title={revealedSeed ? t("home.seed.titleRevealed") : t("home.seed.titleHidden")}
-        description={revealedSeed ? undefined : t("home.seed.description")}
+        description={
+          revealedSeed
+            ? undefined
+            : t(authMode === "passkey" ? "home.seed.passkeyDescription" : "home.seed.description")
+        }
         dismissable={!verifying}
       >
         {revealedSeed ? (
@@ -332,20 +357,22 @@ export default function WalletHomePage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <Input
-              type="password"
-              label={t("create.password.label")}
-              value={seedPassword}
-              onChange={(e) => {
-                setSeedPassword(e.target.value);
-                setSeedError("");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleVerifyPassword();
-              }}
-              disabled={verifying}
-              autoFocus
-            />
+            {authMode !== "passkey" && (
+              <Input
+                type="password"
+                label={t("create.password.label")}
+                value={seedPassword}
+                onChange={(e) => {
+                  setSeedPassword(e.target.value);
+                  setSeedError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleVerifyPassword();
+                }}
+                disabled={verifying}
+                autoFocus
+              />
+            )}
             {seedError && (
               <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
                 <p className="text-sm text-red-700 dark:text-red-300">{seedError}</p>
@@ -364,12 +391,12 @@ export default function WalletHomePage() {
               <Button
                 variant="primary"
                 size="lg"
-                onClick={handleVerifyPassword}
+                onClick={authMode === "passkey" ? handleVerifyPasskey : handleVerifyPassword}
                 loading={verifying}
-                disabled={verifying || !seedPassword}
+                disabled={verifying || (authMode !== "passkey" && !seedPassword)}
                 className="flex-1"
               >
-                {t("home.seed.reveal")}
+                {t(authMode === "passkey" ? "home.seed.verifyWithPasskey" : "home.seed.reveal")}
               </Button>
             </div>
           </div>

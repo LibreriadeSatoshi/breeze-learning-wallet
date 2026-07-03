@@ -214,7 +214,11 @@
       "passwordRequired": "Enter your wallet password",
       "wrongPassword": "Wrong password",
       "warning": "Anyone with these words can drain your wallet. Never share them and avoid cloud-synced plaintext storage.",
-      "reveal": "Reveal"
+      "reveal": "Reveal",
+      "passkeyDescription": "Verify with your passkey to reveal the 12 words.",
+      "verifyWithPasskey": "Verify with passkey",
+      "passkeyFailed": "Couldn't verify with passkey. Try again.",
+      "passkeyMismatch": "That passkey belongs to a different wallet. Use the passkey you created this wallet with."
     }
   },
   "send": {
