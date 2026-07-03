@@ -49,15 +49,31 @@ export async function isPasskeySupported(): Promise<boolean> {
   }
 }
 
+// Android's credential manager sporadically fails the first ceremony after a
+// page load with a transient "unknown error"; a retry succeeds.
+async function withTransientRetry<T>(fn: () => Promise<T>): Promise<T> {
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const transient =
+        e instanceof Error && /unknown error.*credential manager/i.test(e.message);
+      if (!transient || attempt >= MAX_ATTEMPTS) throw e;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+}
+
 export async function registerPasskey(): Promise<Seed> {
   const client = await getClient();
-  const response = await client.register({ label: DEFAULT_LABEL });
+  const response = await withTransientRetry(() => client.register({ label: DEFAULT_LABEL }));
   return response.wallet.seed;
 }
 
 export async function signInWithPasskey(): Promise<Seed> {
   const client = await getClient();
-  const response = await client.signIn({ label: DEFAULT_LABEL });
+  const response = await withTransientRetry(() => client.signIn({ label: DEFAULT_LABEL }));
   return response.wallet.seed;
 }
 
