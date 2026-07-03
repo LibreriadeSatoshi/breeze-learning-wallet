@@ -34,7 +34,8 @@
       "create": "Crear billetera nueva",
       "creating": "Creando billetera...",
       "haveWallet": "¿Ya tienes una billetera?",
-      "restore": "Restaurar billetera"
+      "restore": "Restaurar billetera",
+      "usePasskey": "Usar passkey en su lugar"
     },
     "passkey": {
       "createWith": "Crear con passkey",
@@ -47,7 +48,9 @@
       "backupTitle": "Anota tu frase de recuperación",
       "backupDescription": "Opcional pero recomendado. Estas palabras te permiten recuperar tu billetera si pierdes acceso a tu passkey en todos los dispositivos.",
       "backupHint": "Cualquiera con estas palabras puede gastar tus fondos. Guarda el papel en un lugar seguro y no tomes una captura.",
-      "backupContinue": "Ya la guardé"
+      "backupContinue": "Ya la guardé",
+      "create": "Crear passkey",
+      "useExisting": "Usar passkey existente"
     },
     "footer": "Al continuar, aceptas nuestros Términos del Servicio y Política de Privacidad"
   },

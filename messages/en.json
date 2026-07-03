@@ -34,7 +34,8 @@
       "create": "Create new wallet",
       "creating": "Creating wallet...",
       "haveWallet": "Already have a wallet?",
-      "restore": "Restore wallet"
+      "restore": "Restore wallet",
+      "usePasskey": "Use passkey instead"
     },
     "passkey": {
       "createWith": "Create with passkey",
@@ -47,7 +48,9 @@
       "backupTitle": "Write down your recovery phrase",
       "backupDescription": "Optional but recommended. These words let you restore your wallet if you ever lose access to your passkey on every device.",
       "backupHint": "Anyone with these words can spend your funds. Keep the paper somewhere safe and don't take a screenshot.",
-      "backupContinue": "I've saved it"
+      "backupContinue": "I've saved it",
+      "create": "Create passkey",
+      "useExisting": "Use existing passkey"
     },
     "footer": "By continuing, you agree to our Terms of Service and Privacy Policy"
   },

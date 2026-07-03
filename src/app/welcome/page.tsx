@@ -40,7 +40,8 @@ export default function WelcomePage() {
   const [forgetting, setForgetting] = useState(false);
 
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
-  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passkeyMode, setPasskeyMode] = useState(false);
+  const [passkeyBusy, setPasskeyBusy] = useState<"create" | "signIn" | null>(null);
   const [passkeyError, setPasskeyError] = useState("");
   const [passkeyBackupWords, setPasskeyBackupWords] = useState<string[] | null>(null);
 
@@ -92,7 +93,7 @@ export default function WelcomePage() {
 
   const handlePasskeyCreate = async () => {
     setPasskeyError("");
-    setPasskeyBusy(true);
+    setPasskeyBusy("create");
     try {
       const seed = await registerPasskey();
       const mnemonic = seedToMnemonic(seed);
@@ -101,13 +102,13 @@ export default function WelcomePage() {
     } catch (err) {
       setPasskeyError(err instanceof Error ? err.message : t("welcome.passkey.createFailed"));
     } finally {
-      setPasskeyBusy(false);
+      setPasskeyBusy(null);
     }
   };
 
   const handlePasskeySignIn = async () => {
     setPasskeyError("");
-    setPasskeyBusy(true);
+    setPasskeyBusy("signIn");
     try {
       const seed = await signInWithPasskey();
       const mnemonic = seedToMnemonic(seed);
@@ -116,7 +117,7 @@ export default function WelcomePage() {
     } catch (err) {
       setPasskeyError(err instanceof Error ? err.message : t("welcome.passkey.signInFailed"));
     } finally {
-      setPasskeyBusy(false);
+      setPasskeyBusy(null);
     }
   };
 
@@ -229,8 +230,8 @@ export default function WelcomePage() {
                 variant="primary"
                 size="lg"
                 onClick={handlePasskeySignIn}
-                loading={passkeyBusy}
-                disabled={passkeyBusy}
+                loading={passkeyBusy === "signIn"}
+                disabled={passkeyBusy !== null}
                 className="w-full inline-flex items-center justify-center gap-2"
               >
                 <Fingerprint className="w-5 h-5" />
@@ -252,7 +253,7 @@ export default function WelcomePage() {
           </Card>
         )}
 
-        {!hasVault && (
+        {!hasVault && !passkeyMode && (
           <>
             <Button
               variant="primary"
@@ -263,24 +264,6 @@ export default function WelcomePage() {
             >
               {creatingWallet ? t("welcome.noVault.creating") : t("welcome.noVault.create")}
             </Button>
-            {passkeyAvailable && (
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handlePasskeyCreate}
-                loading={passkeyBusy}
-                disabled={creatingWallet || passkeyBusy}
-                className="w-full inline-flex items-center justify-center gap-2"
-              >
-                <Fingerprint className="w-5 h-5" />
-                <span>{t("welcome.passkey.createWith")}</span>
-              </Button>
-            )}
-            {passkeyError && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                <p className="text-sm text-red-700 dark:text-red-300">{passkeyError}</p>
-              </div>
-            )}
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
@@ -295,11 +278,66 @@ export default function WelcomePage() {
               variant="ghost"
               size="lg"
               onClick={() => router.push("/wallet/restore")}
-              disabled={creatingWallet || passkeyBusy}
+              disabled={creatingWallet}
               className="w-full hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               {t("welcome.noVault.restore")}
             </Button>
+            {passkeyAvailable && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPasskeyError("");
+                  setPasskeyMode(true);
+                }}
+                disabled={creatingWallet}
+                className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                {t("welcome.noVault.usePasskey")}
+              </button>
+            )}
+          </>
+        )}
+
+        {!hasVault && passkeyMode && (
+          <>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handlePasskeyCreate}
+              loading={passkeyBusy === "create"}
+              disabled={passkeyBusy !== null}
+              className="w-full shadow-lg hover:shadow-xl transition-shadow inline-flex items-center justify-center gap-2"
+            >
+              <Fingerprint className="w-5 h-5" />
+              <span>{t("welcome.passkey.create")}</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handlePasskeySignIn}
+              loading={passkeyBusy === "signIn"}
+              disabled={passkeyBusy !== null}
+              className="w-full inline-flex items-center justify-center gap-2"
+            >
+              {t("welcome.passkey.useExisting")}
+            </Button>
+            {passkeyError && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-300">{passkeyError}</p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setPasskeyError("");
+                setPasskeyMode(false);
+              }}
+              disabled={passkeyBusy !== null}
+              className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              {t("welcome.passkey.useRecoveryPhrase")}
+            </button>
           </>
         )}
       </div>
