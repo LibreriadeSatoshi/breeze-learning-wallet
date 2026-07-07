@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useT } from "@/lib/i18n/hook";
 
-const QUESTIONS = [1, 2, 3, 4, 5, 6, 7, 8];
+const QUESTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
 export default function FaqPage() {
   const t = useT();
@@ -31,7 +31,7 @@ export default function FaqPage() {
             {QUESTIONS.map((n) => (
               <div key={n}>
                 <h2 className="font-semibold mb-1">{t(`faq.q${n}`)}</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
                   {t(`faq.a${n}`)}
                 </p>
               </div>
