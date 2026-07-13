@@ -15,7 +15,7 @@ export function MnemonicDisplay({ words, revealed = true }: MnemonicDisplayProps
       {words.map((word, index) => (
         <div
           key={index}
-          className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+          className="select-none flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
         >
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400 w-6">
             {index + 1}.
