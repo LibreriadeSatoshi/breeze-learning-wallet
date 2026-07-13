@@ -9,3 +9,6 @@
 
 ### 📷 Screenshots / GIFs 
 <!-- Drag and drop your before/after images here -->
+
+### 🎟️ JIRA Tickets
+<!-- Paste the Jira link or ticket ID below. -->

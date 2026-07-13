@@ -70,16 +70,13 @@ function PaymentDetailContent({
           }`}
         >
           {isReceived ? "+" : "-"}
-          <SensitiveAmount amount={sats.toLocaleString()}><span>{sats.toLocaleString()}</span></SensitiveAmount>
+          <SensitiveAmount>{sats.toLocaleString()}</SensitiveAmount>
         </div>
         <div className="text-sm text-gray-500 dark:text-gray-400">{t("send.sats")}</div>
         {amountFiat && (
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            ≈
-            <SensitiveAmount amount={amountFiat}>
-            <span className="ml-1">{amountFiat}</span>
+            <SensitiveAmount className="text-sm text-gray-500 dark:text-gray-400 mt-1"> 
+              ≈ {amountFiat}
             </SensitiveAmount>
-          </div>
         )}
         <span
           className={`inline-block mt-3 px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusStyles[payment.status]}`}
@@ -95,12 +92,12 @@ function PaymentDetailContent({
           value={
             feeFiat
               ? (<>
-              <SensitiveAmount amount={feeSats.toLocaleString()}>
-                <span>{feeSats.toLocaleString()}</span>
+              <SensitiveAmount>
+                {feeSats.toLocaleString()}
               </SensitiveAmount>{" "}
               {t("send.sats")}{" · ≈ "}
-              <SensitiveAmount amount={feeSats.toLocaleString()}>
-                <span>{feeFiat}</span>
+              <SensitiveAmount>
+                {feeFiat}
               </SensitiveAmount>
               </>)
               : `${feeSats.toLocaleString()} ${t("send.sats")}`

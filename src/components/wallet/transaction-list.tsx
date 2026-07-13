@@ -129,20 +129,15 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
             }`}
           >
           {isReceived ? "+" : "-"}
-          <SensitiveAmount amount={sats.toLocaleString()}>
-            <span>
+          <SensitiveAmount>
               {sats.toLocaleString()}
-            </span>
           </SensitiveAmount>
           </div>
           <div className="text-xs text-gray-500">sats</div>
           {fiat && (
-            <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              ≈
-              <SensitiveAmount amount={fiat}>
-                <span className="ml-1">{fiat}</span>
+              <SensitiveAmount className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                ≈ {fiat}
               </SensitiveAmount>
-            </div>
           )}
         </div>
       </div>
