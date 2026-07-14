@@ -8,6 +8,8 @@ import {
   Check,
   Clock,
   Copy as CopyIcon,
+  Eye,
+  EyeOff,
   Pencil,
   Share2,
   Zap,
@@ -298,6 +300,7 @@ function InvoiceCreator({
   const [error, setError] = useState("");
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false)
   const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
   const amountSat = parseInt(amount, 10) || 0;
   const fiatPreview =
@@ -396,6 +399,17 @@ function InvoiceCreator({
     setTimeRemaining(0);
   };
 
+  const truncate = (text: string, i: number, f: number): string => {
+    if (text.length <= (i + f)) {
+      return text
+    }
+
+    let initial = text.substring(0, i)
+    let final = text.substring(text.length - f, text.length)
+
+    return `${initial}...${final}`
+  }
+
   if (!open) {
     return (
       <div className="text-center">
@@ -443,8 +457,9 @@ function InvoiceCreator({
               />
             </div>
           </div>
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
-            {invoice.paymentRequest}
+          <div className="flex items-center justify-center flex-row bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
+            {showInvoice ? invoice.paymentRequest : truncate(invoice.paymentRequest, 12, 12)}
+            {showInvoice ? <EyeOff className="pl-2 min-w-6" onClick={() => setShowInvoice(false)}/> : <Eye className="pl-2 min-w-6" onClick={() => setShowInvoice(true)}/> }
           </div>
           {error && (
             <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
