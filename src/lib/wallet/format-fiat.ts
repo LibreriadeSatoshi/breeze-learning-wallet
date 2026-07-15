@@ -21,3 +21,9 @@ export function formatFiat(
     return `${fiat.toFixed(fractionDigits)} ${currency}`;
   }
 }
+
+export const hideAmount = (amount: string | null): string => {
+  const prefix = amount?.match(/^\D*/)?.[0] || '';
+  
+  return `${prefix}******`;
+}
