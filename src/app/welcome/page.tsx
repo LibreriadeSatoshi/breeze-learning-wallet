@@ -147,7 +147,7 @@ export default function WelcomePage() {
   const showPasswordUnlock = hasVault && authMode !== "passkey";
 
   return (
-    <div className="min-h-screen flex flex-col justify-between px-6 py-6 sm:py-10">
+    <div className="min-h-screen min-w-fit flex flex-col justify-between px-6 py-6 sm:py-10">
       <div className="flex flex-col items-center pb-6 sm:flex-1 sm:justify-end sm:pb-20">
         <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl mb-4 sm:mb-8">
           <span className="text-3xl sm:text-5xl font-bold text-white">₿</span>
@@ -213,7 +213,7 @@ export default function WelcomePage() {
         )}
 
         {showPasskeyUnlock && (
-          <Card className="shadow-lg">
+          <Card className="shadow-lg min-w-[250px]">
             <CardContent className="pt-6 space-y-4">
               <div className="text-center">
                 <Fingerprint className="w-12 h-12 mx-auto text-blue-500 mb-3" />
@@ -235,7 +235,7 @@ export default function WelcomePage() {
                 disabled={passkeyBusy !== null}
                 className="w-full inline-flex items-center justify-center gap-2"
               >
-                <Fingerprint className="w-5 h-5" />
+                <Fingerprint className="w-5 h-5 min-w-5" />
                 <span>{t("welcome.passkey.signIn")}</span>
               </Button>
               <button type="button"

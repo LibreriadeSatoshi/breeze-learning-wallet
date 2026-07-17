@@ -79,7 +79,7 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
       <div className="max-w-2xl mx-auto px-6 py-6">
         <div className="flex items-center gap-4 mb-6">
           <button type="button"
@@ -270,7 +270,7 @@ function AddressCard({
             onClick={copy}
             className="inline-flex items-center justify-center gap-2"
           >
-            {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 min-w-4" /> : <CopyIcon className="w-4 h-4 min-w-4" />}
             <span>{copied ? t("common.copied") : t("common.copy")}</span>
           </Button>
           <Button
@@ -278,7 +278,7 @@ function AddressCard({
             onClick={onEdit}
             className="inline-flex items-center justify-center gap-2"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-4 h-4 min-w-4" />
             <span>{t("receive.lightning.editUsername")}</span>
           </Button>
         </div>
@@ -671,7 +671,7 @@ function SuccessView({
   const formattedDate = new Date(details.timestamp * 1000).toLocaleString();
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6">
+      <div className="max-w-2xl mx-auto px-6 py-6 min-w-fit">
         <Card>
           <CardContent className="pt-8 pb-6 text-center">
             <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
