@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
+import { SensitiveAmount } from "./balance-display";
 
 const statusColors = {
   pending: "text-yellow-600 dark:text-yellow-400",
@@ -127,14 +128,16 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
                 : "text-gray-900 dark:text-gray-100"
             }`}
           >
-            {isReceived ? "+" : "-"}
-            {sats.toLocaleString()}
+          {isReceived ? "+" : "-"}
+          <SensitiveAmount>
+              {sats.toLocaleString()}
+          </SensitiveAmount>
           </div>
           <div className="text-xs text-gray-500">sats</div>
           {fiat && (
-            <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              ≈ {fiat}
-            </div>
+              <SensitiveAmount className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                ≈ {fiat}
+              </SensitiveAmount>
           )}
         </div>
       </div>

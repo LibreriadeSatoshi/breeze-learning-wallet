@@ -74,7 +74,7 @@ export default function SettingsPage() {
   if (!isUnlocked) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
       <div className="max-w-2xl mx-auto px-6 py-6">
         <div className="flex items-center gap-4 mb-6">
           <button type="button"

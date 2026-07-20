@@ -8,6 +8,8 @@ import {
   Check,
   Clock,
   Copy as CopyIcon,
+  Eye,
+  EyeOff,
   Pencil,
   Share2,
   Zap,
@@ -77,7 +79,7 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
       <div className="max-w-2xl mx-auto px-6 py-6">
         <div className="flex items-center gap-4 mb-6">
           <button type="button"
@@ -268,7 +270,7 @@ function AddressCard({
             onClick={copy}
             className="inline-flex items-center justify-center gap-2"
           >
-            {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 min-w-4" /> : <CopyIcon className="w-4 h-4 min-w-4" />}
             <span>{copied ? t("common.copied") : t("common.copy")}</span>
           </Button>
           <Button
@@ -276,7 +278,7 @@ function AddressCard({
             onClick={onEdit}
             className="inline-flex items-center justify-center gap-2"
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-4 h-4 min-w-4" />
             <span>{t("receive.lightning.editUsername")}</span>
           </Button>
         </div>
@@ -298,6 +300,7 @@ function InvoiceCreator({
   const [error, setError] = useState("");
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false)
   const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
   const amountSat = parseInt(amount, 10) || 0;
   const fiatPreview =
@@ -396,6 +399,17 @@ function InvoiceCreator({
     setTimeRemaining(0);
   };
 
+  const truncate = (text: string, i: number, f: number): string => {
+    if (text.length <= (i + f)) {
+      return text
+    }
+
+    let initial = text.substring(0, i)
+    let final = text.substring(text.length - f, text.length)
+
+    return `${initial}...${final}`
+  }
+
   if (!open) {
     return (
       <div className="text-center">
@@ -443,8 +457,9 @@ function InvoiceCreator({
               />
             </div>
           </div>
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
-            {invoice.paymentRequest}
+          <div className="flex items-center justify-center flex-row bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
+            {showInvoice ? invoice.paymentRequest : truncate(invoice.paymentRequest, 12, 12)}
+            {showInvoice ? <EyeOff className="pl-2 min-w-6" onClick={() => setShowInvoice(false)}/> : <Eye className="pl-2 min-w-6" onClick={() => setShowInvoice(true)}/> }
           </div>
           {error && (
             <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
@@ -656,7 +671,7 @@ function SuccessView({
   const formattedDate = new Date(details.timestamp * 1000).toLocaleString();
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6">
+      <div className="max-w-2xl mx-auto px-6 py-6 min-w-fit">
         <Card>
           <CardContent className="pt-8 pb-6 text-center">
             <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
