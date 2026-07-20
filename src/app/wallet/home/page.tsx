@@ -193,9 +193,9 @@ export default function WalletHomePage() {
   const isLoading = balanceLoading || paymentsLoading;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
       <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 text-white px-6 pt-6 pb-20">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto min-w-[280px]">
           <div className="flex justify-between items-center gap-2 mb-8">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0">
@@ -289,9 +289,9 @@ export default function WalletHomePage() {
             size="lg"
             onClick={() => router.push("/wallet/send")}
             disabled={!isReady}
-            className="h-20 flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
+            className="h-20 min-w-[110px] flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
           >
-            <ArrowUpFromLine className="w-5 h-5" />
+            <ArrowUpFromLine className="w-5 h-5 min-w-6" />
             <span className="font-semibold text-lg">{t("home.actions.send")}</span>
           </Button>
           <Button
@@ -299,9 +299,9 @@ export default function WalletHomePage() {
             size="lg"
             onClick={() => router.push("/wallet/receive")}
             disabled={!isReady}
-            className="h-20 flex flex-row items-center justify-center gap-3 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
+            className="h-20 min-w-[110px] flex flex-row items-center justify-center gap-3 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
           >
-            <ArrowDownToLine className="w-5 h-5" />
+            <ArrowDownToLine className="w-5 h-5 min-w-6" />
             <span className="font-semibold text-lg">{t("home.actions.receive")}</span>
           </Button>
         </div>

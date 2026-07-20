@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ReactElement } from "react";
 import { ArrowDownLeft, ArrowUpRight, Copy as CopyIcon, Check } from "lucide-react";
 import type { Payment } from "@/lib/lightning/types";
 import { Modal } from "@/components/ui/modal";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
+import { SensitiveAmount } from "./balance-display";
 
 const statusStyles = {
   pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
@@ -44,10 +45,10 @@ function PaymentDetailContent({
   const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
   const amountFiat =
     fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
-  const feeFiat =
+    const feeFiat =
     fiatRate !== undefined && feeSats > 0
-      ? formatFiat(feeSats, fiatRate, fiatCurrency)
-      : null;
+    ? formatFiat(feeSats, fiatRate, fiatCurrency)
+    : null;
 
   return (
     <div className="space-y-5">
@@ -69,13 +70,13 @@ function PaymentDetailContent({
           }`}
         >
           {isReceived ? "+" : "-"}
-          {sats.toLocaleString()}
+          <SensitiveAmount>{sats.toLocaleString()}</SensitiveAmount>
         </div>
         <div className="text-sm text-gray-500 dark:text-gray-400">{t("send.sats")}</div>
         {amountFiat && (
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            ≈ {amountFiat}
-          </div>
+            <SensitiveAmount className="text-sm text-gray-500 dark:text-gray-400 mt-1"> 
+              ≈ {amountFiat}
+            </SensitiveAmount>
         )}
         <span
           className={`inline-block mt-3 px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusStyles[payment.status]}`}
@@ -90,7 +91,15 @@ function PaymentDetailContent({
           label={t("paymentDetail.fee")}
           value={
             feeFiat
-              ? `${feeSats.toLocaleString()} ${t("send.sats")} · ≈ ${feeFiat}`
+              ? (<>
+              <SensitiveAmount>
+                {feeSats.toLocaleString()}
+              </SensitiveAmount>{" "}
+              {t("send.sats")}{" · ≈ "}
+              <SensitiveAmount>
+                {feeFiat}
+              </SensitiveAmount>
+              </>)
               : `${feeSats.toLocaleString()} ${t("send.sats")}`
           }
         />
@@ -122,7 +131,7 @@ function DetailRow({
   wrap = false,
 }: {
   label: string;
-  value: string;
+  value: string | ReactElement;
   wrap?: boolean;
 }) {
   return (

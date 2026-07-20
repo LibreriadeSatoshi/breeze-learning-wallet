@@ -289,21 +289,21 @@ export default function CreateWalletPage() {
                   </div>
                 ) : (
                   <div>
-                    <div className="mb-4 p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 flex items-start gap-2">
-                      <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                      <p className="text-sm text-amber-900 dark:text-amber-200">
-                        <strong className="font-semibold">{t('create.orderMatters.title')}</strong>{' '}
-                        {t('create.orderMatters.body')}
-                      </p>
-                    </div>
-                    <MnemonicDisplay words={words} revealed />
-                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
                       <div className="flex items-start gap-2">
                         <Lightbulb className="w-4 h-4 mt-0.5 text-blue-700 dark:text-blue-300 shrink-0" />
                         <p className="text-sm text-blue-900 dark:text-blue-200">
                           {t('create.tip')}
                         </p>
                       </div>
+                    </div>
+                    <MnemonicDisplay words={words} revealed />
+                    <div className="mt-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 flex items-start gap-2">
+                      <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <p className="text-sm text-amber-900 dark:text-amber-200">
+                        <strong className="font-semibold">{t('create.orderMatters.title')}</strong>{' '}
+                        {t('create.orderMatters.body')}
+                      </p>
                     </div>
                   </div>
                 )}
