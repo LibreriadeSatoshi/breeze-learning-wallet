@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fingerprint } from "lucide-react";
+import { Earth, Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,8 @@ import { Modal } from "@/components/ui/modal";
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { APP_NAME } from "@/lib/config";
 import { useWalletStore } from "@/store/wallet-store";
-import { useT } from "@/lib/i18n/hook";
+import { useLocale, useT } from "@/lib/i18n/hook";
+import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/types";
 import {
   isPasskeySupported,
   registerPasskey,
@@ -39,6 +40,7 @@ export default function WelcomePage() {
   const [showForget, setShowForget] = useState(false);
   const [forgetConfirm, setForgetConfirm] = useState("");
   const [forgetting, setForgetting] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
 
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [passkeyMode, setPasskeyMode] = useState(false);
@@ -69,6 +71,16 @@ export default function WelcomePage() {
     // already routes; including it here would race the close with a re-nav.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBootstrapped, isUnlocked, router]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowLanguageSelector(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [])
 
   const handleCreateWallet = () => {
     setCreatingWallet(true);
@@ -148,7 +160,7 @@ export default function WelcomePage() {
 
   return (
     <div className="min-h-screen min-w-fit flex flex-col justify-between px-6 py-6 sm:py-10">
-      <div className="flex flex-col items-center pb-6 sm:flex-1 sm:justify-end sm:pb-20">
+      <div className="flex flex-col items-center pb-6 pt-10 sm:flex-1 sm:justify-end sm:pb-20 sm:pt-0">
         <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl mb-4 sm:mb-8">
           <span className="text-3xl sm:text-5xl font-bold text-white">₿</span>
         </div>
@@ -159,6 +171,11 @@ export default function WelcomePage() {
           {t("welcome.tagline")}
         </p>
       </div>
+      
+      <button type="button" className="fixed top-6 right-6" onClick={() => setShowLanguageSelector(showLanguageSelector => !showLanguageSelector)}>
+        <Earth />
+      </button>
+      {showLanguageSelector && <LanguageSelectorPopover />}
 
       <div className="flex-1 flex flex-col justify-center space-y-4 max-w-md mx-auto w-full px-6">
         {showPasswordUnlock && (
@@ -438,4 +455,20 @@ export default function WelcomePage() {
       </Modal>
     </div>
   );
+}
+
+function LanguageSelectorPopover() {
+  const { locale, setLocale } = useLocale();
+  return (
+    <Card  className="flex flex-col items-start fixed top-12 right-12 pl-4 pr-4 pb-1 pt-1 space-y-1">
+      {LOCALES.map((code) => (
+        <button
+          type="button"
+          className={`cursor-pointer hover:text-blue-600 ${locale === code ? "text-blue-600" : ""}`}
+          key={code}
+          onClick={() => setLocale(code)}>{LOCALE_LABELS[code]}
+        </button>
+      ))}
+    </Card>
+  )
 }
