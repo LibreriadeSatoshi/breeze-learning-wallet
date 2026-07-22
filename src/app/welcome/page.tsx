@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Earth, Fingerprint } from "lucide-react";
@@ -11,8 +11,7 @@ import { Modal } from "@/components/ui/modal";
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { APP_NAME } from "@/lib/config";
 import { useWalletStore } from "@/store/wallet-store";
-import { useLocale, useT } from "@/lib/i18n/hook";
-import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/types";
+import { useT } from "@/lib/i18n/hook";
 import {
   isPasskeySupported,
   registerPasskey,
@@ -20,10 +19,13 @@ import {
   seedToMnemonic,
 } from "@/lib/auth/passkey";
 import { mnemonicToWords } from "@/lib/bitcoin/mnemonic";
+import { LanguagePickerSection } from "../wallet/settings/page";
 
 export default function WelcomePage() {
   const t = useT();
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const hasVault = useWalletStore((s) => s.hasVault);
   const authMode = useWalletStore((s) => s.authMode);
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
@@ -40,7 +42,6 @@ export default function WelcomePage() {
   const [showForget, setShowForget] = useState(false);
   const [forgetConfirm, setForgetConfirm] = useState("");
   const [forgetting, setForgetting] = useState(false);
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
 
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [passkeyMode, setPasskeyMode] = useState(false);
@@ -71,16 +72,6 @@ export default function WelcomePage() {
     // already routes; including it here would race the close with a re-nav.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBootstrapped, isUnlocked, router]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setShowLanguageSelector(false);
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [])
 
   const handleCreateWallet = () => {
     setCreatingWallet(true);
@@ -158,6 +149,18 @@ export default function WelcomePage() {
   const showPasskeyUnlock = hasVault && authMode === "passkey";
   const showPasswordUnlock = hasVault && authMode !== "passkey";
 
+  const handleClick = () => {
+  const selectElement = containerRef.current?.querySelector<HTMLSelectElement>("select");
+
+  if (selectElement) {
+    if ("showPicker" in selectElement) {
+      selectElement.showPicker();
+    } else {
+      return null;
+    }
+  }
+};
+
   return (
     <div className="min-h-screen min-w-fit flex flex-col justify-between px-6 py-6 sm:py-10">
       <div className="flex flex-col items-center pb-6 pt-10 sm:flex-1 sm:justify-end sm:pb-20 sm:pt-0">
@@ -171,11 +174,23 @@ export default function WelcomePage() {
           {t("welcome.tagline")}
         </p>
       </div>
-      
-      <button type="button" className="fixed top-6 right-6" onClick={() => setShowLanguageSelector(showLanguageSelector => !showLanguageSelector)}>
-        <Earth />
-      </button>
-      {showLanguageSelector && <LanguageSelectorPopover />}
+
+      <div className="fixed top-6 right-6">
+        <button
+          type="button"
+          onClick={handleClick}
+          className="p-2 z-50 rounded-lg hover:bg-neutral-800/50 transition-colors cursor-pointer text-gray-300 hover:text-white"
+        >
+          <Earth className="w-6 h-6" />
+        </button>
+
+        <div
+          ref={containerRef}
+          className="absolute right-6 top-9 mt-1 opacity-0 pointer-events-none [&>select]:w-auto"
+        >
+          <LanguagePickerSection />
+        </div>
+      </div>
 
       <div className="flex-1 flex flex-col justify-center space-y-4 max-w-md mx-auto w-full px-6">
         {showPasswordUnlock && (
@@ -455,20 +470,4 @@ export default function WelcomePage() {
       </Modal>
     </div>
   );
-}
-
-function LanguageSelectorPopover() {
-  const { locale, setLocale } = useLocale();
-  return (
-    <Card  className="flex flex-col items-start fixed top-12 right-12 pl-4 pr-4 pb-1 pt-1 space-y-1">
-      {LOCALES.map((code) => (
-        <button
-          type="button"
-          className={`cursor-pointer hover:text-blue-600 ${locale === code ? "text-blue-600" : ""}`}
-          key={code}
-          onClick={() => setLocale(code)}>{LOCALE_LABELS[code]}
-        </button>
-      ))}
-    </Card>
-  )
 }

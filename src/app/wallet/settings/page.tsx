@@ -363,7 +363,7 @@ function DriveBackupSection() {
   );
 }
 
-function LanguagePickerSection() {
+export function LanguagePickerSection() {
   const { locale, setLocale } = useLocale();
   return (
     <select
