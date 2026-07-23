@@ -19,7 +19,7 @@ import {
   seedToMnemonic,
 } from "@/lib/auth/passkey";
 import { mnemonicToWords } from "@/lib/bitcoin/mnemonic";
-import { LanguagePickerSection } from "../wallet/settings/page";
+import { LanguagePickerSection } from "@/components/ui/language-picker";
 
 export default function WelcomePage() {
   const t = useT();
