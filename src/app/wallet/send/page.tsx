@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Clipboard, X } from "lucide-react";
+import { ArrowDownUp, ArrowLeft, Check, Clipboard, X } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,8 +44,11 @@ export default function SendPage() {
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
   const [step, setStep] = useState<SendStep>("input");
   const [destination, setDestination] = useState("");
+  const [rawSats, setRawSats] = useState<number>(0);
   const [amountSatInput, setAmountSatInput] = useState("");
-  const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
+  const [amountFiatInput, setAmountFiatInput] = useState("");
+  const [isSats, setIsSats] = useState(true);
+  const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null,);
   const [error, setError] = useState("");
 
   const { data: balance } = useBalance(true);
@@ -89,7 +92,7 @@ export default function SendPage() {
         return;
       }
 
-      const amountSat = amountSatInput ? parseInt(amountSatInput, 10) : undefined;
+      const amountSat = rawSats ?? undefined;
 
       let prep: PrepareResult;
       if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
@@ -165,7 +168,64 @@ export default function SendPage() {
     setError("");
     setDestination("");
     setAmountSatInput("");
+    setAmountFiatInput("");
     setPrepareResult(null);
+  };
+
+  useEffect(() => {
+    if (!fiatRate) return;
+
+    if (!rawSats || rawSats <= 0) {
+      setAmountSatInput("");
+      setAmountFiatInput("");
+      return;
+    }
+
+    if (isSats) {
+      setAmountSatInput(rawSats.toString());
+    } else {
+      const calculatedFiat = (rawSats / 100_000_000) * fiatRate;
+      setAmountFiatInput(`$${calculatedFiat.toFixed(2)}`);
+    }
+  }, [isSats]);
+
+  const handleAmountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!fiatRate) return;
+
+    if (isSats) {
+      const cleanSats = e.target.value.replace(/[^0-9]/g, "");
+      setAmountSatInput(cleanSats);
+
+      const satsNumber = parseInt(cleanSats, 10) || 0;
+      setRawSats(satsNumber);
+    } else {
+      let value = e.target.value.replace(/[^0-9.]/g, "");
+
+      if (value === "") {
+        setAmountFiatInput("");
+        setRawSats(0);
+        return;
+      }
+
+      if (value.startsWith(".")) {
+        value = "0" + value
+      };
+
+      const parts = value.split(".");
+      if (parts.length > 2) {
+        value = `${parts[0]}.${parts.slice(1).join("")}`;
+      }
+
+      if (parts.length >= 2) {
+        value = `${parts[0]}.${parts[1].slice(0, 2)}`;
+      }
+
+      setAmountFiatInput(`$${value}`);
+
+      const numericFiat = parseFloat(value) || 0;
+      const calculatedSats = Math.round((numericFiat / fiatRate) * 100_000_000);
+      setRawSats(calculatedSats);
+    }
   };
 
   if (!isUnlocked) return null;
@@ -214,18 +274,30 @@ export default function SendPage() {
                 error={error || undefined}
                 helperText={t("send.destination.helper")}
               />
-
-              <Input
-                label={t("send.amount.label")}
-                placeholder={t("send.amount.placeholder")}
-                value={amountSatInput}
-                onChange={(e) =>
-                  setAmountSatInput(e.target.value.replace(/[^0-9]/g, ""))
-                }
-                inputMode="numeric"
-                helperText={t("send.amount.helper")}
-              />
-
+              <div className="flex flex-row">
+                <Input
+                  label={
+                    isSats
+                      ? t("send.amount.label")
+                      : t("send.amount.fiat", { currency: fiatCurrency.toLocaleLowerCase() })
+                  }
+                  placeholder={t("send.amount.placeholder")}
+                  value={isSats ? amountSatInput : amountFiatInput}
+                  onChange={(e) => {
+                    handleAmountInput(e);
+                  }}
+                  inputMode="numeric"
+                  helperText={t("send.amount.helper")}
+                />
+                <button
+                  className="px-2 h-16 flex items-end justify-center"
+                  onClick={() => {
+                    setIsSats(!isSats);
+                  }}
+                >
+                  <ArrowDownUp />
+                </button>
+              </div>
               <div className="grid grid-cols-1 gap-3">
                 <Button
                   variant="outline"

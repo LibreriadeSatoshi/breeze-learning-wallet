@@ -234,6 +234,7 @@
     },
     "amount": {
       "label": "Monto (sats)",
+      "fiat": "Monto ({{currency}})",
       "placeholder": "0",
       "helper": "Opcional para invoices que ya tienen un monto codificado"
     },
