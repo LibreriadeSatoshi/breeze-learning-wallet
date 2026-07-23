@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fingerprint } from "lucide-react";
+import { Earth, Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,10 +19,13 @@ import {
   seedToMnemonic,
 } from "@/lib/auth/passkey";
 import { mnemonicToWords } from "@/lib/bitcoin/mnemonic";
+import { LanguagePickerSection } from "@/components/ui/language-picker";
 
 export default function WelcomePage() {
   const t = useT();
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const hasVault = useWalletStore((s) => s.hasVault);
   const authMode = useWalletStore((s) => s.authMode);
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
@@ -146,9 +149,21 @@ export default function WelcomePage() {
   const showPasskeyUnlock = hasVault && authMode === "passkey";
   const showPasswordUnlock = hasVault && authMode !== "passkey";
 
+  const handleClick = () => {
+  const selectElement = containerRef.current?.querySelector<HTMLSelectElement>("select");
+
+  if (selectElement) {
+    if ("showPicker" in selectElement) {
+      selectElement.showPicker();
+    } else {
+      return null;
+    }
+  }
+};
+
   return (
     <div className="min-h-screen min-w-fit flex flex-col justify-between px-6 py-6 sm:py-10">
-      <div className="flex flex-col items-center pb-6 sm:flex-1 sm:justify-end sm:pb-20">
+      <div className="flex flex-col items-center pb-6 pt-10 sm:flex-1 sm:justify-end sm:pb-20 sm:pt-0">
         <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl mb-4 sm:mb-8">
           <span className="text-3xl sm:text-5xl font-bold text-white">₿</span>
         </div>
@@ -158,6 +173,23 @@ export default function WelcomePage() {
         <p className="text-center text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-sm px-4">
           {t("welcome.tagline")}
         </p>
+      </div>
+
+      <div className="fixed top-6 right-6">
+        <button
+          type="button"
+          onClick={handleClick}
+          className="p-2 z-50 rounded-lg hover:bg-neutral-800/50 transition-colors cursor-pointer text-gray-300 hover:text-white"
+        >
+          <Earth className="w-6 h-6" />
+        </button>
+
+        <div
+          ref={containerRef}
+          className="absolute right-6 top-9 mt-1 opacity-0 pointer-events-none [&>select]:w-auto"
+        >
+          <LanguagePickerSection />
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col justify-center space-y-4 max-w-md mx-auto w-full px-6">
