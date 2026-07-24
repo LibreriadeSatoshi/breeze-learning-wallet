@@ -46,7 +46,7 @@ export default function SendPage() {
   const [destination, setDestination] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [isSats, setIsSats] = useState(true);
-  const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null,);
+  const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
 
   const { data: balance } = useBalance(true);
@@ -228,6 +228,8 @@ export default function SendPage() {
 
   if (!isUnlocked) return null;
 
+  const isFiatRateAvailable: boolean = fiatRate !== undefined && fiatRate !== null && fiatCurrency !== undefined && fiatCurrency !== null;
+
   if (step === "input") {
     return (
       <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
@@ -287,8 +289,9 @@ export default function SendPage() {
                   className="px-2 h-16 flex items-end justify-center"
                   onClick={toggleIsSats}
                   type="button"
+                  disabled={!isFiatRateAvailable}
                 >
-                  <ArrowDownUp />
+                  <ArrowDownUp opacity={!isFiatRateAvailable ? 0.5 : 1 }/>
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-3">
