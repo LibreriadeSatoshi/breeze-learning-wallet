@@ -183,26 +183,26 @@ export default function SendPage() {
   };
 
   const handleAmountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!fiatRate) return;
     const rawText = e.target.value;
 
     if (isSats) {
-      const cleanSatsText = rawText.replace(/\D/g, "");
-      setInputValue(cleanSatsText);
-    } else {
-      let cleanFiatText = rawText.replace(/[^0-9.]/g, "");
-      const parts = cleanFiatText.split(".");
-
-      if (parts.length > 2) {
-        cleanFiatText = `${parts[0]}.${parts.slice(1).join("")}`;
-      }
-
-      if (parts.length >= 2) {
-        cleanFiatText = `${parts[0]}.${parts[1].slice(0, 2)}`;
-      }
-
-      setInputValue(cleanFiatText);
+      setInputValue(rawText.replace(/\D/g, ""));
+      return;
     }
+
+    if (!fiatRate) return;
+    let cleanFiatText = rawText.replace(/[^0-9.]/g, "");
+    const parts = cleanFiatText.split(".");
+
+    if (parts.length > 2) {
+      cleanFiatText = `${parts[0]}.${parts.slice(1).join("")}`;
+    }
+
+    if (parts.length >= 2) {
+      cleanFiatText = `${parts[0]}.${parts[1].slice(0, 2)}`;
+    }
+
+    setInputValue(cleanFiatText);
   };
 
   const toggleIsSats = () => {
