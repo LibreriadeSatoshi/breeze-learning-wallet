@@ -234,6 +234,7 @@
     },
     "amount": {
       "label": "Amount (sats)",
+      "fiat": "Amount ({{currency}})",
       "placeholder": "0",
       "helper": "Optional for invoices that already encode an amount"
     },

@@ -40,11 +40,11 @@ import {
   getLastSyncIso,
   getDriveEmail,
 } from "@/lib/backup/drive-client";
-import { useT, useLocale } from "@/lib/i18n/hook";
-import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n/types";
+import { useT } from "@/lib/i18n/hook";
 import { useFormatRelativeTime } from "@/lib/wallet/relative-time";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
+import { LanguagePickerSection } from "@/components/ui/language-picker";
 
 const USERNAME_RE = /^[a-z0-9._-]{1,32}$/;
 
@@ -360,23 +360,6 @@ function DriveBackupSection() {
         </div>
       </Modal>
     </div>
-  );
-}
-
-function LanguagePickerSection() {
-  const { locale, setLocale } = useLocale();
-  return (
-    <select
-      value={locale}
-      onChange={(e) => setLocale(e.target.value as Locale)}
-      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-    >
-      {LOCALES.map((code) => (
-        <option key={code} value={code}>
-          {LOCALE_LABELS[code]}
-        </option>
-      ))}
-    </select>
   );
 }
 
