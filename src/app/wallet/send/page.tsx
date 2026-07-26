@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Clipboard, X } from "lucide-react";
+import { ArrowDownUp, ArrowLeft, Check, Clipboard, X } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import {
   useExecuteLnurlPay,
 } from "@/hooks/use-breez";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat } from "@/lib/wallet/format-fiat";
+import { formatFiat, SATS_PER_BTC } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 import type {
   PrepareSendResult,
@@ -44,7 +44,8 @@ export default function SendPage() {
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
   const [step, setStep] = useState<SendStep>("input");
   const [destination, setDestination] = useState("");
-  const [amountSatInput, setAmountSatInput] = useState("");
+  const [inputValue, setInputValue] = useState("");
+  const [isSats, setIsSats] = useState(true);
   const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
 
@@ -74,6 +75,19 @@ export default function SendPage() {
     }
   };
 
+  const parseSats = (value: string): number | undefined => {
+    if (isSats) {
+      const cleanSatsText = value.replace(/\D/g, "");
+      return Number.parseInt(cleanSatsText, 10) || 0;
+    } else {
+      if (!fiatRate) return undefined;
+      const cleanFiatText = value.replace(/[^0-9.]/g, "");
+      const fiat = Number.parseFloat(cleanFiatText) || 0;
+      return Math.round((fiat / fiatRate) * SATS_PER_BTC);
+    }
+  };
+
+
   const handleContinue = async () => {
     setError("");
     const dest = destination.trim();
@@ -89,7 +103,7 @@ export default function SendPage() {
         return;
       }
 
-      const amountSat = amountSatInput ? parseInt(amountSatInput, 10) : undefined;
+      const amountSat = inputValue ? parseSats(inputValue) : undefined;
 
       let prep: PrepareResult;
       if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
@@ -164,11 +178,57 @@ export default function SendPage() {
     setStep("input");
     setError("");
     setDestination("");
-    setAmountSatInput("");
+    setInputValue("");
     setPrepareResult(null);
   };
 
+  const handleAmountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawText = e.target.value;
+
+    if (isSats) {
+      setInputValue(rawText.replace(/\D/g, ""));
+      return;
+    }
+
+    if (!fiatRate) return;
+    let cleanFiatText = rawText.replace(/[^0-9.]/g, "");
+    const parts = cleanFiatText.split(".");
+
+    if (parts.length > 2) {
+      cleanFiatText = `${parts[0]}.${parts.slice(1).join("")}`;
+    }
+
+    if (parts.length >= 2) {
+      cleanFiatText = `${parts[0]}.${parts[1].slice(0, 2)}`;
+    }
+
+    setInputValue(cleanFiatText);
+  };
+
+  const toggleIsSats = () => {
+    setIsSats((prevIsSats) => {
+      const nextIsSats = !prevIsSats;
+      const rawSats = parseSats(inputValue);
+
+      if (!rawSats) {
+        setInputValue("");
+        return nextIsSats;
+      }
+
+      if (nextIsSats) {
+        setInputValue(rawSats.toString());
+      } else if (fiatRate) {
+        const fiat = (rawSats / SATS_PER_BTC) * fiatRate;
+        setInputValue(fiat.toFixed(2));
+      }
+
+      return nextIsSats;
+    });
+  };
+
   if (!isUnlocked) return null;
+
+  const isFiatRateAvailable: boolean = fiatRate !== undefined && fiatRate !== null && fiatCurrency !== undefined && fiatCurrency !== null;
 
   if (step === "input") {
     return (
@@ -214,18 +274,26 @@ export default function SendPage() {
                 error={error || undefined}
                 helperText={t("send.destination.helper")}
               />
-
-              <Input
-                label={t("send.amount.label")}
-                placeholder={t("send.amount.placeholder")}
-                value={amountSatInput}
-                onChange={(e) =>
-                  setAmountSatInput(e.target.value.replace(/[^0-9]/g, ""))
-                }
-                inputMode="numeric"
-                helperText={t("send.amount.helper")}
-              />
-
+              <div className="flex flex-row">
+                <Input
+                  label={isSats ? t("send.amount.label") : t("send.amount.fiat", { currency: fiatCurrency.toLocaleLowerCase() })}
+                  placeholder={t("send.amount.placeholder")}
+                  value={inputValue}
+                  onChange={(e) => {
+                    handleAmountInput(e);
+                  }}
+                  inputMode={isSats ? "numeric" : "decimal"}
+                  helperText={t("send.amount.helper")}
+                />
+                <button
+                  className="px-2 h-16 flex items-end justify-center"
+                  onClick={toggleIsSats}
+                  type="button"
+                  disabled={!isFiatRateAvailable}
+                >
+                  <ArrowDownUp opacity={!isFiatRateAvailable ? 0.5 : 1 }/>
+                </button>
+              </div>
               <div className="grid grid-cols-1 gap-3">
                 <Button
                   variant="outline"
