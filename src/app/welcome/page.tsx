@@ -175,7 +175,7 @@ export default function WelcomePage() {
         </p>
       </div>
 
-      <div className="fixed top-6 right-6">
+      <div className="fixed top-6 right-6 h-auto w-auto">
         <button
           type="button"
           onClick={handleClick}
@@ -186,7 +186,7 @@ export default function WelcomePage() {
 
         <div
           ref={containerRef}
-          className="absolute right-6 top-9 mt-1 opacity-0 pointer-events-none [&>select]:w-auto"
+          className="absolute right-6 top-16 mt-1 opacity-0 pointer-events-none [&>select]:w-auto"
         >
           <LanguagePickerSection />
         </div>
