@@ -148,19 +148,7 @@ export default function WelcomePage() {
 
   const showPasskeyUnlock = hasVault && authMode === "passkey";
   const showPasswordUnlock = hasVault && authMode !== "passkey";
-
-  const handleClick = () => {
-  const selectElement = containerRef.current?.querySelector<HTMLSelectElement>("select");
-
-  if (selectElement) {
-    if ("showPicker" in selectElement) {
-      selectElement.showPicker();
-    } else {
-      return null;
-    }
-  }
-};
-
+  
   return (
     <div className="min-h-screen min-w-fit flex flex-col justify-between px-6 py-6 sm:py-10">
       <div className="flex flex-col items-center pb-6 pt-10 sm:flex-1 sm:justify-end sm:pb-20 sm:pt-0">
@@ -175,19 +163,10 @@ export default function WelcomePage() {
         </p>
       </div>
 
-      <div className="fixed top-6 right-6 h-auto w-auto">
-        <button
-          type="button"
-          onClick={handleClick}
-          className="p-2 z-50 rounded-lg hover:bg-neutral-800/50 transition-colors cursor-pointer text-gray-300 hover:text-white"
-        >
-          <Earth className="w-6 h-6" />
-        </button>
+      <div className="fixed top-6 right-6 h-10 w-10 flex items-center justify-center rounded-lg hover:bg-neutral-800/50 transition-colors text-gray-300 hover:text-white">
+        <Earth className="w-6 h-6 pointer-events-none" />
 
-        <div
-          ref={containerRef}
-          className="absolute right-6 top-16 mt-1 opacity-0 pointer-events-none [&>select]:w-auto"
-        >
+        <div className="absolute inset-0 opacity-0 cursor-pointer [&>select]:w-full [&>select]:h-full [&>select]:cursor-pointer">
           <LanguagePickerSection />
         </div>
       </div>
