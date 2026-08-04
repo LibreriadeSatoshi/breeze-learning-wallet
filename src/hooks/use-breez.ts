@@ -22,12 +22,25 @@ import {
   listFiatRates,
   type PrepareSendResult,
   type PrepareLnurlPayResult,
+  disableStableBalance,
+  enableStableBalance,
+  fetchConvertionLimit,
+  estimateSwapFee,
+  getUserSettings
 } from "@/lib/lightning/breez-service";
 import type {
   LnurlPayRequestDetails,
   Fee,
 } from "@breeztech/breez-sdk-spark";
 import type { Payment } from "@/lib/lightning/types";
+
+interface UseSwapFeeParams { 
+  isStableBalance: boolean; 
+  balanceSats: number; 
+  tokenBalance: bigint | undefined;
+  fiatRate: number; 
+  enabled?: boolean; 
+}
 
 const breezKeys = {
   all: ["breez"] as const,
@@ -38,12 +51,76 @@ const breezKeys = {
   lightningAddress: () => [...breezKeys.all, "lightningAddress"] as const,
   fiatCurrencies: () => [...breezKeys.all, "fiatCurrencies"] as const,
   fiatRates: () => [...breezKeys.all, "fiatRates"] as const,
+  convertionLimit: () => [...breezKeys.all, "convertionLimit"] as const,
+  estimatedSwapFee: () => [...breezKeys.all, "estimatedFees"] as const,
+  userSettings: () => [...breezKeys.all, "userSettings"] as const
 };
 
 export function useBalance(enabled: boolean = true) {
   return useQuery({
     queryKey: breezKeys.balance(),
     queryFn: getBalance,
+    enabled,
+    refetchInterval: enabled ? 60000 : false,
+    staleTime: 10000,
+  });
+}
+
+export function useToggleStableBalance() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ enable, label = 'USDB' }: { enable: boolean; label?: string }) => {
+      if (enable) {
+        await enableStableBalance(label);
+      } else {
+        await disableStableBalance();
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: breezKeys.balance() }); 
+    },
+    onError: (error) => {
+      console.error("Error toggling stable balance: ", error);
+    }
+  });
+}
+
+export function useConvertionLimit() {
+  return useQuery({
+    queryKey: breezKeys.convertionLimit(),
+    queryFn: fetchConvertionLimit,
+    refetchInterval: 60000,
+    staleTime: 10000,
+  });
+}
+
+export function useSwapFee({ 
+  isStableBalance, 
+  balanceSats, 
+  tokenBalance = BigInt(0),
+  fiatRate, 
+  enabled = true, 
+}: UseSwapFeeParams) {
+  return useQuery({
+    queryKey: [
+      ...breezKeys.estimatedSwapFee(), 
+      isStableBalance, 
+      balanceSats, 
+      tokenBalance.toString(),
+      fiatRate
+    ],
+    queryFn: () => estimateSwapFee({ isStableBalance, balanceSats, tokenBalance, fiatRate }),
+    enabled,
+    refetchInterval: 60000,
+    staleTime: 10000
+  });
+}
+
+export function useUserSettings(enabled: boolean = true) {
+  return useQuery({
+    queryKey: breezKeys.userSettings(),
+    queryFn: getUserSettings,
     enabled,
     refetchInterval: enabled ? 60000 : false,
     staleTime: 10000,

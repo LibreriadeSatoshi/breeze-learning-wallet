@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowDownToLine,
+  ArrowDownUp,
   ArrowUpFromLine,
   CreditCard,
   Key,
@@ -11,27 +12,32 @@ import {
   Settings as SettingsIcon,
   TriangleAlert,
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useWalletStore } from "@/store/wallet-store";
-import {
-  BalanceDisplay,
-} from "@/components/wallet/balance-display";
+import { BalanceDisplay } from "@/components/wallet/balance-display";
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { TransactionList } from "@/components/wallet/transaction-list";
 import { PaymentDetailModal } from "@/components/wallet/payment-detail-modal";
 import { BuyBitcoinModal } from "@/components/wallet/buy-bitcoin-modal";
 import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
-import { onSdkEvent } from "@/lib/lightning/breez-service";
+import {
+  onSdkEvent,
+  USDB_TOKEN_IDENTIFIER,
+} from "@/lib/lightning/breez-service";
 import { signInWithPasskey, seedToMnemonic } from "@/lib/auth/passkey";
 import {
   useBalance,
   usePayments,
   useUnclaimedDeposits,
   useRefreshBreez,
+  useToggleStableBalance,
+  useConvertionLimit,
+  useSwapFee,
+  useUserSettings,
 } from "@/hooks/use-breez";
 import { useFiat } from "@/hooks/use-fiat";
 import { useT } from "@/lib/i18n/hook";
@@ -65,21 +71,38 @@ export default function WalletHomePage() {
 
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSeedModal, setShowSeedModal] = useState(false);
+  const [showSwapModal, setShowSwapModal] = useState(false);
   const [seedPassword, setSeedPassword] = useState("");
   const [seedError, setSeedError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [revealedSeed, setRevealedSeed] = useState<string[] | null>(null);
-
+  const [isStableBalance, setIsStableBalance] = useState(false);
 
   const { data: balance, isLoading: balanceLoading } = useBalance(isReady);
   const { data: payments = [], isLoading: paymentsLoading } =
     usePayments(isReady);
   const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
   const { refresh } = useRefreshBreez();
-  const { rate: fiatRate, currency: selectedCurrency } = useFiat(isReady);
-
+  const { rate: fiatRate, currency: selectedCurrency, estableRate } = useFiat(isReady);
+  const { mutateAsync: toggleStableAsync, isPending: isSwapPending } = useToggleStableBalance();
+  const { data: convertionLimit, isLoading: convertionLimitLoading } = useConvertionLimit();
   const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
+  const { data: userSettings, isLoading: userSettingsLoading } = useUserSettings();
+
+  const token = balance?.tokenUSDB;
+
   const needsAttention = rejectedDeposits.length;
+  const { 
+  data: conversionFeeUSD,
+  isLoading: isEstimating, 
+  error 
+} = useSwapFee({ 
+  isStableBalance, 
+  balanceSats: balance?.totalSats || 0, 
+  tokenBalance: token?.balance || BigInt(0), 
+  fiatRate: fiatRate || 0, 
+  enabled: showSwapModal && fiatRate !== undefined && fiatRate !== 0,
+});
 
   useEffect(() => {
     setMounted(true);
@@ -140,6 +163,14 @@ export default function WalletHomePage() {
     return onSdkEvent(handleEvent);
   }, [isReady, refresh]);
 
+  useEffect(() => {
+    if (userSettings?.stableBalanceActiveLabel === "USDB") {
+      setIsStableBalance(true);
+    } else {
+      setIsStableBalance(false);
+    }
+  }, [userSettings]);
+
   const handleLock = () => {
     lock();
     router.push("/welcome");
@@ -190,7 +221,43 @@ export default function WalletHomePage() {
 
   if (!mounted || !isUnlocked) return null;
 
-  const isLoading = balanceLoading || paymentsLoading;
+  const canConvert = () => {
+    let { fromBitcoin, toBitcoin } = convertionLimit ?? {};
+
+    const hasTokenBalance = Boolean(
+      token && BigInt(token.balance ?? 0) > BigInt(0),
+    );
+
+    if (!hasTokenBalance) {
+      const min = BigInt(fromBitcoin?.minFromAmount ?? 0);
+      const current = BigInt(balance?.totalSats ?? 0);
+      return current >= min;
+    } else {
+      const min = BigInt(toBitcoin?.minFromAmount ?? 0);
+      const current = BigInt(token?.balance ?? 0);
+      return current >= min;
+    }
+  };
+
+  const handleSwap = async () => {
+    try {
+      const nextState = !isStableBalance;
+
+      await toggleStableAsync({
+        enable: nextState,
+        label: "USDB",
+      });
+
+      await refresh();
+
+      setIsStableBalance(nextState);
+      setShowSwapModal(false);
+    } catch (err) {
+      console.error("Error toggling stable balance: ", err);
+    }
+  };
+
+  const isLoading = balanceLoading || paymentsLoading ||isSwapPending || userSettingsLoading || convertionLimitLoading;
 
   return (
     <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
@@ -225,7 +292,17 @@ export default function WalletHomePage() {
                   <span className="hidden sm:inline">{t("home.buy")}</span>
                 </button>
               )}
-              <button type="button"
+              <button
+                type="button"
+                onClick={() => setShowSwapModal(true)}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
+              >
+                <ArrowDownUp className="w-4 h-4" />
+                <span>{isStableBalance ? "USD" : "BTC"}</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowSeedModal(true)}
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
                 aria-label={t("home.phraseAria")}
@@ -251,9 +328,12 @@ export default function WalletHomePage() {
             </div>
           </div>
           <BalanceDisplay
-            balanceSat={balance?.totalSats ?? 0}
+            balanceSat={balance?.totalSats || 0}
             fiatRate={fiatRate}
             fiatCurrency={selectedCurrency}
+            token={token ?? 0}
+            isStableBalance={isStableBalance}
+            usdRate={estableRate}
           />
         </div>
       </div>
@@ -331,7 +411,56 @@ export default function WalletHomePage() {
         onClose={() => setSelectedPayment(null)}
       />
 
-      {showBuyModal && <BuyBitcoinModal onClose={() => setShowBuyModal(false)} />}
+      {showBuyModal && (
+        <BuyBitcoinModal onClose={() => setShowBuyModal(false)} />
+      )}
+
+      {showSwapModal && (
+        <Modal
+          open={showSwapModal}
+          onClose={() => setShowSwapModal(false)}
+          title={`Convert to ${isStableBalance ? "sats" : "USD"}`}
+          description={`Your balance will be converted ${isStableBalance ? "back to sats" : "to USD"}.`}
+        >
+          <div className="py-4 text-center">
+            {canConvert() ? (
+              <div className="space-y-1">
+                <p className="text-sm text-gray-400">
+                  Conversion fee:{" "}
+                  <span className="text-white font-medium">
+                    {isEstimating ? (
+                      <span className="animate-pulse">Calculating...</span>
+                    ) : (
+                      conversionFeeUSD
+                    )}
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-amber-500 dark:text-amber-400">
+                Balance too low to convert — it will remain as change
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-center gap-4 w-full mt-2">
+            <Button
+              className="flex-1 py-2.5 px-4 font-medium rounded-xl transition-colors"
+              onClick={() => setShowSwapModal(false)}
+              disabled={isEstimating}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 py-2.5 px-4 font-medium rounded-xl transition-colors"
+              onClick={handleSwap}
+              disabled={isEstimating}
+            >
+              Confirm
+            </Button>
+          </div>
+        </Modal>
+      )}
 
       <Modal
         open={showSeedModal}

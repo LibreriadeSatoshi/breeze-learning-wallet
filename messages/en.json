@@ -413,7 +413,11 @@
     "receivedDefault": "Received payment",
     "sentDefault": "Sent payment",
     "statusPending": "Pending",
-    "statusFailed": "Failed"
+    "statusFailed": "Failed",
+    "conversion": {
+      "token": "Conversion to {{token}}",
+      "bitcoin": "Conversion to Bitcoin"
+    }
   },
   "paymentDetail": {
     "title": "Payment details",

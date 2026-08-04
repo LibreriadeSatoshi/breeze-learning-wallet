@@ -14,6 +14,7 @@ import {
   useExecuteSend,
   usePrepareLnurlPay,
   useExecuteLnurlPay,
+  useUserSettings,
 } from "@/hooks/use-breez";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat, SATS_PER_BTC } from "@/lib/wallet/format-fiat";
@@ -23,6 +24,7 @@ import type {
   PrepareLnurlPayResult,
 } from "@/lib/lightning/breez-service";
 import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
+import { formatTokenBalance } from "@/components/wallet/balance-display";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -49,15 +51,19 @@ export default function SendPage() {
   const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
 
-  const { data: balance } = useBalance(true);
+  const { data: balances } = useBalance(true);
   const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const {data: userSettings} = useUserSettings();
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
   const executeMutation = useExecuteSend();
   const prepareLnurlMutation = usePrepareLnurlPay();
   const executeLnurlMutation = useExecuteLnurlPay();
 
-  const balanceSat = balance?.totalSats ?? 0;
+  const isStableBalance = userSettings?.stableBalanceActiveLabel === "USDB";
+
+  const tokenUSDB = balances?.tokenUSDB;
+  const balance = isStableBalance ? tokenUSDB?.balance || 0 : balances?.totalSats ?? 0;
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");
@@ -139,8 +145,8 @@ export default function SendPage() {
       }
 
       const sendAmountSat = readAmountSat(prep);
-      if (sendAmountSat !== null && sendAmountSat > balanceSat) {
-        setError(t("send.insufficientBalance", { balance: balanceSat.toLocaleString() }));
+      if (sendAmountSat !== null && sendAmountSat > balance) {
+        setError(t("send.insufficientBalance", { balance: balance.toLocaleString() }));
         return;
       }
       setPrepareResult(prep);
@@ -252,7 +258,7 @@ export default function SendPage() {
                   {t("send.available")}
                 </p>
                 <p className="text-3xl font-bold text-orange-500">
-                  {balanceSat.toLocaleString()} {t("send.sats")}
+                  {isStableBalance ? formatTokenBalance({amount: balance.toString()}): <>balance.toLocaleString() {t("send.sats")}</>}
                 </p>
               </div>
             </CardContent>

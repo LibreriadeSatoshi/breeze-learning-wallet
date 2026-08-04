@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
-import { SensitiveAmount } from "./balance-display";
+import { estimateSats, formatTokenBalance, SensitiveAmount } from "./balance-display";
 
 const statusColors = {
   pending: "text-yellow-600 dark:text-yellow-400",
@@ -69,9 +69,10 @@ interface TransactionItemProps {
 
 function TransactionItem({ payment, onClick }: TransactionItemProps) {
   const t = useT();
-  const sats = payment.amountSat;
+  const sats = payment.amount || 0;
   const date = new Date(payment.paymentTime * 1000);
   const isReceived = payment.paymentType === "received";
+  const isToken = payment.method === "token";
   const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
   const fiat =
     fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
@@ -81,6 +82,9 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
     complete: "",
     failed: t("transactions.statusFailed"),
   };
+
+  const isConversion = payment.purpose === "autoConversion"
+  const ticker = payment.conversionDetails?.to?.ticker || ""
 
   return (
     <button
@@ -102,7 +106,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <div className="font-medium truncate min-w-0">
-                {payment.description ||
+                {isConversion ? ticker == "BTC" ? t("transactions.conversion.bitcoin") : t("transactions.conversion.token", {token: ticker}) : payment.description ||
                   (isReceived ? t("transactions.receivedDefault") : t("transactions.sentDefault"))}
               </div>
               {statusLabels[payment.status] && (
@@ -130,13 +134,13 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           >
           {isReceived ? "+" : "-"}
           <SensitiveAmount>
-              {sats.toLocaleString()}
+              {isToken ? formatTokenBalance({amount: sats.toString()}) : sats.toLocaleString()}
           </SensitiveAmount>
           </div>
-          <div className="text-xs text-gray-500">sats</div>
+          <div className="text-xs text-gray-500">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>
           {fiat && (
               <SensitiveAmount className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                ≈ {fiat}
+                ≈ {isToken ? estimateSats(sats, fiatRate || 0) : fiat}
               </SensitiveAmount>
           )}
         </div>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useFiat } from "@/hooks/use-fiat";
 import { formatFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
-import { SensitiveAmount } from "./balance-display";
+import { estimateSats, formatTokenBalance, SensitiveAmount } from "./balance-display";
 
 const statusStyles = {
   pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
@@ -38,17 +38,22 @@ function PaymentDetailContent({
   onClose: () => void;
 }) {
   const t = useT();
-  const sats = payment.amountSat;
-  const feeSats = payment.feeSat;
+  const sats = payment.amount;
+  const feeSats = payment.fees;
+
   const isReceived = payment.paymentType === "received";
+  const isToken = payment.method === "token";
   const date = new Date(payment.paymentTime * 1000);
   const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+
+  const amountSats = estimateSats(sats, fiatRate || 0); 
   const amountFiat =
     fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
-    const feeFiat =
-    fiatRate !== undefined && feeSats > 0
-    ? formatFiat(feeSats, fiatRate, fiatCurrency)
-    : null;
+  const feeFiat =
+  fiatRate !== undefined && feeSats > 0
+  ? formatFiat(feeSats, fiatRate, fiatCurrency)
+  : null;
+  const feeFrom = payment.conversionDetails?.from?.fee || 0;
 
   return (
     <div className="space-y-5">
@@ -70,12 +75,12 @@ function PaymentDetailContent({
           }`}
         >
           {isReceived ? "+" : "-"}
-          <SensitiveAmount>{sats.toLocaleString()}</SensitiveAmount>
+          <SensitiveAmount>{isToken ? `${formatTokenBalance({amount: sats.toString()}).replace("$", "")}` : sats.toLocaleString()}</SensitiveAmount>
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">{t("send.sats")}</div>
+        <div className="text-sm text-gray-500 dark:text-gray-400">{isToken ? payment.conversionDetails?.to.ticker : t("send.sats")}</div>
         {amountFiat && (
             <SensitiveAmount className="text-sm text-gray-500 dark:text-gray-400 mt-1"> 
-              ≈ {amountFiat}
+              ≈ {isToken ? `${amountSats} sats` : amountFiat}
             </SensitiveAmount>
         )}
         <span
@@ -90,17 +95,43 @@ function PaymentDetailContent({
         <DetailRow
           label={t("paymentDetail.fee")}
           value={
-            feeFiat
-              ? (<>
-              <SensitiveAmount>
-                {feeSats.toLocaleString()}
-              </SensitiveAmount>{" "}
-              {t("send.sats")}{" · ≈ "}
-              <SensitiveAmount>
-                {feeFiat}
-              </SensitiveAmount>
-              </>)
-              : `${feeSats.toLocaleString()} ${t("send.sats")}`
+            payment.purpose === "autoConversion" && payment.conversionDetails?.from.ticker === "USDB" ? (
+              <>
+                <SensitiveAmount>
+                  {formatTokenBalance({amount: feeFrom.toLocaleString(), fraction: 6}).replace("$", "")}
+                </SensitiveAmount>
+                {" "}
+                
+                {payment.purpose === "autoConversion" && payment.conversionDetails
+                  ? payment.conversionDetails.from.ticker
+                  : "sats"}
+                
+                {" · ≈ "}
+                
+                <SensitiveAmount>
+                  {`${estimateSats(feeFrom || 0, fiatRate || 0).toLocaleString()} ${t("send.sats")}`}
+                </SensitiveAmount>
+              </>
+            ) : (
+              feeFiat ? (
+                <>
+                  <SensitiveAmount>
+                    {feeSats.toLocaleString()}
+                  </SensitiveAmount>
+                  {" "}
+                  
+                  {t("send.sats")}
+                  
+                  {" · ≈ "}
+                  
+                  <SensitiveAmount>
+                    {feeFiat}
+                  </SensitiveAmount>
+                </>
+              ) : (
+                `${feeSats.toLocaleString()} ${t("send.sats")}`
+              )
+            )
           }
         />
         <DetailRow

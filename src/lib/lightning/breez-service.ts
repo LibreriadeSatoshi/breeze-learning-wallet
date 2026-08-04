@@ -15,6 +15,9 @@ import type {
   Payment as SdkPayment,
   BuyBitcoinRequest,
   BuyBitcoinResponse,
+  TokenBalance,
+  UserSettings,
+  Conversion,
 } from "@breeztech/breez-sdk-spark";
 import type { Payment } from "./types";
 
@@ -29,6 +32,8 @@ let activeMnemonic: string | null = null;
 
 type EventCallback = (event: SdkEvent) => void;
 const eventCallbacks: EventCallback[] = [];
+
+export const USDB_TOKEN_IDENTIFIER = 'btkn1xgrvjwey5ngcagvap2dzzvsy4uk8ua9x69k82dwvt5e7ef9drm9qztux87'
 
 async function getBreezApiKey(): Promise<string> {
   if (cachedApiKey) return cachedApiKey;
@@ -85,6 +90,13 @@ export async function initBreez(config: BreezSparkConfig): Promise<void> {
         type: "networkRecommended",
         leewaySatPerVbyte: config.claimLeewaySatPerVbyte,
       };
+    }
+
+    sdkConfig.stableBalanceConfig = {
+      tokens: [{
+        label: "USDB",
+        tokenIdentifier: USDB_TOKEN_IDENTIFIER
+      }]
     }
 
     if (!config.mnemonic) {
@@ -147,15 +159,147 @@ export async function getNodeState(): Promise<{ id?: string } | null> {
   }
 }
 
-export async function getBalance(): Promise<{ totalSats: number }> {
+export async function getBalance(): Promise<{ totalSats: number, tokenUSDB?: TokenBalance}> {
   if (!sdk) return { totalSats: 0 };
+  
   try {
     const info = await sdk.getInfo({});
-    return { totalSats: info.balanceSats };
+    const USDB_TOKEN = info.tokenBalances.get(USDB_TOKEN_IDENTIFIER);
+    
+    return { 
+      totalSats: info.balanceSats || 0, 
+      tokenUSDB: USDB_TOKEN
+    };
   } catch (error) {
     console.error("Failed to get balance:", error);
     return { totalSats: 0 };
   }
+}
+
+export async function enableStableBalance(label: string): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  try {
+    await sdk.updateUserSettings({
+      stableBalanceActiveLabel: { type: 'set', label },
+    });
+  } catch (error) {
+    console.error("Failed to enable stable balance:", error);
+  }
+}
+
+export async function disableStableBalance(): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  
+  try {
+    await sdk.updateUserSettings({
+      stableBalanceActiveLabel: { type: 'unset' },
+    });
+  } catch (error) {
+    console.error("Failed to disable stable balance:", error);
+  }
+}
+
+export async function fetchConvertionLimit() {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  const fromBitcoinResponse = await sdk.fetchConversionLimits({
+    conversionType: { type: 'fromBitcoin' },
+    tokenIdentifier: USDB_TOKEN_IDENTIFIER
+  })
+
+  const toBitcoinResponse = await sdk.fetchConversionLimits({
+    conversionType: {
+      type: 'toBitcoin',
+      fromTokenIdentifier: USDB_TOKEN_IDENTIFIER
+    },
+    tokenIdentifier: undefined
+  })
+  
+  return {
+    fromBitcoin: fromBitcoinResponse,
+    toBitcoin: toBitcoinResponse
+  }
+}
+
+export const estimateSwapFee = async (params: {
+  isStableBalance: boolean;
+  balanceSats: number;
+  tokenBalance: bigint;
+  fiatRate: number;
+}): Promise<string> => {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  const { isStableBalance, balanceSats, tokenBalance, fiatRate } = params;
+
+  const hasBalance = !isStableBalance 
+    ? balanceSats > 0 
+    : tokenBalance > BigInt(0);
+    
+  if (!hasBalance) return "$0.00";
+
+  const MIN_AMOUNT_FOR_SWAP = BigInt(800);
+  let amount: bigint = BigInt(0);
+
+  if (!isStableBalance) {
+    if (balanceSats < Number(MIN_AMOUNT_FOR_SWAP)) return "$0.00";
+    
+    const btcValue = balanceSats / 100_000_000;
+    const fiatValue = btcValue * fiatRate;
+    amount = BigInt(Math.round(fiatValue * 1_000_000));
+  } else {
+    if (tokenBalance < MIN_AMOUNT_FOR_SWAP) return "$0.00";
+
+    const fiatValue = Number(tokenBalance) / 1_000_000;
+    const satsValue = (fiatValue / fiatRate) * 100_000_000;
+    amount = BigInt(Math.round(satsValue));
+  }
+
+  const receiveResponse = await sdk.receivePayment({
+    paymentMethod: { type: "sparkAddress" }, 
+  });
+  
+  const sparkAddress = receiveResponse.paymentRequest;
+
+  const conversionOptions = !isStableBalance
+    ? { conversionType: { type: "fromBitcoin" as const } }
+    : { 
+        conversionType: { 
+          type: "toBitcoin" as const, 
+          fromTokenIdentifier: USDB_TOKEN_IDENTIFIER 
+        } 
+      };
+
+  try {
+    const prepareResponse = await sdk.prepareSendPayment({
+      paymentRequest: { type: "input", input: sparkAddress },
+      amount,
+      tokenIdentifier: !isStableBalance ? USDB_TOKEN_IDENTIFIER : undefined,
+      conversionOptions,
+    });
+
+    if (prepareResponse.conversionEstimate) {
+      const feeInBaseUnits = Number(prepareResponse.conversionEstimate.fee);
+      const feeInUSD = feeInBaseUnits / 1_000_000;
+
+      if (feeInUSD === 0) {
+        return "$0.00";
+      }
+
+      return `$${feeInUSD.toFixed(6)}`; 
+    }
+  } catch (e) {
+    console.warn("Estimation failed: ", e);
+    return "$0.00";
+  }
+
+  return "$0.00";
+};
+
+
+export async function getUserSettings(): Promise<UserSettings> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.getUserSettings();
 }
 
 export async function parseInput(input: string): Promise<InputType> {
@@ -291,12 +435,13 @@ export async function recommendedFees(): Promise<RecommendedFees> {
 
 function mapPayment(p: SdkPayment): Payment {
   const lightning = p.details?.type === "lightning" ? p.details : null;
-  return {
+
+  let personalized_payment: Partial<Payment> = {
     id: p.id,
     paymentType: p.paymentType === "send" ? "sent" : "received",
     paymentTime: p.timestamp,
-    amountSat: Number(p.amount),
-    feeSat: Number(p.fees),
+    amount: Number(p.amount),
+    fees: Number(p.fees),
     status:
       p.status === "completed"
         ? "complete"
@@ -307,6 +452,37 @@ function mapPayment(p: SdkPayment): Payment {
     bolt11: lightning?.invoice,
     method: p.method,
   };
+
+  if (p.details?.type !== "withdraw" && p.details?.type !== "deposit" && p.details?.conversionInfo?.type === "amm") {
+    if (p.conversionDetails?.conversions !== undefined && p.conversionDetails?.conversions?.length > 0) {
+      let conversions = p?.conversionDetails?.conversions.map((conversion: Conversion) => {
+        return {
+          from: {
+            amount: Number(conversion?.from?.amount),
+            fee: Number(conversion?.from?.fee),
+            ticker: conversion?.from.asset.ticker,
+          },
+          to: {
+            amount: Number(conversion?.to?.amount),
+            fee: Number(conversion?.to?.fee),
+            ticker: conversion.to.asset.ticker,
+          }
+        }
+      })
+
+      let conversionDetails = {
+      status: p?.conversionDetails?.status,
+      from: conversions[0].from,
+      to: conversions[0].to,
+      }
+
+      personalized_payment.conversionDetails = conversionDetails
+    }
+    personalized_payment.purpose = p.details?.conversionInfo?.purpose?.type;
+
+  }
+  
+  return personalized_payment as Payment
 }
 
 export async function listPayments(): Promise<Payment[]> {
