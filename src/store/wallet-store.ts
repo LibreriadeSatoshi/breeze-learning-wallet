@@ -3,12 +3,22 @@ import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 import { clearLocalDriveState } from "@/lib/backup/drive-client";
 import { disconnectBreez } from "@/lib/lightning/breez-service";
+import {
+  useBalance,
+  useConvertionLimit,
+  usePayments,
+  useRefreshBreez,
+  useToggleStableBalance,
+  useUnclaimedDeposits,
+  useUserSettings,
+} from "@/hooks/use-breez";
+import { useFiat } from "@/hooks/use-fiat";
 
 let mnemonicInMemory: string | null = null;
 
 const SESSION_KEY_MNEMONIC = "scholar-wallet:session-mnemonic";
 const STORAGE_KEY_AUTH_MODE = "scholar-wallet:auth-mode";
-const STORAGE_KEY_SHOW_BALANCE = "scholar-wallet:show-balance"
+const STORAGE_KEY_SHOW_BALANCE = "scholar-wallet:show-balance";
 
 const LEGACY_STORAGE_KEYS = [
   "etta-wallet-storage",
@@ -59,7 +69,7 @@ interface WalletStore {
   authMode: AuthMode | null;
   isUnlocked: boolean;
   isBootstrapped: boolean;
-  showBalance: boolean
+  showBalance: boolean;
 
   bootstrap: () => Promise<void>;
   refreshHasVault: () => Promise<void>;
@@ -69,7 +79,7 @@ interface WalletStore {
   lock: () => void;
   destroyVault: () => Promise<void>;
   getMnemonic: () => string | null;
-  toggleBalanceVisibility: () => void
+  toggleBalanceVisibility: () => void;
   // Decrypts the vault with the given password without changing unlock state.
   verifyPasswordAndReveal: (password: string) => Promise<string>;
 }
@@ -93,7 +103,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     const mode = readAuthMode();
     const hasVault = blob !== null || mode === "passkey";
     const showBalance = readShowBalance();
-    
+
     if (session && hasVault) {
       mnemonicInMemory = session;
     }
@@ -102,7 +112,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
       authMode: mode,
       isUnlocked: session !== null && hasVault,
       isBootstrapped: true,
-      showBalance
+      showBalance,
     });
   },
 
@@ -151,12 +161,12 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   getMnemonic: () => mnemonicInMemory,
 
   toggleBalanceVisibility: () => {
-    const newVal = !get().showBalance
+    const newVal = !get().showBalance;
     if (window == undefined) return;
-    window.localStorage.setItem(STORAGE_KEY_SHOW_BALANCE, String(newVal))
+    window.localStorage.setItem(STORAGE_KEY_SHOW_BALANCE, String(newVal));
     set({
-      showBalance: newVal
-    })
+      showBalance: newVal,
+    });
   },
 
   verifyPasswordAndReveal: async (password) => {
@@ -165,3 +175,41 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     return decryptMnemonic(blob, password);
   },
 }));
+
+export const useWalletData = (isReady: boolean) => {
+  const { data: balance, isLoading: balanceLoading } = useBalance(isReady);
+  const { data: payments = [], isLoading: paymentsLoading } =
+    usePayments(isReady);
+  const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
+  const { refresh } = useRefreshBreez();
+  const {
+    rate: fiatRate,
+    currency: selectedCurrency,
+    estableRate,
+  } = useFiat(isReady);
+  const { mutateAsync: toggleStableAsync, isPending: isSwapPending } =
+    useToggleStableBalance();
+  const { data: convertionLimit, isLoading: convertionLimitLoading } =
+    useConvertionLimit();
+  const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
+  const { data: userSettings, isLoading: userSettingsLoading } =
+    useUserSettings();
+
+  return {
+    balance,
+    balanceLoading,
+    payments,
+    paymentsLoading,
+    rejectedDeposits,
+    fiatRate,
+    selectedCurrency,
+    estableRate,
+    toggleStableAsync,
+    isSwapPending,
+    convertionLimit,
+    convertionLimitLoading,
+    userSettings,
+    userSettingsLoading,
+    refresh,
+  };
+};

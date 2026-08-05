@@ -15,8 +15,8 @@ const statusColors = {
 };
 
 interface TransactionListProps {
-  payments: Payment[];
-  onPaymentClick?: (payment: Payment) => void;
+  readonly payments: Payment[];
+  readonly onPaymentClick?: (payment: Payment) => void;
 }
 
 export function TransactionList({
@@ -63,8 +63,8 @@ export function TransactionList({
 }
 
 interface TransactionItemProps {
-  payment: Payment;
-  onClick?: () => void;
+  readonly payment: Payment;
+  readonly onClick?: () => void;
 }
 
 function TransactionItem({ payment, onClick }: TransactionItemProps) {
@@ -85,6 +85,8 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
 
   const isConversion = payment.purpose === "autoConversion"
   const ticker = payment.conversionDetails?.to?.ticker || ""
+  const defaultMessage = payment.description || (isReceived ? t("transactions.receivedDefault") : t("transactions.sentDefault"))
+  const conversionMessage = ticker == "BTC" ? t("transactions.conversion.bitcoin") : t("transactions.conversion.token", {token: ticker})
 
   return (
     <button
@@ -106,8 +108,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <div className="font-medium truncate min-w-0">
-                {isConversion ? ticker == "BTC" ? t("transactions.conversion.bitcoin") : t("transactions.conversion.token", {token: ticker}) : payment.description ||
-                  (isReceived ? t("transactions.receivedDefault") : t("transactions.sentDefault"))}
+                {isConversion ? conversionMessage : defaultMessage}
               </div>
               {statusLabels[payment.status] && (
                 <span className={`text-xs font-medium shrink-0 ${statusColors[payment.status]}`}>

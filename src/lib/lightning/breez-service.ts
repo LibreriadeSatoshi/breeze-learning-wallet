@@ -224,13 +224,17 @@ export async function fetchConvertionLimit() {
 
 export const estimateSwapFee = async (params: {
   isStableBalance: boolean;
-  balanceSats: number;
-  tokenBalance: bigint;
+  balance: {totalSats: number, tokenUSDB: TokenBalance | undefined};
   fiatRate: number;
 }): Promise<string> => {
   if (!sdk) throw new Error("Wallet not ready.");
 
-  const { isStableBalance, balanceSats, tokenBalance, fiatRate } = params;
+  const { isStableBalance, balance, fiatRate } = params;
+  
+  const balanceSats = balance.totalSats;
+  const tokenBalance = balance.tokenUSDB?.balance || 0;
+
+  let amount: bigint;
 
   const hasBalance = !isStableBalance 
     ? balanceSats > 0 
@@ -239,7 +243,6 @@ export const estimateSwapFee = async (params: {
   if (!hasBalance) return "$0.00";
 
   const MIN_AMOUNT_FOR_SWAP = BigInt(800);
-  let amount: bigint = BigInt(0);
 
   if (!isStableBalance) {
     if (balanceSats < Number(MIN_AMOUNT_FOR_SWAP)) return "$0.00";
@@ -435,6 +438,9 @@ export async function recommendedFees(): Promise<RecommendedFees> {
 
 function mapPayment(p: SdkPayment): Payment {
   const lightning = p.details?.type === "lightning" ? p.details : null;
+  const statusFailed = p.status === "failed"
+          ? "failed"
+          : "pending"
 
   let personalized_payment: Partial<Payment> = {
     id: p.id,
@@ -442,12 +448,8 @@ function mapPayment(p: SdkPayment): Payment {
     paymentTime: p.timestamp,
     amount: Number(p.amount),
     fees: Number(p.fees),
-    status:
-      p.status === "completed"
-        ? "complete"
-        : p.status === "failed"
-          ? "failed"
-          : "pending",
+    status: p.status === "completed"
+        ? "complete" : statusFailed,
     description: lightning?.description,
     bolt11: lightning?.invoice,
     method: p.method,

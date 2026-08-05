@@ -17,8 +17,8 @@ const statusStyles = {
 } as const;
 
 interface PaymentDetailModalProps {
-  payment: Payment | null;
-  onClose: () => void;
+  readonly payment: Payment | null;
+  readonly onClose: () => void;
 }
 
 export function PaymentDetailModal({ payment, onClose }: PaymentDetailModalProps) {
@@ -30,29 +30,52 @@ export function PaymentDetailModal({ payment, onClose }: PaymentDetailModalProps
   );
 }
 
+function getFiatData(payment: Payment, fiatRate: number | undefined, fiatCurrency: string) {
+  const sats = payment.amount;
+  const feeSats = payment.fees;
+
+  const amountFiat = fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
+  const feeFiat = fiatRate !== undefined && feeSats > 0 ? formatFiat(feeSats, fiatRate, fiatCurrency) : null;
+
+  return { amountFiat, feeFiat };
+}
+
+function displayFeeFiat(feeFiat: string | null, feeSats: number, t: ReturnType<typeof useT>) {
+  return feeFiat ? (
+  <>
+    <SensitiveAmount>
+      {feeSats.toLocaleString()}
+    </SensitiveAmount>
+    {" "}
+    {t("send.sats")}
+    {" · ≈ "}
+    <SensitiveAmount>
+      {feeFiat}
+    </SensitiveAmount>
+  </>
+    ) : (
+    `${feeSats.toLocaleString()} ${t("send.sats")}`
+  )
+}
+
 function PaymentDetailContent({
   payment,
   onClose,
 }: {
-  payment: Payment;
-  onClose: () => void;
+  readonly payment: Payment;
+  readonly onClose: () => void;
 }) {
   const t = useT();
   const sats = payment.amount;
-  const feeSats = payment.fees;
 
   const isReceived = payment.paymentType === "received";
   const isToken = payment.method === "token";
   const date = new Date(payment.paymentTime * 1000);
   const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
 
-  const amountSats = estimateSats(sats, fiatRate || 0); 
-  const amountFiat =
-    fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
-  const feeFiat =
-  fiatRate !== undefined && feeSats > 0
-  ? formatFiat(feeSats, fiatRate, fiatCurrency)
-  : null;
+  const amountSats = estimateSats(payment.amount, fiatRate || 0); 
+  const { feeFiat, amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
+
   const feeFrom = payment.conversionDetails?.from?.fee || 0;
 
   return (
@@ -112,26 +135,7 @@ function PaymentDetailContent({
                   {`${estimateSats(feeFrom || 0, fiatRate || 0).toLocaleString()} ${t("send.sats")}`}
                 </SensitiveAmount>
               </>
-            ) : (
-              feeFiat ? (
-                <>
-                  <SensitiveAmount>
-                    {feeSats.toLocaleString()}
-                  </SensitiveAmount>
-                  {" "}
-                  
-                  {t("send.sats")}
-                  
-                  {" · ≈ "}
-                  
-                  <SensitiveAmount>
-                    {feeFiat}
-                  </SensitiveAmount>
-                </>
-              ) : (
-                `${feeSats.toLocaleString()} ${t("send.sats")}`
-              )
-            )
+            ) : (displayFeeFiat(feeFiat, payment.fees, t))
           }
         />
         <DetailRow
@@ -156,15 +160,17 @@ function PaymentDetailContent({
   );
 }
 
+interface DetailRowProps {
+  readonly label: string;
+  readonly value: string | ReactElement;
+  readonly wrap?: boolean;
+}
+
 function DetailRow({
   label,
   value,
   wrap = false,
-}: {
-  label: string;
-  value: string | ReactElement;
-  wrap?: boolean;
-}) {
+}: DetailRowProps) {
   return (
     <div className="py-3 flex items-start gap-4">
       <dt className="text-gray-500 dark:text-gray-400 shrink-0">{label}</dt>
@@ -179,7 +185,12 @@ function DetailRow({
   );
 }
 
-function CopyRow({ label, value }: { label: string; value: string }) {
+interface CopyRowProps {
+  readonly label: string;
+  readonly value: string;
+}
+
+function CopyRow({ label, value }: CopyRowProps) {
   const t = useT();
   const [copied, setCopied] = useState(false);
   const truncated = value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;

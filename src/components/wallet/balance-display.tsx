@@ -31,7 +31,7 @@ interface BalanceDisplayProps {
   readonly usdRate?: number;
   readonly fiatCurrency?: string;
   readonly token?: any;
-  readonly isStableBalance?: boolean;
+  readonly isStableBalance: boolean;
 }
 
 export function formatTokenBalance({amount, decimals = 6, fraction = 2}: {amount: string, decimals?: number, fraction?: number}) {
@@ -63,30 +63,17 @@ export function BalanceDisplay({
   const showBalance = useWalletStore((e) => e.showBalance);
   const onToggleVisibility = useWalletStore((e) => e.toggleBalanceVisibility);
 
-  const primaryAmount = isStableBalance 
-    ? formatTokenBalance({amount: token?.balance}).replace("$", "")
-    : balanceSat.toLocaleString();
+  const primaryAmount = getPrimaryAmount(balanceSat, token, isStableBalance);
 
-  const primaryTicker = isStableBalance 
-    ? (token?.tokenMetadata?.ticker || "USDB") 
-    : "sats";
+  const primaryTicker = getPrimaryTicker(token, isStableBalance);
 
-    let secondaryText = "";
-
-  if (fiatRate !== undefined && fiatRate > 0 && fiatCurrency && usdRate !== undefined && usdRate > 0) {
-    if (isStableBalance) {
-      const isToken = token !== undefined && token !== 0;
-      const equivalentSats = isToken ? estimateSats(token?.balance, usdRate, token?.tokenMetadata?.decimals) : balanceSat;
-      secondaryText = isToken ?  `≈ ${equivalentSats.toLocaleString()} sats` : `≈ ${equivalentSats.toLocaleString()} change`;
-    } else {
-      secondaryText = `≈ ${formatFiat(balanceSat, fiatRate, fiatCurrency)}`;
-    }
-  }
+  let secondaryText = getSecondaryText(balanceSat, isStableBalance, fiatRate, fiatCurrency, usdRate, token);
 
   return (
     <div className="text-center py-8">
       <div className="mb-2 flex flex-row justify-center items-end">
         <button 
+          type="button"
           onClick={onToggleVisibility} 
           className="mb-3 mr-3 focus:outline-none"
           aria-label={showBalance ? "hide balance" : "show balance"}
@@ -110,4 +97,35 @@ export function BalanceDisplay({
       )}
     </div>
   );
+}
+
+function getPrimaryAmount(balanceSat: number, token: any, isStableBalance: boolean = false) {
+  let primaryAmount = "";
+
+  if (isStableBalance) {
+    primaryAmount = formatTokenBalance({ amount: token?.balance }).replace("$", "");
+  } else {
+    primaryAmount = balanceSat.toLocaleString();
+  }
+  return primaryAmount;
+}
+
+function getPrimaryTicker(token: any, isStableBalance: boolean = false) {
+  return isStableBalance 
+    ? (token?.tokenMetadata?.ticker || "USDB") 
+    : "sats";
+}
+
+function getSecondaryText(balanceSat: number, isStableBalance: boolean, fiatRate?: number, fiatCurrency: string = "", usdRate?: number, token?: any) {
+    if (fiatRate === undefined || fiatRate <= 0 && fiatCurrency || usdRate === undefined || usdRate <= 0) {
+      return ""
+    }
+
+    if (isStableBalance) {
+      const isToken = token !== undefined && token !== 0;
+      const equivalentSats = isToken ? estimateSats(token?.balance, usdRate, token?.tokenMetadata?.decimals) : balanceSat;
+      return isToken ?  `≈ ${equivalentSats.toLocaleString()} sats` : `≈ ${equivalentSats.toLocaleString()} change`;
+    } else {
+      return `≈ ${formatFiat(balanceSat, fiatRate, fiatCurrency)}`;
+    }
 }

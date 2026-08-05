@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { useWalletStore } from "@/store/wallet-store";
+import { useWalletData, useWalletStore } from "@/store/wallet-store";
 import { BalanceDisplay } from "@/components/wallet/balance-display";
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { TransactionList } from "@/components/wallet/transaction-list";
@@ -26,20 +26,11 @@ import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import {
   onSdkEvent,
-  USDB_TOKEN_IDENTIFIER,
 } from "@/lib/lightning/breez-service";
 import { signInWithPasskey, seedToMnemonic } from "@/lib/auth/passkey";
 import {
-  useBalance,
-  usePayments,
-  useUnclaimedDeposits,
-  useRefreshBreez,
-  useToggleStableBalance,
-  useConvertionLimit,
   useSwapFee,
-  useUserSettings,
 } from "@/hooks/use-breez";
-import { useFiat } from "@/hooks/use-fiat";
 import { useT } from "@/lib/i18n/hook";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Payment } from "@/lib/lightning/types";
@@ -56,14 +47,6 @@ export default function WalletHomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
-  const isUnlocked = useWalletStore((s) => s.isUnlocked);
-  const lock = useWalletStore((s) => s.lock);
-  const bootstrap = useWalletStore((s) => s.bootstrap);
-  const isBootstrapped = useWalletStore((s) => s.isBootstrapped);
-  const verifyPasswordAndReveal = useWalletStore((s) => s.verifyPasswordAndReveal);
-  const authMode = useWalletStore((s) => s.authMode);
-  const getMnemonic = useWalletStore((s) => s.getMnemonic);
-
   const [isReady, setIsReady] = useState(false);
   const initializingRef = useRef(false);
   const [conn, setConn] = useState<"offline" | "syncing" | "synced" | "failed">("offline");
@@ -78,28 +61,35 @@ export default function WalletHomePage() {
   const [revealedSeed, setRevealedSeed] = useState<string[] | null>(null);
   const [isStableBalance, setIsStableBalance] = useState(false);
 
-  const { data: balance, isLoading: balanceLoading } = useBalance(isReady);
-  const { data: payments = [], isLoading: paymentsLoading } =
-    usePayments(isReady);
-  const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
-  const { refresh } = useRefreshBreez();
-  const { rate: fiatRate, currency: selectedCurrency, estableRate } = useFiat(isReady);
-  const { mutateAsync: toggleStableAsync, isPending: isSwapPending } = useToggleStableBalance();
-  const { data: convertionLimit, isLoading: convertionLimitLoading } = useConvertionLimit();
-  const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
-  const { data: userSettings, isLoading: userSettingsLoading } = useUserSettings();
+  const {isUnlocked, lock, bootstrap, isBootstrapped, verifyPasswordAndReveal, authMode, getMnemonic} = useWalletStore()
+
+  const {
+    balance,
+    balanceLoading,
+    payments,
+    paymentsLoading,
+    rejectedDeposits,
+    fiatRate,
+    selectedCurrency,
+    estableRate,
+    toggleStableAsync,
+    isSwapPending,
+    convertionLimit,
+    convertionLimitLoading,
+    userSettings,
+    userSettingsLoading,
+    refresh,
+  } = useWalletData(isReady);
 
   const token = balance?.tokenUSDB;
 
   const needsAttention = rejectedDeposits.length;
   const { 
   data: conversionFeeUSD,
-  isLoading: isEstimating, 
-  error 
+  isLoading: isEstimating 
 } = useSwapFee({ 
   isStableBalance, 
-  balanceSats: balance?.totalSats || 0, 
-  tokenBalance: token?.balance || BigInt(0), 
+  balance: balance,
   fiatRate: fiatRate || 0, 
   enabled: showSwapModal && fiatRate !== undefined && fiatRate !== 0,
 });
