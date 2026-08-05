@@ -258,7 +258,7 @@ export default function SendPage() {
                   {t("send.available")}
                 </p>
                 <p className="text-3xl font-bold text-orange-500">
-                  {isStableBalance ? formatTokenBalance({amount: balance.toString()}): <>balance.toLocaleString() {t("send.sats")}</>}
+                  {isStableBalance ? formatTokenBalance({amount: balance.toString()}): <>{balance.toLocaleString()} {t("send.sats")}</>}
                 </p>
               </div>
             </CardContent>

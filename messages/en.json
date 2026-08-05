@@ -2,6 +2,7 @@
   "common": {
     "back": "Back",
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "continue": "Continue",
     "save": "Save",
     "copy": "Copy",
@@ -219,6 +220,13 @@
       "verifyWithPasskey": "Verify",
       "passkeyFailed": "Couldn't verify with passkey. Try again.",
       "passkeyMismatch": "That passkey belongs to a different wallet. Use the passkey you created this wallet with."
+    },
+    "swap": {
+      "title": "Convert to {{token}}",
+      "description": "Your balance will be converted to {{token}}",
+      "conversionFee": "Conversion fee:",
+      "calculatingFee": "Calculating...",
+      "insufficientBalance": "Balance too low to convert — it will remain as change"
     }
   },
   "send": {

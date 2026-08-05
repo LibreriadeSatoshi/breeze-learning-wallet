@@ -409,17 +409,17 @@ export default function WalletHomePage() {
         <Modal
           open={showSwapModal}
           onClose={() => setShowSwapModal(false)}
-          title={`Convert to ${isStableBalance ? "sats" : "USD"}`}
-          description={`Your balance will be converted ${isStableBalance ? "back to sats" : "to USD"}.`}
+          title={t("home.swap.title", { token: isStableBalance ? "sats" : "USD"})}
+          description={t("home.swap.description", { token: isStableBalance ? "sats" : "USD"})}
         >
           <div className="py-4 text-center">
             {canConvert() ? (
               <div className="space-y-1">
                 <p className="text-sm text-gray-400">
-                  Conversion fee:{" "}
+                  {t("home.swap.conversionFee")}{" "}
                   <span className="text-white font-medium">
                     {isEstimating ? (
-                      <span className="animate-pulse">Calculating...</span>
+                      <span className="animate-pulse">{t("home.swap.calculatingFee")}</span>
                     ) : (
                       conversionFeeUSD
                     )}
@@ -428,7 +428,7 @@ export default function WalletHomePage() {
               </div>
             ) : (
               <p className="text-sm text-amber-500 dark:text-amber-400">
-                Balance too low to convert — it will remain as change
+                {t("home.swap.insufficientBalance")}
               </p>
             )}
           </div>
@@ -439,14 +439,14 @@ export default function WalletHomePage() {
               onClick={() => setShowSwapModal(false)}
               disabled={isEstimating}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               className="flex-1 py-2.5 px-4 font-medium rounded-xl transition-colors"
               onClick={handleSwap}
               disabled={isEstimating}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </Modal>

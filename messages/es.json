@@ -2,6 +2,7 @@
   "common": {
     "back": "Atrás",
     "cancel": "Cancelar",
+    "confirm": "Confirmar",
     "continue": "Continuar",
     "save": "Guardar",
     "copy": "Copiar",
@@ -219,6 +220,13 @@
       "verifyWithPasskey": "Verificar",
       "passkeyFailed": "No se pudo verificar con la passkey. Intenta de nuevo.",
       "passkeyMismatch": "Esa passkey pertenece a otra billetera. Usa la passkey con la que creaste esta billetera."
+    },
+    "swap": {
+      "title": "Convertir a {{token}}",
+      "description": "Tu balance sera convertido a {{token}}",
+      "conversionFee": "Conversion fee:",
+      "calculatingFee": "Calculando...",
+      "insufficientBalance": "Saldo insuficiente para convertirlo — se mantendra como cambio"
     }
   },
   "send": {
