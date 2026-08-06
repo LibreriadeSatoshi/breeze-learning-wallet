@@ -121,7 +121,7 @@ function PaymentDetailContent({
             payment.purpose === "autoConversion" && payment.conversionDetails?.from.ticker === "USDB" ? (
               <>
                 <SensitiveAmount>
-                  {formatTokenBalance({amount: feeFrom.toLocaleString(), fraction: 6}).replace("$", "")}
+                  {formatTokenBalance({amount: feeFrom.toString(), fraction: 6}).replace("$", "")}
                 </SensitiveAmount>
                 {" "}
                 

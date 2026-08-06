@@ -24,7 +24,7 @@ import type {
   PrepareLnurlPayResult,
 } from "@/lib/lightning/breez-service";
 import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
-import { formatTokenBalance } from "@/components/wallet/balance-display";
+import { estimateSats, formatTokenBalance } from "@/components/wallet/balance-display";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -52,7 +52,7 @@ export default function SendPage() {
   const [error, setError] = useState("");
 
   const { data: balances } = useBalance(true);
-  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
   const {data: userSettings} = useUserSettings();
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
@@ -143,10 +143,11 @@ export default function SendPage() {
           destinationKind: destinationKindForParsed(parsed),
         };
       }
-
       const sendAmountSat = readAmountSat(prep);
-      if (sendAmountSat !== null && sendAmountSat > balance) {
-        setError(t("send.insufficientBalance", { balance: balance.toLocaleString() }));
+      const balanceSats = isStableBalance ? estimateSats(tokenUSDB?.balance || 0, usdRate || 0, tokenUSDB?.tokenMetadata?.decimals) : estimateSats(balances?.tokenUSDB?.balance || 0, usdRate || 0, tokenUSDB?.tokenMetadata?.decimals) + (balances?.totalSats || 0);
+
+      if (sendAmountSat !== null && sendAmountSat > balanceSats) {
+        setError(t("send.insufficientBalance", { balance: balanceSats.toLocaleString() }));
         return;
       }
       setPrepareResult(prep);
