@@ -71,9 +71,9 @@ function PaymentDetailContent({
   const isReceived = payment.paymentType === "received";
   const isToken = payment.method === "token";
   const date = new Date(payment.paymentTime * 1000);
-  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
 
-  const amountSats = estimateSats(payment.amount, fiatRate || 0); 
+  const amountSats = estimateSats(payment.amount, usdRate || 0); 
   const { feeFiat, amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
 
   const feeFrom = payment.conversionDetails?.from?.fee || 0;
@@ -132,7 +132,7 @@ function PaymentDetailContent({
                 {" · ≈ "}
                 
                 <SensitiveAmount>
-                  {`${estimateSats(feeFrom || 0, fiatRate || 0).toLocaleString()} ${t("send.sats")}`}
+                  {`${estimateSats(feeFrom || 0, usdRate || 0).toLocaleString()} ${t("send.sats")}`}
                 </SensitiveAmount>
               </>
             ) : (displayFeeFiat(feeFiat, payment.fees, t))

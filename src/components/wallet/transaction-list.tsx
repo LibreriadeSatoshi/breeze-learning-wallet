@@ -73,7 +73,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
   const date = new Date(payment.paymentTime * 1000);
   const isReceived = payment.paymentType === "received";
   const isToken = payment.method === "token";
-  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const { rate: fiatRate, estableRate: usdRate, currency: fiatCurrency } = useFiat(true);
   const fiat =
     fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
 
@@ -141,7 +141,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           <div className="text-xs text-gray-500">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>
           {fiat && (
               <SensitiveAmount className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                ≈ {isToken ? estimateSats(sats, fiatRate || 0) : fiat}
+                ≈ {isToken ? estimateSats(sats, usdRate || 0) : fiat}
               </SensitiveAmount>
           )}
         </div>

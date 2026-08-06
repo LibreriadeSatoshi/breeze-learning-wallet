@@ -46,10 +46,10 @@ export function formatTokenBalance({amount, decimals = 6, fraction = 2}: {amount
   }).format(numericBalance);
 }
 
-export function estimateSats(amount: number, rate: number, decimals = 6) {
+export function estimateSats(amount: number, usdRate: number, decimals = 6) {
   const tokenBalanceNum = Number(amount || 0) / Math.pow(10, decimals);
   
-  return Math.round((tokenBalanceNum * 100_000_000) / rate);
+  return Math.round((tokenBalanceNum * 100_000_000) / usdRate);
 }
 
 export function BalanceDisplay({ 
