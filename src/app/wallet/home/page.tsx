@@ -82,6 +82,7 @@ export default function WalletHomePage() {
   } = useWalletData(isReady);
 
   const token = balance?.tokenUSDB;
+  const ticker = token?.tokenMetadata.ticker ?? "USDB"
 
   const needsAttention = rejectedDeposits.length;
   const { 
@@ -289,7 +290,7 @@ export default function WalletHomePage() {
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
               >
                 <ArrowDownUp className="w-4 h-4" />
-                <span>{isStableBalance ? "USD" : "BTC"}</span>
+                <span>{isStableBalance ? ticker : "BTC"}</span>
               </button>
               <button
                 type="button"
@@ -409,8 +410,8 @@ export default function WalletHomePage() {
         <Modal
           open={showSwapModal}
           onClose={() => setShowSwapModal(false)}
-          title={t("home.swap.title", { token: isStableBalance ? "sats" : "USD"})}
-          description={t("home.swap.description", { token: isStableBalance ? "sats" : "USD"})}
+          title={t("home.swap.title", { token: isStableBalance ? "sats" : ticker})}
+          description={t("home.swap.description", { token: isStableBalance ? "sats" : ticker})}
         >
           <div className="py-4 text-center">
             {canConvert() ? (
