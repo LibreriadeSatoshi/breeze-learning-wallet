@@ -40,22 +40,19 @@ function getFiatData(payment: Payment, fiatRate: number | undefined, fiatCurrenc
   return { amountFiat, feeFiat };
 }
 
-function displayFeeFiat(feeFiat: string | null, feeSats: number, t: ReturnType<typeof useT>) {
-  return feeFiat ? (
-  <>
+function displayFeeFiat(feeFiat: string | null, payment: Payment, usdRate: number, t: ReturnType<typeof useT>) {
+  const feeTo = payment.conversionDetails?.to.fee || 0;
+  return <>
     <SensitiveAmount>
-      {feeSats.toLocaleString()}
+      {feeFiat ? payment.fees.toLocaleString() : estimateSats(feeTo, usdRate || 0)}
     </SensitiveAmount>
     {" "}
     {t("send.sats")}
     {" · ≈ "}
     <SensitiveAmount>
-      {feeFiat}
+      {feeFiat ?? `${formatTokenBalance({amount: feeTo.toString(), fraction: 6})}`}
     </SensitiveAmount>
   </>
-    ) : (
-    `${feeSats.toLocaleString()} ${t("send.sats")}`
-  )
 }
 
 function PaymentDetailContent({
@@ -135,7 +132,7 @@ function PaymentDetailContent({
                   {`${estimateSats(feeFrom || 0, usdRate || 0).toLocaleString()} ${t("send.sats")}`}
                 </SensitiveAmount>
               </>
-            ) : (displayFeeFiat(feeFiat, payment.fees, t))
+            ) : (displayFeeFiat(feeFiat, payment, usdRate || 0, t))
           }
         />
         <DetailRow

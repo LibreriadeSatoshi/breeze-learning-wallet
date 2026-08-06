@@ -72,7 +72,7 @@ export default function WalletHomePage() {
     rejectedDeposits,
     fiatRate,
     selectedCurrency,
-    estableRate,
+    estableRate: usdRate,
     toggleStableAsync,
     isSwapPending,
     convertionLimit,
@@ -91,9 +91,8 @@ export default function WalletHomePage() {
   data: conversionFeeUSD,
   isLoading: isEstimating 
 } = useSwapFee({ 
-  isStableBalance, 
   balance: balances as Balances,
-  fiatRate: fiatRate || 0, 
+  fiatRate: fiatRate ?? usdRate ?? 0, 
   enabled: showSwapModal && fiatRate !== undefined && fiatRate !== 0,
 });
 
@@ -326,7 +325,7 @@ export default function WalletHomePage() {
             fiatCurrency={selectedCurrency}
             token={token ?? 0}
             isStableBalance={isStableBalance}
-            usdRate={estableRate}
+            usdRate={usdRate}
           />
         </div>
       </div>

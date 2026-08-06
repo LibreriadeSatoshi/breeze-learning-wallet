@@ -35,7 +35,7 @@ interface BalanceDisplayProps {
 }
 
 export function formatTokenBalance({amount, decimals = 6, fraction = 2}: {amount: string, decimals?: number, fraction?: number}) {
-  if (!amount) return "$0.00";
+  if (!amount || amount === "0") return "$0.00";
   const numericBalance = Number(amount) / Math.pow(10, decimals);
   
   return new Intl.NumberFormat("en-US", {

@@ -36,7 +36,6 @@ import type {
 import type { Payment } from "@/lib/lightning/types";
 
 interface UseSwapFeeParams { 
-  isStableBalance: boolean; 
   balance: Balances;
   fiatRate: number; 
   enabled?: boolean; 
@@ -96,7 +95,6 @@ export function useConvertionLimit() {
 }
 
 export function useSwapFee({ 
-  isStableBalance, 
   balance,
   fiatRate, 
   enabled = true, 
@@ -104,11 +102,10 @@ export function useSwapFee({
   return useQuery({
     queryKey: [
       ...breezKeys.estimatedSwapFee(), 
-      isStableBalance, 
       balance,
       fiatRate
     ],
-    queryFn: () => estimateSwapFee({ isStableBalance, balance, fiatRate }),
+    queryFn: () => estimateSwapFee({ balance, fiatRate }),
     enabled,
     refetchInterval: 60000,
     staleTime: 10000
