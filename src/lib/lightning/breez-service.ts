@@ -15,9 +15,9 @@ import type {
   Payment as SdkPayment,
   BuyBitcoinRequest,
   BuyBitcoinResponse,
-  TokenBalance,
   UserSettings,
   Conversion,
+  TokenMetadata,
 } from "@breeztech/breez-sdk-spark";
 import type { Payment } from "./types";
 
@@ -159,16 +159,19 @@ export async function getNodeState(): Promise<{ id?: string } | null> {
   }
 }
 
-export async function getBalance(): Promise<{ totalSats: number, tokenUSDB?: TokenBalance}> {
+export type Balances = {
+  totalSats: number, tokenUSDB?: {balance: number, tokenMetadata: TokenMetadata}
+}
+export async function getBalance(): Promise<Balances> {
   if (!sdk) return { totalSats: 0 };
   
   try {
     const info = await sdk.getInfo({});
     const USDB_TOKEN = info.tokenBalances.get(USDB_TOKEN_IDENTIFIER);
-    
+
     return { 
       totalSats: info.balanceSats || 0, 
-      tokenUSDB: USDB_TOKEN
+      tokenUSDB: USDB_TOKEN ? {balance: Number(USDB_TOKEN.balance), tokenMetadata: USDB_TOKEN.tokenMetadata} : undefined
     };
   } catch (error) {
     console.error("Failed to get balance:", error);
@@ -224,7 +227,7 @@ export async function fetchConvertionLimit() {
 
 export const estimateSwapFee = async (params: {
   isStableBalance: boolean;
-  balance: {totalSats: number, tokenUSDB: TokenBalance | undefined};
+  balance: Balances;
   fiatRate: number;
 }): Promise<string> => {
   if (!sdk) throw new Error("Wallet not ready.");
@@ -232,7 +235,7 @@ export const estimateSwapFee = async (params: {
   const { isStableBalance, balance, fiatRate } = params;
   
   const balanceSats = balance.totalSats;
-  const tokenBalance = balance.tokenUSDB?.balance || 0;
+  const tokenBalance = balance?.tokenUSDB?.balance || 0;
 
   let amount: bigint;
 

@@ -177,7 +177,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
 }));
 
 export const useWalletData = (isReady: boolean) => {
-  const { data: balance, isLoading: balanceLoading } = useBalance(isReady);
+  const { data: balances, isLoading: balanceLoading } = useBalance(isReady);
   const { data: payments = [], isLoading: paymentsLoading } =
     usePayments(isReady);
   const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
@@ -196,7 +196,7 @@ export const useWalletData = (isReady: boolean) => {
     useUserSettings();
 
   return {
-    balance,
+    balances,
     balanceLoading,
     payments,
     paymentsLoading,
@@ -211,5 +211,6 @@ export const useWalletData = (isReady: boolean) => {
     userSettings,
     userSettingsLoading,
     refresh,
+    unclaimedDeposits,
   };
 };

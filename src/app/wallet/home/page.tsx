@@ -25,6 +25,7 @@ import { BuyBitcoinModal } from "@/components/wallet/buy-bitcoin-modal";
 import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import {
+  Balances,
   onSdkEvent,
 } from "@/lib/lightning/breez-service";
 import { signInWithPasskey, seedToMnemonic } from "@/lib/auth/passkey";
@@ -64,7 +65,7 @@ export default function WalletHomePage() {
   const {isUnlocked, lock, bootstrap, isBootstrapped, verifyPasswordAndReveal, authMode, getMnemonic} = useWalletStore()
 
   const {
-    balance,
+    balances,
     balanceLoading,
     payments,
     paymentsLoading,
@@ -78,11 +79,12 @@ export default function WalletHomePage() {
     convertionLimitLoading,
     userSettings,
     userSettingsLoading,
+    unclaimedDeposits,
     refresh,
   } = useWalletData(isReady);
 
-  const token = balance?.tokenUSDB;
-  const ticker = token?.tokenMetadata.ticker ?? "USDB"
+  const token = balances?.tokenUSDB;
+  const ticker = token?.tokenMetadata?.ticker ?? "USDB"
 
   const needsAttention = rejectedDeposits.length;
   const { 
@@ -90,7 +92,7 @@ export default function WalletHomePage() {
   isLoading: isEstimating 
 } = useSwapFee({ 
   isStableBalance, 
-  balance: balance,
+  balance: balances as Balances,
   fiatRate: fiatRate || 0, 
   enabled: showSwapModal && fiatRate !== undefined && fiatRate !== 0,
 });
@@ -221,7 +223,7 @@ export default function WalletHomePage() {
 
     if (!hasTokenBalance) {
       const min = BigInt(fromBitcoin?.minFromAmount ?? 0);
-      const current = BigInt(balance?.totalSats ?? 0);
+      const current = BigInt(balances?.totalSats ?? 0);
       return current >= min;
     } else {
       const min = BigInt(toBitcoin?.minFromAmount ?? 0);
@@ -319,7 +321,7 @@ export default function WalletHomePage() {
             </div>
           </div>
           <BalanceDisplay
-            balanceSat={balance?.totalSats || 0}
+            balanceSat={balances?.totalSats || 0}
             fiatRate={fiatRate}
             fiatCurrency={selectedCurrency}
             token={token ?? 0}

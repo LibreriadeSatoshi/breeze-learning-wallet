@@ -63,7 +63,7 @@ export default function SendPage() {
   const isStableBalance = userSettings?.stableBalanceActiveLabel === "USDB";
 
   const tokenUSDB = balances?.tokenUSDB;
-  const balance = isStableBalance ? tokenUSDB?.balance || 0 : balances?.totalSats ?? 0;
+  const balance = isStableBalance && tokenUSDB?.balance || balances?.totalSats || 0;
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");

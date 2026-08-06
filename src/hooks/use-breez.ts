@@ -26,7 +26,8 @@ import {
   enableStableBalance,
   fetchConvertionLimit,
   estimateSwapFee,
-  getUserSettings
+  getUserSettings,
+  Balances
 } from "@/lib/lightning/breez-service";
 import type {
   LnurlPayRequestDetails,
@@ -36,7 +37,7 @@ import type { Payment } from "@/lib/lightning/types";
 
 interface UseSwapFeeParams { 
   isStableBalance: boolean; 
-  balance: any,
+  balance: Balances;
   fiatRate: number; 
   enabled?: boolean; 
 }
