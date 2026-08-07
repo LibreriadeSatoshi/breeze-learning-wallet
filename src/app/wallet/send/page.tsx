@@ -63,7 +63,7 @@ export default function SendPage() {
   const isStableBalance = userSettings?.stableBalanceActiveLabel === "USDB";
 
   const tokenUSDB = balances?.tokenUSDB;
-  const balance = isStableBalance && tokenUSDB?.balance || balances?.totalSats || 0;
+  const totalBalanceSats = (estimateSats(tokenUSDB?.balance || 0, usdRate || 0 , tokenUSDB?.tokenMetadata?.decimals) || 0) + (balances?.totalSats || 0);
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");
@@ -144,10 +144,9 @@ export default function SendPage() {
         };
       }
       const sendAmountSat = readAmountSat(prep);
-      const balanceSats = isStableBalance ? estimateSats(tokenUSDB?.balance || 0, usdRate || 0, tokenUSDB?.tokenMetadata?.decimals) : estimateSats(balances?.tokenUSDB?.balance || 0, usdRate || 0, tokenUSDB?.tokenMetadata?.decimals) + (balances?.totalSats || 0);
 
-      if (sendAmountSat !== null && sendAmountSat > balanceSats) {
-        setError(t("send.insufficientBalance", { balance: balanceSats.toLocaleString() }));
+      if (sendAmountSat !== null && sendAmountSat > totalBalanceSats) {
+        setError(t("send.insufficientBalance", { balance: totalBalanceSats.toLocaleString() }));
         return;
       }
       setPrepareResult(prep);
@@ -259,7 +258,7 @@ export default function SendPage() {
                   {t("send.available")}
                 </p>
                 <p className="text-3xl font-bold text-orange-500">
-                  {isStableBalance ? formatTokenBalance({amount: balance.toString()}): <>{balance.toLocaleString()} {t("send.sats")}</>}
+                  {isStableBalance ? formatTokenBalance({amount: totalBalanceSats.toString()}): <>{totalBalanceSats.toLocaleString()} {t("send.sats")}</>}
                 </p>
               </div>
             </CardContent>

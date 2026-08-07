@@ -252,13 +252,13 @@ export const estimateSwapFee = async (): Promise<string> => {
     if (balanceSats < Number(MIN_AMOUNT_FOR_SWAP)) return "$0.00";
     
     const btcValue = balanceSats / 100_000_000;
-    const fiatValue = btcValue * fiatRate;
+    const fiatValue = btcValue * usdRate;
     amount = BigInt(Math.round(fiatValue * 1_000_000));
   } else {
     if (tokenBalance < MIN_AMOUNT_FOR_SWAP) return "$0.00";
 
     const fiatValue = Number(tokenBalance) / 1_000_000;
-    const satsValue = (fiatValue / fiatRate) * 100_000_000;
+    const satsValue = (fiatValue / usdRate) * 100_000_000;
     amount = BigInt(Math.round(satsValue));
   }
 
