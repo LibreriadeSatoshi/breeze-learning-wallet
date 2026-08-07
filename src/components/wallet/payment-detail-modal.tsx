@@ -59,8 +59,21 @@ function PaymentDetailContent({
   const { amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
 
   const feeSats = payment.fees + estimateSats(payment.conversionDetails?.from?.fee || 0, usdRate || 0) + estimateSats(payment.conversionDetails?.to?.fee || 0, usdRate || 0);
-  const feeUSD = payment.conversionDetails ? (payment.conversionDetails?.from.ticker !== "BTC" && formatTokenToUSD({amount: payment.conversionDetails?.from.fee.toString(), fraction: 6})) || (payment.conversionDetails?.to.ticker !== "BTC" && formatTokenToUSD({amount: payment.conversionDetails?.to.fee.toString(), fraction: 6})) : convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6});
 
+  let feeUSD;
+
+  if (payment.conversionDetails) {
+    if (payment.conversionDetails.from?.ticker !== "BTC") {
+      feeUSD = formatTokenToUSD({ amount: payment.conversionDetails.from.fee.toString(), fraction: 6 });
+    } else if (payment.conversionDetails.to?.ticker !== "BTC") {
+      feeUSD = formatTokenToUSD({ amount: payment.conversionDetails.to.fee.toString(), fraction: 6 });
+    } else {
+      feeUSD = undefined; 
+    }
+  } else {
+    feeUSD = convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6 });
+  }
+  
   return (
     <div className="space-y-5">
       <div className="text-center">
