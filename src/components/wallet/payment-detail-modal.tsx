@@ -34,25 +34,10 @@ function getFiatData(payment: Payment, fiatRate: number | undefined, fiatCurrenc
   const sats = payment.amount;
   const feeSats = payment.fees;
 
-  const amountFiat = fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
-  const feeFiat = fiatRate !== undefined && feeSats > 0 ? formatFiat(feeSats, fiatRate, fiatCurrency) : null;
+  const amountFiat = fiatRate !== undefined ? formatFiat({ sats: sats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
+  const feeFiat = fiatRate !== undefined && feeSats > 0 ? formatFiat({ sats: feeSats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
 
   return { amountFiat, feeFiat };
-}
-
-function displayFeeFiat(feeFiat: string | null, payment: Payment, usdRate: number, t: ReturnType<typeof useT>) {
-  const feeTo = payment.conversionDetails?.to.fee || 0;
-  return <>
-    <SensitiveAmount>
-      {feeFiat ? payment.fees.toLocaleString() : estimateSats(feeTo, usdRate || 0)}
-    </SensitiveAmount>
-    {" "}
-    {t("send.sats")}
-    {" · ≈ "}
-    <SensitiveAmount>
-      {feeFiat ?? `${formatTokenBalance({amount: feeTo.toString(), fraction: 6})}`}
-    </SensitiveAmount>
-  </>
 }
 
 function PaymentDetailContent({
@@ -71,9 +56,10 @@ function PaymentDetailContent({
   const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
 
   const amountSats = estimateSats(payment.amount, usdRate || 0); 
-  const { feeFiat, amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
+  const { amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
 
-  const feeFrom = payment.conversionDetails?.from?.fee || 0;
+  const feeSats = payment.fees + estimateSats(payment.conversionDetails?.from?.fee || 0, usdRate || 0) + estimateSats(payment.conversionDetails?.to?.fee || 0, usdRate || 0);
+  const feeUSD = payment.conversionDetails ? (payment.conversionDetails?.from.ticker !== "BTC" && formatTokenBalance({amount: payment.conversionDetails?.from.fee.toString(), fraction: 6})) || (payment.conversionDetails?.to.ticker !== "BTC" && formatTokenBalance({amount: payment.conversionDetails?.to.fee.toString(), fraction: 6})) : formatFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6});
 
   return (
     <div className="space-y-5">
@@ -115,24 +101,16 @@ function PaymentDetailContent({
         <DetailRow
           label={t("paymentDetail.fee")}
           value={
-            payment.purpose === "autoConversion" && payment.conversionDetails?.from.ticker === "USDB" ? (
               <>
                 <SensitiveAmount>
-                  {formatTokenBalance({amount: feeFrom.toString(), fraction: 6}).replace("$", "")}
+                  {`${feeSats}  ${t("send.sats")}`}
                 </SensitiveAmount>
                 {" "}
-                
-                {payment.purpose === "autoConversion" && payment.conversionDetails
-                  ? payment.conversionDetails.from.ticker
-                  : "sats"}
-                
                 {" · ≈ "}
-                
                 <SensitiveAmount>
-                  {`${estimateSats(feeFrom || 0, usdRate || 0).toLocaleString()} ${t("send.sats")}`}
+                  {`${feeUSD ?? formatFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6})}`}
                 </SensitiveAmount>
               </>
-            ) : (displayFeeFiat(feeFiat, payment, usdRate || 0, t))
           }
         />
         <DetailRow

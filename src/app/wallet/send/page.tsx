@@ -372,7 +372,7 @@ export default function SendPage() {
                 <p className="text-lg text-gray-600 dark:text-gray-400">{t("send.sats")}</p>
                 {fiatRate !== undefined && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    ≈ {formatFiat(amountSat, fiatRate, fiatCurrency)}
+                    ≈ {formatFiat({sats: amountSat, ratePerBtc: fiatRate, currency: fiatCurrency})}
                   </p>
                 )}
               </div>

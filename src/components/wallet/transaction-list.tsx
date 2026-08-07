@@ -75,7 +75,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
   const isToken = payment.method === "token";
   const { rate: fiatRate, estableRate: usdRate, currency: fiatCurrency } = useFiat(true);
   const fiat =
-    fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
+    fiatRate !== undefined ? formatFiat({ sats: sats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
 
   const statusLabels: Record<typeof payment.status, string> = {
     pending: t("transactions.statusPending"),
