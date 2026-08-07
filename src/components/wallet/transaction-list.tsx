@@ -4,9 +4,9 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Payment } from "@/lib/lightning/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat } from "@/lib/wallet/format-fiat";
+import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
-import { estimateSats, formatTokenBalance, SensitiveAmount } from "./balance-display";
+import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
 
 const statusColors = {
   pending: "text-yellow-600 dark:text-yellow-400",
@@ -75,7 +75,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
   const isToken = payment.method === "token";
   const { rate: fiatRate, estableRate: usdRate, currency: fiatCurrency } = useFiat(true);
   const fiat =
-    fiatRate !== undefined ? formatFiat({ sats: sats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
+    fiatRate !== undefined ? convertSatsToFiat({ sats: sats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
 
   const statusLabels: Record<typeof payment.status, string> = {
     pending: t("transactions.statusPending"),
@@ -135,13 +135,13 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           >
           {isReceived ? "+" : "-"}
           <SensitiveAmount>
-              {isToken ? formatTokenBalance({amount: sats.toString()}) : sats.toLocaleString()}
+              {isToken ? formatTokenToUSD({amount: sats.toString()}) : sats.toLocaleString()}
           </SensitiveAmount>
           </div>
           <div className="text-xs text-gray-500">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>
           {fiat && (
               <SensitiveAmount className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                ≈ {isToken ? estimateSats(sats, usdRate || 0) : fiat}
+                ≈ {isToken ? <>{estimateSats(sats, usdRate || 0)} {t("send.sats")}</> : fiat}
               </SensitiveAmount>
           )}
         </div>

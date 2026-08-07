@@ -1,6 +1,6 @@
 'use client';
 
-import { formatFiat } from '@/lib/wallet/format-fiat';
+import { convertSatsToFiat } from '@/lib/wallet/format-fiat';
 import { useWalletStore } from '@/store/wallet-store';
 import { Eye, EyeOff } from 'lucide-react';
 import React from 'react';
@@ -34,7 +34,7 @@ interface BalanceDisplayProps {
   readonly isStableBalance: boolean;
 }
 
-export function formatTokenBalance({amount, decimals = 6, fraction = 2}: {amount: string, decimals?: number, fraction?: number}) {
+export function formatTokenToUSD({amount, decimals = 6, fraction = 2}: {amount: string, decimals?: number, fraction?: number}) {
   if (!amount || amount === "0") return "$0.00";
   const numericBalance = Number(amount) / Math.pow(10, decimals);
   
@@ -103,7 +103,7 @@ function getPrimaryAmount(balanceSat: number, token: any, isStableBalance: boole
   let primaryAmount = "";
 
   if (isStableBalance) {
-    primaryAmount = formatTokenBalance({ amount: token?.balance }).replace("$", "");
+    primaryAmount = formatTokenToUSD({ amount: token?.balance }).replace("$", "");
   } else {
     primaryAmount = balanceSat.toLocaleString();
   }
@@ -126,6 +126,6 @@ function getSecondaryText(balanceSat: number, isStableBalance: boolean, fiatRate
       const equivalentSats = isToken ? estimateSats(token?.balance, usdRate, token?.tokenMetadata?.decimals) : balanceSat;
       return isToken ?  `≈ ${equivalentSats.toLocaleString()} sats` : `≈ ${equivalentSats.toLocaleString()} change`;
     } else {
-      return `≈ ${formatFiat({ sats: balanceSat, ratePerBtc: fiatRate, currency: fiatCurrency })}`;
+      return `≈ ${convertSatsToFiat({ sats: balanceSat, ratePerBtc: fiatRate, currency: fiatCurrency })}`;
     }
 }

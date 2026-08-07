@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buyBitcoin, onSdkEvent } from "@/lib/lightning/breez-service";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat } from "@/lib/wallet/format-fiat";
+import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 
 type Provider = "moonpay" | "cashApp";
@@ -51,7 +51,7 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
 
   const amountFiat =
     fiatRate !== undefined && amountSats !== null && validAmount
-      ? formatFiat(amountSats, fiatRate, fiatCurrency)
+      ? convertSatsToFiat({sats: amountSats, ratePerBtc: fiatRate, currency: fiatCurrency})
       : null;
 
   const handleMoonPay = useCallback(async () => {

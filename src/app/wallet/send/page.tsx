@@ -17,14 +17,14 @@ import {
   useUserSettings,
 } from "@/hooks/use-breez";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat, SATS_PER_BTC } from "@/lib/wallet/format-fiat";
+import { convertSatsToFiat, SATS_PER_BTC } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 import type {
   PrepareSendResult,
   PrepareLnurlPayResult,
 } from "@/lib/lightning/breez-service";
 import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
-import { estimateSats, formatTokenBalance } from "@/components/wallet/balance-display";
+import { estimateSats } from "@/components/wallet/balance-display";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -258,7 +258,9 @@ export default function SendPage() {
                   {t("send.available")}
                 </p>
                 <p className="text-3xl font-bold text-orange-500">
-                  {isStableBalance ? formatTokenBalance({amount: totalBalanceSats.toString()}): <>{totalBalanceSats.toLocaleString()} {t("send.sats")}</>}
+                  {isStableBalance
+                  ? convertSatsToFiat({ sats: totalBalanceSats, ratePerBtc: usdRate || 0 })
+                  : <>{totalBalanceSats.toLocaleString()} {t("send.sats")}</>}
                 </p>
               </div>
             </CardContent>
@@ -372,7 +374,7 @@ export default function SendPage() {
                 <p className="text-lg text-gray-600 dark:text-gray-400">{t("send.sats")}</p>
                 {fiatRate !== undefined && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    ≈ {formatFiat({sats: amountSat, ratePerBtc: fiatRate, currency: fiatCurrency})}
+                    ≈ {convertSatsToFiat({sats: amountSat, ratePerBtc: fiatRate, currency: fiatCurrency})}
                   </p>
                 )}
               </div>

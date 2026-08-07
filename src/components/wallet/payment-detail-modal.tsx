@@ -6,9 +6,9 @@ import type { Payment } from "@/lib/lightning/types";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat } from "@/lib/wallet/format-fiat";
+import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
-import { estimateSats, formatTokenBalance, SensitiveAmount } from "./balance-display";
+import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
 
 const statusStyles = {
   pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
@@ -34,8 +34,8 @@ function getFiatData(payment: Payment, fiatRate: number | undefined, fiatCurrenc
   const sats = payment.amount;
   const feeSats = payment.fees;
 
-  const amountFiat = fiatRate !== undefined ? formatFiat({ sats: sats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
-  const feeFiat = fiatRate !== undefined && feeSats > 0 ? formatFiat({ sats: feeSats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
+  const amountFiat = fiatRate !== undefined ? convertSatsToFiat({ sats: sats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
+  const feeFiat = fiatRate !== undefined && feeSats > 0 ? convertSatsToFiat({ sats: feeSats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
 
   return { amountFiat, feeFiat };
 }
@@ -48,18 +48,18 @@ function PaymentDetailContent({
   readonly onClose: () => void;
 }) {
   const t = useT();
-  const sats = payment.amount;
-
   const isReceived = payment.paymentType === "received";
   const isToken = payment.method === "token";
   const date = new Date(payment.paymentTime * 1000);
+
   const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
 
+  const amount = payment.amount
   const amountSats = estimateSats(payment.amount, usdRate || 0); 
   const { amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
 
   const feeSats = payment.fees + estimateSats(payment.conversionDetails?.from?.fee || 0, usdRate || 0) + estimateSats(payment.conversionDetails?.to?.fee || 0, usdRate || 0);
-  const feeUSD = payment.conversionDetails ? (payment.conversionDetails?.from.ticker !== "BTC" && formatTokenBalance({amount: payment.conversionDetails?.from.fee.toString(), fraction: 6})) || (payment.conversionDetails?.to.ticker !== "BTC" && formatTokenBalance({amount: payment.conversionDetails?.to.fee.toString(), fraction: 6})) : formatFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6});
+  const feeUSD = payment.conversionDetails ? (payment.conversionDetails?.from.ticker !== "BTC" && formatTokenToUSD({amount: payment.conversionDetails?.from.fee.toString(), fraction: 6})) || (payment.conversionDetails?.to.ticker !== "BTC" && formatTokenToUSD({amount: payment.conversionDetails?.to.fee.toString(), fraction: 6})) : convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6});
 
   return (
     <div className="space-y-5">
@@ -81,7 +81,7 @@ function PaymentDetailContent({
           }`}
         >
           {isReceived ? "+" : "-"}
-          <SensitiveAmount>{isToken ? `${formatTokenBalance({amount: sats.toString()}).replace("$", "")}` : sats.toLocaleString()}</SensitiveAmount>
+          <SensitiveAmount>{isToken ? `${formatTokenToUSD({amount: amount.toString()}).replace("$", "")}` : amount.toLocaleString()}</SensitiveAmount>
         </div>
         <div className="text-sm text-gray-500 dark:text-gray-400">{isToken ? payment.conversionDetails?.to.ticker : t("send.sats")}</div>
         {amountFiat && (
@@ -108,7 +108,7 @@ function PaymentDetailContent({
                 {" "}
                 {" · ≈ "}
                 <SensitiveAmount>
-                  {`${feeUSD ?? formatFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6})}`}
+                  {`${feeUSD ?? convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6})}`}
                 </SensitiveAmount>
               </>
           }
