@@ -25,7 +25,6 @@ import { BuyBitcoinModal } from "@/components/wallet/buy-bitcoin-modal";
 import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import {
-  Balances,
   onSdkEvent,
 } from "@/lib/lightning/breez-service";
 import { signInWithPasskey, seedToMnemonic } from "@/lib/auth/passkey";
@@ -91,9 +90,7 @@ export default function WalletHomePage() {
   data: conversionFeeUSD,
   isLoading: isEstimating 
 } = useSwapFee({ 
-  balance: balances as Balances,
-  fiatRate: fiatRate ?? usdRate ?? 0, 
-  enabled: showSwapModal && fiatRate !== undefined && fiatRate !== 0,
+  enabled: showSwapModal && usdRate !== undefined && usdRate !== 0,
 });
 
   useEffect(() => {

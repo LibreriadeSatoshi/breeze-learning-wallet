@@ -27,7 +27,6 @@ import {
   fetchConvertionLimit,
   estimateSwapFee,
   getUserSettings,
-  Balances
 } from "@/lib/lightning/breez-service";
 import type {
   LnurlPayRequestDetails,
@@ -36,8 +35,6 @@ import type {
 import type { Payment } from "@/lib/lightning/types";
 
 interface UseSwapFeeParams { 
-  balance: Balances;
-  fiatRate: number; 
   enabled?: boolean; 
 }
 
@@ -95,17 +92,13 @@ export function useConvertionLimit() {
 }
 
 export function useSwapFee({ 
-  balance,
-  fiatRate, 
   enabled = true, 
 }: UseSwapFeeParams) {
   return useQuery({
     queryKey: [
-      ...breezKeys.estimatedSwapFee(), 
-      balance,
-      fiatRate
+      ...breezKeys.estimatedSwapFee(),
     ],
-    queryFn: () => estimateSwapFee({ balance, fiatRate }),
+    queryFn: () => estimateSwapFee(),
     enabled,
     refetchInterval: 60000,
     staleTime: 10000

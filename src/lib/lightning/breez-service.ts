@@ -225,16 +225,16 @@ export async function fetchConvertionLimit() {
   }
 }
 
-export const estimateSwapFee = async (params: {
-  balance: Balances;
-  fiatRate: number;
-}): Promise<string> => {
+export const estimateSwapFee = async (): Promise<string> => {
   if (!sdk) throw new Error("Wallet not ready.");
-  const { balance, fiatRate } = params;
   
   const userSettings = await getUserSettings();
-  const isStableBalance = userSettings.stableBalanceActiveLabel !== undefined;
+  const rates = await listFiatRates()
+  const balance = await getBalance();
   
+  const isStableBalance = userSettings.stableBalanceActiveLabel !== undefined;
+  const usdRate = rates.find((r) => r.coin === "USD")?.value || 0;
+
   const balanceSats = balance.totalSats;
   const tokenBalance = balance?.tokenUSDB?.balance || 0;
 
