@@ -216,11 +216,7 @@ export default function WalletHomePage() {
   const canConvert = () => {
     let { fromBitcoin, toBitcoin } = convertionLimit ?? {};
 
-    const hasTokenBalance = Boolean(
-      token && BigInt(token.balance ?? 0) > BigInt(0),
-    );
-
-    if (!hasTokenBalance) {
+    if (!isStableBalance) {
       const min = BigInt(fromBitcoin?.minFromAmount ?? 0);
       const current = BigInt(balances?.totalSats ?? 0);
       return current >= min;
