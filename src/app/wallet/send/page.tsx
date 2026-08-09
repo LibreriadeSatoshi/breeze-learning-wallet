@@ -63,7 +63,7 @@ export default function SendPage() {
   const isStableBalance = userSettings?.stableBalanceActiveLabel === "USDB";
 
   const tokenUSDB = balances?.tokenUSDB;
-  const totalBalanceSats = (estimateSats(tokenUSDB?.balance || 0, usdRate || 0 , tokenUSDB?.tokenMetadata?.decimals) || 0) + (balances?.totalSats || 0);
+  const totalBalanceSats = (estimateSats(tokenUSDB?.balance || 0, usdRate, tokenUSDB?.tokenMetadata?.decimals) || 0) + (balances?.totalSats || 0);
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");

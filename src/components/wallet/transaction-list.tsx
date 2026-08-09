@@ -141,7 +141,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           <div className="text-xs text-gray-500">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>
           {fiat && (
               <SensitiveAmount className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                ≈ {isToken ? <>{estimateSats(sats, usdRate || 0)} {t("send.sats")}</> : fiat}
+                ≈ {isToken ? <>{estimateSats(sats, usdRate)} {t("send.sats")}</> : fiat}
               </SensitiveAmount>
           )}
         </div>

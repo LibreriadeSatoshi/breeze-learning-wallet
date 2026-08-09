@@ -58,7 +58,7 @@ function PaymentDetailContent({
   const amountSats = estimateSats(payment.amount, usdRate || 0); 
   const { amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
 
-  const feeSats = payment.fees + estimateSats(payment.conversionDetails?.from?.fee || 0, usdRate || 0) + estimateSats(payment.conversionDetails?.to?.fee || 0, usdRate || 0);
+  const feeSats = payment.fees + estimateSats(payment.conversionDetails?.from?.fee || 0, usdRate) + estimateSats(payment.conversionDetails?.to?.fee || 0, usdRate);
 
   let feeUSD;
 

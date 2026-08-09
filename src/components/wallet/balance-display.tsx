@@ -46,7 +46,9 @@ export function formatTokenToUSD({amount, decimals = 6, fraction = 2}: {amount: 
   }).format(numericBalance);
 }
 
-export function estimateSats(amount: number, usdRate: number, decimals = 6) {
+export function estimateSats(amount: number, usdRate?: number, decimals = 6) {
+  if (usdRate === 0 || usdRate === undefined) return 0;
+
   const tokenBalanceNum = Number(amount || 0) / Math.pow(10, decimals);
   
   return Math.round((tokenBalanceNum * 100_000_000) / usdRate);
@@ -117,7 +119,7 @@ function getPrimaryTicker(token: any, isStableBalance: boolean = false) {
 }
 
 function getSecondaryText(balanceSat: number, isStableBalance: boolean, fiatRate?: number, fiatCurrency: string = "", usdRate?: number, token?: any) {
-    if (fiatRate === undefined || fiatRate <= 0 && fiatCurrency || usdRate === undefined || usdRate <= 0) {
+    if (fiatRate === undefined || fiatRate <= 0 || usdRate === undefined || usdRate <= 0) {
       return ""
     }
 
