@@ -223,10 +223,10 @@
     },
     "swap": {
       "title": "Convertir a {{token}}",
-      "description": "Tu balance sera convertido a {{token}}",
-      "conversionFee": "Conversion fee:",
+      "description": "Tu balance será convertido a {{token}}",
+      "conversionFee": "Tarifa de conversión:",
       "calculatingFee": "Calculando...",
-      "insufficientBalance": "Saldo insuficiente para convertirlo — se mantendra como cambio"
+      "insufficientBalance": "Saldo insuficiente para convertirlo — se mantendrá como cambio"
     }
   },
   "send": {
