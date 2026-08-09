@@ -182,25 +182,17 @@ export async function getBalance(): Promise<Balances> {
 export async function enableStableBalance(label: string): Promise<void> {
   if (!sdk) throw new Error("Wallet not ready.");
 
-  try {
-    await sdk.updateUserSettings({
-      stableBalanceActiveLabel: { type: 'set', label },
-    });
-  } catch (error) {
-    console.error("Failed to enable stable balance:", error);
-  }
+  await sdk.updateUserSettings({
+    stableBalanceActiveLabel: { type: 'set', label },
+  });
 }
 
 export async function disableStableBalance(): Promise<void> {
   if (!sdk) throw new Error("Wallet not ready.");
-  
-  try {
-    await sdk.updateUserSettings({
-      stableBalanceActiveLabel: { type: 'unset' },
-    });
-  } catch (error) {
-    console.error("Failed to disable stable balance:", error);
-  }
+
+  await sdk.updateUserSettings({
+    stableBalanceActiveLabel: { type: 'unset' },
+  });
 }
 
 export async function fetchConversionLimit() {

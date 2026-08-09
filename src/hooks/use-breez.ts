@@ -78,6 +78,7 @@ export function useToggleStableBalance() {
     },
     onError: (error) => {
       console.error("Error toggling stable balance: ", error);
+      throw error;
     }
   });
 }
