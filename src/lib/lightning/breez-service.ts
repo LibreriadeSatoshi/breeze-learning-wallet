@@ -203,7 +203,7 @@ export async function disableStableBalance(): Promise<void> {
   }
 }
 
-export async function fetchConvertionLimit() {
+export async function fetchConversionLimit() {
   if (!sdk) throw new Error("Wallet not ready.");
 
   const fromBitcoinResponse = await sdk.fetchConversionLimits({

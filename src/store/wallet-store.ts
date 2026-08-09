@@ -5,7 +5,7 @@ import { clearLocalDriveState } from "@/lib/backup/drive-client";
 import { disconnectBreez } from "@/lib/lightning/breez-service";
 import {
   useBalance,
-  useConvertionLimit,
+  useConversionLimit,
   usePayments,
   useRefreshBreez,
   useToggleStableBalance,
@@ -190,10 +190,10 @@ export const useWalletData = (isReady: boolean) => {
   const { mutateAsync: toggleStableAsync, isPending: isSwapPending } =
     useToggleStableBalance();
   const { data: convertionLimit, isLoading: convertionLimitLoading } =
-    useConvertionLimit();
+    useConversionLimit(isReady);
   const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
   const { data: userSettings, isLoading: userSettingsLoading } =
-    useUserSettings();
+    useUserSettings(isReady);
 
   return {
     balances,
