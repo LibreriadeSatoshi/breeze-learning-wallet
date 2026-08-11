@@ -53,7 +53,7 @@ export default function SendPage() {
 
   const { data: balances } = useBalance(true);
   const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
-  const {data: userSettings} = useUserSettings();
+  const {data: userSettings} = useUserSettings(true);
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
   const executeMutation = useExecuteSend();
