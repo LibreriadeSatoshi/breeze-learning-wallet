@@ -135,7 +135,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           >
           {isReceived ? "+" : "-"}
           <SensitiveAmount>
-              {isToken ? formatTokenToUSD({amount: sats.toString()}) : sats.toLocaleString()}
+              {isToken ? formatTokenToUSD({amount: sats}) : sats.toLocaleString()}
           </SensitiveAmount>
           </div>
           <div className="text-xs text-gray-500">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>

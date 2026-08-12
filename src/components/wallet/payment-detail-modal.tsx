@@ -69,11 +69,11 @@ function PaymentDetailContent({
 
     if (from?.ticker === "BTC") {
       feeSats += fromFee + estimateSats(toFee, usdRate, to?.decimals);
-      feeUSD = formatTokenToUSD({ amount: toFee.toString(), fraction: 6 });
+      feeUSD = formatTokenToUSD({ amount: toFee, fraction: 6 });
 
     } else if (to?.ticker === "BTC") {
       feeSats += toFee + estimateSats(fromFee, usdRate, from?.decimals);
-      feeUSD = formatTokenToUSD({ amount: fromFee.toString(), fraction: 6 });
+      feeUSD = formatTokenToUSD({ amount: fromFee, fraction: 6 });
 
     } else {
       feeUSD = convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6 });
@@ -102,7 +102,7 @@ function PaymentDetailContent({
           }`}
         >
           {isReceived ? "+" : "-"}
-          <SensitiveAmount>{isToken ? `${formatTokenToUSD({amount: amount.toString()}).replace("$", "")}` : amount.toLocaleString()}</SensitiveAmount>
+          <SensitiveAmount>{isToken ? `${formatTokenToUSD({amount: amount}).replace("$", "")}` : amount.toLocaleString()}</SensitiveAmount>
         </div>
         <div className="text-sm text-gray-500 dark:text-gray-400">{isToken ? payment.conversionDetails?.to.ticker : t("send.sats")}</div>
         {amountFiat && (

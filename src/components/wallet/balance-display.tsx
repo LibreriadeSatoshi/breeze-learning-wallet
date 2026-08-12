@@ -1,5 +1,6 @@
 'use client';
 
+import { Balances } from '@/lib/lightning/breez-service';
 import { convertSatsToFiat } from '@/lib/wallet/format-fiat';
 import { useWalletStore } from '@/store/wallet-store';
 import { Eye, EyeOff } from 'lucide-react';
@@ -30,12 +31,12 @@ interface BalanceDisplayProps {
   readonly fiatRate?: number;
   readonly usdRate?: number;
   readonly fiatCurrency?: string;
-  readonly token?: any;
+  readonly token: Balances["tokenUSDB"];
   readonly isStableBalance: boolean;
 }
 
-export function formatTokenToUSD({amount, decimals = 6, fraction = 2}: {amount: string, decimals?: number, fraction?: number}) {
-  if (!amount || amount === "0") return "$0.00";
+export function formatTokenToUSD({amount, decimals = 6, fraction = 2}: {amount: number | undefined, decimals?: number, fraction?: number}) {
+  if (amount === undefined || !amount || amount === 0) return "$0.00";
   const numericBalance = Number(amount) / Math.pow(10, decimals);
   
   return new Intl.NumberFormat("en-US", {
@@ -101,7 +102,7 @@ export function BalanceDisplay({
   );
 }
 
-function getPrimaryAmount(balanceSat: number, token: any, isStableBalance: boolean = false) {
+function getPrimaryAmount(balanceSat: number, token: Balances["tokenUSDB"], isStableBalance: boolean = false) {
   let primaryAmount = "";
 
   if (isStableBalance) {
@@ -112,19 +113,19 @@ function getPrimaryAmount(balanceSat: number, token: any, isStableBalance: boole
   return primaryAmount;
 }
 
-function getPrimaryTicker(token: any, isStableBalance: boolean = false) {
+function getPrimaryTicker(token: Balances["tokenUSDB"], isStableBalance: boolean = false) {
   return isStableBalance 
     ? (token?.tokenMetadata?.ticker || "USDB") 
     : "sats";
 }
 
-function getSecondaryText(balanceSat: number, isStableBalance: boolean, fiatRate?: number, fiatCurrency: string = "", usdRate?: number, token?: any) {
+function getSecondaryText(balanceSat: number, isStableBalance: boolean, fiatRate?: number, fiatCurrency: string = "", usdRate?: number, token?: Balances["tokenUSDB"]) {
     if (fiatRate === undefined || fiatRate <= 0 || usdRate === undefined || usdRate <= 0) {
       return ""
     }
 
     if (isStableBalance) {
-      const isToken = token !== undefined && token !== 0;
+      const isToken = token !== undefined;
       const equivalentSats = isToken ? estimateSats(token?.balance, usdRate, token?.tokenMetadata?.decimals) : balanceSat;
       return isToken ?  `≈ ${equivalentSats.toLocaleString()} sats` : `≈ ${equivalentSats.toLocaleString()} change`;
     } else {

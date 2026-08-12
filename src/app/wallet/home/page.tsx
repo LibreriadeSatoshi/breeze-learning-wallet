@@ -317,7 +317,7 @@ export default function WalletHomePage() {
             balanceSat={balances?.totalSats || 0}
             fiatRate={fiatRate}
             fiatCurrency={selectedCurrency}
-            token={token ?? 0}
+            token={token}
             isStableBalance={isStableBalance}
             usdRate={usdRate}
           />
