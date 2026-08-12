@@ -75,7 +75,7 @@ export default function WalletHomePage() {
     toggleStableAsync,
     isSwapPending,
     isSwapError,
-    convertionLimit,
+    conversionLimits,
     convertionLimitLoading,
     userSettings,
     userSettingsLoading,
@@ -212,16 +212,16 @@ export default function WalletHomePage() {
   if (!mounted || !isUnlocked) return null;
 
   const canConvert = () => {
-    let { fromBitcoin, toBitcoin } = convertionLimit ?? {};
+  const { fromBitcoin, toBitcoin } = conversionLimits ?? {};
 
     if (!isStableBalance) {
       const min = BigInt(fromBitcoin?.minFromAmount ?? 0);
       const current = BigInt(balances?.totalSats ?? 0);
-      return current >= min;
+      return min > BigInt(0) && current >= min;
     } else {
       const min = BigInt(toBitcoin?.minFromAmount ?? 0);
       const current = BigInt(token?.balance ?? 0);
-      return current >= min;
+      return min > BigInt(0) && current >= min;
     }
   };
 

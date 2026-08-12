@@ -220,38 +220,58 @@ export async function fetchConversionLimit() {
 export const estimateSwapFee = async (): Promise<string> => {
   if (!sdk) throw new Error("Wallet not ready.");
   
-  const userSettings = await getUserSettings();
-  const rates = await listFiatRates()
-  const balance = await getBalance();
+  const [userSettings, rates, balance, conversionLimits] = await Promise.all([
+    getUserSettings(),
+    listFiatRates(),
+    getBalance(),
+    fetchConversionLimit(),
+  ]);
   
   const isStableBalance = userSettings.stableBalanceActiveLabel !== undefined;
   const usdRate = rates.find((r) => r.coin === "USD")?.value || 0;
 
-  const balanceSats = balance.totalSats;
-  const tokenBalance = balance?.tokenUSDB?.balance || 0;
+  if (usdRate <= 0) return "$0.00";
 
-  let amount: bigint;
+  const balanceSats = BigInt(balance.totalSats || 0);
+  const tokenBalance = balance?.tokenUSDB?.balance || BigInt(0);
 
   const hasBalance = !isStableBalance 
-    ? balanceSats > 0 
+    ? balanceSats > BigInt(0) 
     : tokenBalance > BigInt(0);
     
   if (!hasBalance) return "$0.00";
 
-  const MIN_AMOUNT_FOR_SWAP = BigInt(800);
+  const bitcoinMinFromAmount = BigInt(conversionLimits?.fromBitcoin?.minFromAmount ?? 0);
+  const bitcoinMinToAmount = BigInt(conversionLimits?.fromBitcoin?.minToAmount ?? 0);
+  const tokenMinFromAmount = BigInt(conversionLimits?.toBitcoin?.minFromAmount ?? 0);
+  const tokenMinToAmount = BigInt(conversionLimits?.toBitcoin?.minToAmount ?? 0);
+
+  let amount: bigint;
 
   if (!isStableBalance) {
-    if (balanceSats < Number(MIN_AMOUNT_FOR_SWAP)) return "$0.00";
+    if (bitcoinMinFromAmount === BigInt(0) || balanceSats < bitcoinMinFromAmount) {
+      return "$0.00";
+    }
     
-    const btcValue = balanceSats / 100_000_000;
+    const btcValue = Number(balanceSats) / 100_000_000;
     const fiatValue = btcValue * usdRate;
     amount = BigInt(Math.round(fiatValue * 1_000_000));
+
+    if (bitcoinMinToAmount > BigInt(0) && amount < bitcoinMinToAmount) {
+      return "$0.00";
+    }
   } else {
-    if (tokenBalance < MIN_AMOUNT_FOR_SWAP) return "$0.00";
+    if (tokenMinFromAmount === BigInt(0) || tokenBalance < tokenMinFromAmount) {
+      return "$0.00";
+    }
 
     const fiatValue = Number(tokenBalance) / 1_000_000;
     const satsValue = (fiatValue / usdRate) * 100_000_000;
     amount = BigInt(Math.round(satsValue));
+
+    if (tokenMinToAmount > BigInt(0) && amount < tokenMinToAmount) {
+      return "$0.00";
+    }
   }
 
   const receiveResponse = await sdk.receivePayment({
@@ -281,9 +301,7 @@ export const estimateSwapFee = async (): Promise<string> => {
       const feeInBaseUnits = Number(prepareResponse.conversionEstimate.fee);
       const feeInUSD = feeInBaseUnits / 1_000_000;
 
-      if (feeInUSD === 0) {
-        return "$0.00";
-      }
+      if (feeInUSD === 0) return "$0.00";
 
       return `$${feeInUSD.toFixed(6)}`; 
     }

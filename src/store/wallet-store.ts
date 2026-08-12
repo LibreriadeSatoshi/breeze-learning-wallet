@@ -189,7 +189,7 @@ export const useWalletData = (isReady: boolean) => {
   } = useFiat(isReady);
   const { mutateAsync: toggleStableAsync, isPending: isSwapPending, isError: isSwapError} =
     useToggleStableBalance();
-  const { data: convertionLimit, isLoading: convertionLimitLoading } =
+  const { data: conversionLimits, isLoading: convertionLimitLoading } =
     useConversionLimit(isReady);
   const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
   const { data: userSettings, isLoading: userSettingsLoading } =
@@ -207,7 +207,7 @@ export const useWalletData = (isReady: boolean) => {
     toggleStableAsync,
     isSwapPending,
     isSwapError,
-    convertionLimit,
+    conversionLimits,
     convertionLimitLoading,
     userSettings,
     userSettingsLoading,
