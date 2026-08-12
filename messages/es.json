@@ -228,6 +228,9 @@
       "calculatingFee": "Calculando...",
       "insufficientBalance": "Saldo insuficiente para convertirlo — se mantendrá como cambio",
       "unknownError": "Ha ocurrido un error. Inténtalo más tarde"
+    },
+    "balance": {
+      "change": "Cambio"
     }
   },
   "send": {

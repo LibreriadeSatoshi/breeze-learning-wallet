@@ -228,6 +228,9 @@
       "calculatingFee": "Calculating...",
       "insufficientBalance": "Balance too low to convert — it will remain as change",
       "unknownError": "An error occurred. Please try again later."
+    },
+    "balance": {
+      "change": "Change"
     }
   },
   "send": {

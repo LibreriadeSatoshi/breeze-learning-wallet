@@ -1,5 +1,6 @@
 'use client';
 
+import { useT } from '@/lib/i18n/hook';
 import { Balances } from '@/lib/lightning/breez-service';
 import { convertSatsToFiat } from '@/lib/wallet/format-fiat';
 import { useWalletStore } from '@/store/wallet-store';
@@ -39,7 +40,7 @@ export function formatTokenToUSD({amount, decimals = 6, fraction = 2}: {amount: 
   if (amount === undefined || !amount || amount === 0) return "$0.00";
   const numericBalance = Number(amount) / Math.pow(10, decimals);
   
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: fraction,
@@ -65,12 +66,14 @@ export function BalanceDisplay({
 }: BalanceDisplayProps) {
   const showBalance = useWalletStore((e) => e.showBalance);
   const onToggleVisibility = useWalletStore((e) => e.toggleBalanceVisibility);
+  const t = useT();
+  let changeText = t("home.balance.change");
 
   const primaryAmount = getPrimaryAmount(balanceSat, token, isStableBalance);
 
   const primaryTicker = getPrimaryTicker(token, isStableBalance);
 
-  let secondaryText = getSecondaryText(balanceSat, isStableBalance, fiatRate, fiatCurrency, usdRate, token);
+  let secondaryText = getSecondaryText(balanceSat, isStableBalance, changeText, fiatCurrency, fiatRate, usdRate, token);
 
   return (
     <div className="text-center py-8">
@@ -119,7 +122,7 @@ function getPrimaryTicker(token: Balances["tokenUSDB"], isStableBalance: boolean
     : "sats";
 }
 
-function getSecondaryText(balanceSat: number, isStableBalance: boolean, fiatRate?: number, fiatCurrency: string = "", usdRate?: number, token?: Balances["tokenUSDB"]) {
+function getSecondaryText(balanceSat: number, isStableBalance: boolean, changeText: string, fiatCurrency: string = "", fiatRate?: number, usdRate?: number, token?: Balances["tokenUSDB"],) {
     if (fiatRate === undefined || fiatRate <= 0 || usdRate === undefined || usdRate <= 0) {
       return ""
     }
@@ -127,7 +130,7 @@ function getSecondaryText(balanceSat: number, isStableBalance: boolean, fiatRate
     if (isStableBalance) {
       const isToken = token !== undefined;
       const equivalentSats = isToken ? estimateSats(token?.balance, usdRate, token?.tokenMetadata?.decimals) : balanceSat;
-      return isToken ?  `≈ ${equivalentSats.toLocaleString()} sats` : `≈ ${equivalentSats.toLocaleString()} change`;
+      return isToken ?  `≈ ${equivalentSats.toLocaleString()} sats` : `≈ ${equivalentSats.toLocaleString()} ${changeText}`;
     } else {
       return `≈ ${convertSatsToFiat({ sats: balanceSat, ratePerBtc: fiatRate, currency: fiatCurrency })}`;
     }
