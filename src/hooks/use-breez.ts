@@ -24,7 +24,7 @@ import {
   type PrepareLnurlPayResult,
   disableStableBalance,
   enableStableBalance,
-  fetchConversionLimit,
+  fetchConversionLimits,
   estimateSwapFee,
   getUserSettings
 } from "@/lib/lightning/breez-service";
@@ -51,7 +51,7 @@ const breezKeys = {
   lightningAddress: () => [...breezKeys.all, "lightningAddress"] as const,
   fiatCurrencies: () => [...breezKeys.all, "fiatCurrencies"] as const,
   fiatRates: () => [...breezKeys.all, "fiatRates"] as const,
-  conversionLimit: () => [...breezKeys.all, "convertionLimit"] as const,
+  conversionLimits: () => [...breezKeys.all, "convertionLimits"] as const,
   estimatedSwapFee: () => [...breezKeys.all, "estimatedFees"] as const,
   userSettings: () => [...breezKeys.all, "userSettings"] as const
 };
@@ -87,10 +87,10 @@ export function useToggleStableBalance() {
   });
 }
 
-export function useConversionLimit(enabled: boolean) {
+export function useConversionLimits(enabled: boolean) {
   return useQuery({
-    queryKey: breezKeys.conversionLimit(),
-    queryFn: fetchConversionLimit,
+    queryKey: breezKeys.conversionLimits(),
+    queryFn: fetchConversionLimits,
     refetchInterval: 60000,
     staleTime: 10000,
     enabled

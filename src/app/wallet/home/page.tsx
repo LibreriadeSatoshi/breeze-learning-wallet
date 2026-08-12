@@ -16,7 +16,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { useWalletData, useWalletStore } from "@/store/wallet-store";
 import { BalanceDisplay } from "@/components/wallet/balance-display";
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { TransactionList } from "@/components/wallet/transaction-list";
@@ -34,6 +33,8 @@ import {
 import { useT } from "@/lib/i18n/hook";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
+import { useWalletData } from "@/hooks/use-wallet-data";
+import { useWalletStore } from "@/store/wallet-store";
 
 const CONN_DOT: Record<"offline" | "syncing" | "synced" | "failed", string> = {
   offline: "bg-gray-400",

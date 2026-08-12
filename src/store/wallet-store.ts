@@ -3,16 +3,6 @@ import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 import { clearLocalDriveState } from "@/lib/backup/drive-client";
 import { disconnectBreez } from "@/lib/lightning/breez-service";
-import {
-  useBalance,
-  useConversionLimit,
-  usePayments,
-  useRefreshBreez,
-  useToggleStableBalance,
-  useUnclaimedDeposits,
-  useUserSettings,
-} from "@/hooks/use-breez";
-import { useFiat } from "@/hooks/use-fiat";
 
 let mnemonicInMemory: string | null = null;
 
@@ -175,43 +165,3 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     return decryptMnemonic(blob, password);
   },
 }));
-
-export const useWalletData = (isReady: boolean) => {
-  const { data: balances, isLoading: balanceLoading } = useBalance(isReady);
-  const { data: payments = [], isLoading: paymentsLoading } =
-    usePayments(isReady);
-  const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
-  const { refresh } = useRefreshBreez();
-  const {
-    rate: fiatRate,
-    currency: selectedCurrency,
-    estableRate,
-  } = useFiat(isReady);
-  const { mutateAsync: toggleStableAsync, isPending: isSwapPending, isError: isSwapError} =
-    useToggleStableBalance();
-  const { data: conversionLimits, isLoading: convertionLimitLoading } =
-    useConversionLimit(isReady);
-  const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
-  const { data: userSettings, isLoading: userSettingsLoading } =
-    useUserSettings(isReady);
-
-  return {
-    balances,
-    balanceLoading,
-    payments,
-    paymentsLoading,
-    rejectedDeposits,
-    fiatRate,
-    selectedCurrency,
-    estableRate,
-    toggleStableAsync,
-    isSwapPending,
-    isSwapError,
-    conversionLimits,
-    convertionLimitLoading,
-    userSettings,
-    userSettingsLoading,
-    refresh,
-    unclaimedDeposits,
-  };
-};
