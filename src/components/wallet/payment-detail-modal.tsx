@@ -58,17 +58,25 @@ function PaymentDetailContent({
   const amountSats = estimateSats(payment.amount, usdRate || 0); 
   const { amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
 
-  const feeSats = payment.fees + estimateSats(payment.conversionDetails?.from?.fee || 0, usdRate) + estimateSats(payment.conversionDetails?.to?.fee || 0, usdRate);
-
+  let feeSats = payment.fees || 0;
   let feeUSD;
 
   if (payment.conversionDetails) {
-    if (payment.conversionDetails.from?.ticker !== "BTC") {
-      feeUSD = formatTokenToUSD({ amount: payment.conversionDetails.from.fee.toString(), fraction: 6 });
-    } else if (payment.conversionDetails.to?.ticker !== "BTC") {
-      feeUSD = formatTokenToUSD({ amount: payment.conversionDetails.to.fee.toString(), fraction: 6 });
+    const { from, to } = payment.conversionDetails;
+    
+    const fromFee = from?.fee || 0;
+    const toFee = to?.fee || 0;
+
+    if (from?.ticker === "BTC") {
+      feeSats += fromFee + estimateSats(toFee, usdRate, to?.decimals);
+      feeUSD = formatTokenToUSD({ amount: toFee.toString(), fraction: 6 });
+
+    } else if (to?.ticker === "BTC") {
+      feeSats += toFee + estimateSats(fromFee, usdRate, from?.decimals);
+      feeUSD = formatTokenToUSD({ amount: fromFee.toString(), fraction: 6 });
+
     } else {
-      feeUSD = undefined; 
+      feeUSD = convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6 });
     }
   } else {
     feeUSD = convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6 });
@@ -121,7 +129,7 @@ function PaymentDetailContent({
                 {" "}
                 {" · ≈ "}
                 <SensitiveAmount>
-                  {`${feeUSD ?? convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6})}`}
+                  {`${feeUSD}`}
                 </SensitiveAmount>
               </>
           }

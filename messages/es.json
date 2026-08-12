@@ -226,7 +226,8 @@
       "description": "Tu balance será convertido a {{token}}",
       "conversionFee": "Tarifa de conversión:",
       "calculatingFee": "Calculando...",
-      "insufficientBalance": "Saldo insuficiente para convertirlo — se mantendrá como cambio"
+      "insufficientBalance": "Saldo insuficiente para convertirlo — se mantendrá como cambio",
+      "unknownError": "Ha ocurrido un error. Inténtalo más tarde"
     }
   },
   "send": {

@@ -74,6 +74,7 @@ export default function WalletHomePage() {
     estableRate: usdRate,
     toggleStableAsync,
     isSwapPending,
+    isSwapError,
     convertionLimit,
     convertionLimitLoading,
     userSettings,
@@ -420,6 +421,11 @@ export default function WalletHomePage() {
                     )}
                   </span>
                 </p>
+                {isSwapError && (
+                  <p className="text-sm text-amber-500 dark:text-amber-400">
+                    {t("home.swap.unknownError")}
+                  </p>
+                )}
               </div>
             ) : (
               <p className="text-sm text-amber-500 dark:text-amber-400">

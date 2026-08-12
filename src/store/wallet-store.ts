@@ -187,7 +187,7 @@ export const useWalletData = (isReady: boolean) => {
     currency: selectedCurrency,
     estableRate,
   } = useFiat(isReady);
-  const { mutateAsync: toggleStableAsync, isPending: isSwapPending } =
+  const { mutateAsync: toggleStableAsync, isPending: isSwapPending, isError: isSwapError} =
     useToggleStableBalance();
   const { data: convertionLimit, isLoading: convertionLimitLoading } =
     useConversionLimit(isReady);
@@ -206,6 +206,7 @@ export const useWalletData = (isReady: boolean) => {
     estableRate,
     toggleStableAsync,
     isSwapPending,
+    isSwapError,
     convertionLimit,
     convertionLimitLoading,
     userSettings,

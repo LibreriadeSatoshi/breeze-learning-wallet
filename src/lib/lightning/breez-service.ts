@@ -459,11 +459,13 @@ function mapPayment(p: SdkPayment): Payment {
             amount: Number(conversion?.from?.amount),
             fee: Number(conversion?.from?.fee),
             ticker: conversion?.from.asset.ticker,
+            decimals: conversion?.from.asset.decimals
           },
           to: {
             amount: Number(conversion?.to?.amount),
             fee: Number(conversion?.to?.fee),
             ticker: conversion.to.asset.ticker,
+            decimals: conversion?.to.asset.decimals
           }
         }
       })

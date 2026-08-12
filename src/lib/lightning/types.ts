@@ -17,11 +17,13 @@ export interface Payment {
       amount: number;
       fee: number;
       ticker: string;
+      decimals: number;
     };
     to: {
       amount: number;
       fee: number;
       ticker: string;
+      decimals: number;
     };
   }
 }
