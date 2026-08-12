@@ -1,7 +1,8 @@
 'use client';
 
 import { useT } from '@/lib/i18n/hook';
-import { Balances } from '@/lib/lightning/breez-service';
+import { usdbTicker } from '@/lib/lightning/breez-service';
+import { Balances } from '@/lib/lightning/types';
 import { convertSatsToFiat } from '@/lib/wallet/format-fiat';
 import { useWalletStore } from '@/store/wallet-store';
 import { Eye, EyeOff } from 'lucide-react';
@@ -118,7 +119,7 @@ function getPrimaryAmount(balanceSat: number, token: Balances["tokenUSDB"], isSt
 
 function getPrimaryTicker(token: Balances["tokenUSDB"], isStableBalance: boolean = false) {
   return isStableBalance 
-    ? (token?.tokenMetadata?.ticker || "USDB") 
+    ? (token?.tokenMetadata?.ticker || usdbTicker) 
     : "sats";
 }
 

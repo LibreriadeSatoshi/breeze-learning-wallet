@@ -60,6 +60,8 @@ export interface BreezSparkConfig {
   claimLeewaySatPerVbyte?: number;
 }
 
+export const usdbTicker = "USDB";
+
 export async function initBreez(config: BreezSparkConfig): Promise<void> {
   if (isInitializing) return;
   if (sdk && activeMnemonic === config.mnemonic) return;
@@ -92,7 +94,7 @@ export async function initBreez(config: BreezSparkConfig): Promise<void> {
 
     sdkConfig.stableBalanceConfig = {
       tokens: [{
-        label: "USDB",
+        label: usdbTicker,
         tokenIdentifier: USDB_TOKEN_IDENTIFIER
       }]
     }

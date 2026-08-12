@@ -25,6 +25,7 @@ import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import {
   onSdkEvent,
+  usdbTicker,
 } from "@/lib/lightning/breez-service";
 import { signInWithPasskey, seedToMnemonic } from "@/lib/auth/passkey";
 import {
@@ -85,7 +86,7 @@ export default function WalletHomePage() {
   } = useWalletData(isReady);
 
   const token = balances?.tokenUSDB;
-  const ticker = token?.tokenMetadata?.ticker ?? "USDB"
+  const ticker = token?.tokenMetadata?.ticker ?? usdbTicker;
 
   const needsAttention = rejectedDeposits.length;
   const { 
@@ -159,7 +160,7 @@ export default function WalletHomePage() {
   }, [isReady, refresh]);
 
   useEffect(() => {
-    if (userSettings?.stableBalanceActiveLabel === "USDB") {
+    if (userSettings?.stableBalanceActiveLabel === usdbTicker) {
       setIsStableBalance(true);
     } else {
       setIsStableBalance(false);
@@ -236,7 +237,7 @@ export default function WalletHomePage() {
 
       await toggleStableAsync({
         enable: nextState,
-        label: "USDB",
+        label: usdbTicker,
       });
 
       await refresh();

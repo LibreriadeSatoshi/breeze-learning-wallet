@@ -19,9 +19,10 @@ import {
 import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat, SATS_PER_BTC } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
-import type {
-  PrepareSendResult,
-  PrepareLnurlPayResult,
+import {
+  type PrepareSendResult,
+  type PrepareLnurlPayResult,
+  usdbTicker,
 } from "@/lib/lightning/breez-service";
 import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
 import { estimateSats } from "@/components/wallet/balance-display";
@@ -60,7 +61,7 @@ export default function SendPage() {
   const prepareLnurlMutation = usePrepareLnurlPay();
   const executeLnurlMutation = useExecuteLnurlPay();
 
-  const isStableBalance = userSettings?.stableBalanceActiveLabel === "USDB";
+  const isStableBalance = userSettings?.stableBalanceActiveLabel === usdbTicker;
 
   const tokenUSDB = balances?.tokenUSDB;
   const totalBalanceSats = (estimateSats(tokenUSDB?.balance || 0, usdRate, tokenUSDB?.tokenMetadata?.decimals) || 0) + (balances?.totalSats || 0);
