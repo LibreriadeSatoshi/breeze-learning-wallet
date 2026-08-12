@@ -130,7 +130,7 @@ function getSecondaryText(balanceSat: number, isStableBalance: boolean, changeTe
     if (isStableBalance) {
       const isToken = token !== undefined;
       const equivalentSats = isToken ? estimateSats(token?.balance, usdRate, token?.tokenMetadata?.decimals) : balanceSat;
-      return isToken ?  `≈ ${equivalentSats.toLocaleString()} sats` : `≈ ${equivalentSats.toLocaleString()} ${changeText}`;
+      return isToken ?  `≈ ${equivalentSats} sats` : `≈ ${equivalentSats} ${changeText}`;
     } else {
       return `≈ ${convertSatsToFiat({ sats: balanceSat, ratePerBtc: fiatRate, currency: fiatCurrency })}`;
     }
