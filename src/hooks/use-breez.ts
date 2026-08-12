@@ -79,10 +79,6 @@ export function useToggleStableBalance() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.balance() }); 
-    },
-    onError: (error) => {
-      console.error("Error toggling stable balance: ", error);
-      throw error;
     }
   });
 }
