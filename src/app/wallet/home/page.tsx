@@ -242,7 +242,17 @@ export default function WalletHomePage() {
       console.error("Error toggling stable balance: ", err);
     }
   };
+  const formatConversionFee = (amount: number | null | undefined) => {
+    if (!amount || amount === null || amount === undefined) return "";
 
+    const formattedAmount = amount.toLocaleString(undefined, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: amount == 0 ? 2 : 6,
+    });
+    return formattedAmount;
+    
+  }
   const isLoading = balanceLoading || paymentsLoading ||isSwapPending || userSettingsLoading || convertionLimitLoading;
 
   return (
@@ -417,7 +427,7 @@ export default function WalletHomePage() {
                     {isEstimating ? (
                       <span className="animate-pulse">{t("home.swap.calculatingFee")}</span>
                     ) : (
-                      conversionFeeUSD
+                      formatConversionFee(conversionFeeUSD)
                     )}
                   </span>
                 </p>

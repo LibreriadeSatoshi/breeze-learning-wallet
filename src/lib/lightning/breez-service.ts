@@ -217,7 +217,7 @@ export async function fetchConversionLimit() {
   }
 }
 
-export const estimateSwapFee = async (): Promise<string> => {
+export const estimateSwapFee = async (): Promise<number | null> => {
   if (!sdk) throw new Error("Wallet not ready.");
   
   const [userSettings, rates, balance, conversionLimits] = await Promise.all([
@@ -227,90 +227,62 @@ export const estimateSwapFee = async (): Promise<string> => {
     fetchConversionLimit(),
   ]);
   
-  const isStableBalance = userSettings.stableBalanceActiveLabel !== undefined;
   const usdRate = rates.find((r) => r.coin === "USD")?.value || 0;
+  if (usdRate <= 0) return null;
 
-  if (usdRate <= 0) return "$0.00";
+  const isStableBalance = userSettings.stableBalanceActiveLabel !== undefined;
+  
+  const currentBalance = isStableBalance 
+    ? balance?.tokenUSDB?.balance || BigInt(0)
+    : BigInt(balance.totalSats || 0);
 
-  const balanceSats = BigInt(balance.totalSats || 0);
-  const tokenBalance = balance?.tokenUSDB?.balance || BigInt(0);
+  const limits = isStableBalance 
+    ? conversionLimits?.toBitcoin 
+    : conversionLimits?.fromBitcoin;
 
-  const hasBalance = !isStableBalance 
-    ? balanceSats > BigInt(0) 
-    : tokenBalance > BigInt(0);
-    
-  if (!hasBalance) return "$0.00";
+  const minFromAmount = BigInt(limits?.minFromAmount ?? 0);
+  const minToAmount = BigInt(limits?.minToAmount ?? 0);
 
-  const bitcoinMinFromAmount = BigInt(conversionLimits?.fromBitcoin?.minFromAmount ?? 0);
-  const bitcoinMinToAmount = BigInt(conversionLimits?.fromBitcoin?.minToAmount ?? 0);
-  const tokenMinFromAmount = BigInt(conversionLimits?.toBitcoin?.minFromAmount ?? 0);
-  const tokenMinToAmount = BigInt(conversionLimits?.toBitcoin?.minToAmount ?? 0);
-
-  let amount: bigint;
-
-  if (!isStableBalance) {
-    if (bitcoinMinFromAmount === BigInt(0) || balanceSats < bitcoinMinFromAmount) {
-      return "$0.00";
-    }
-    
-    const btcValue = Number(balanceSats) / 100_000_000;
-    const fiatValue = btcValue * usdRate;
-    amount = BigInt(Math.round(fiatValue * 1_000_000));
-
-    if (bitcoinMinToAmount > BigInt(0) && amount < bitcoinMinToAmount) {
-      return "$0.00";
-    }
-  } else {
-    if (tokenMinFromAmount === BigInt(0) || tokenBalance < tokenMinFromAmount) {
-      return "$0.00";
-    }
-
-    const fiatValue = Number(tokenBalance) / 1_000_000;
-    const satsValue = (fiatValue / usdRate) * 100_000_000;
-    amount = BigInt(Math.round(satsValue));
-
-    if (tokenMinToAmount > BigInt(0) && amount < tokenMinToAmount) {
-      return "$0.00";
-    }
+  if (currentBalance === BigInt(0) || minFromAmount === BigInt(0) || currentBalance < minFromAmount) {
+    return null; 
   }
 
-  const receiveResponse = await sdk.receivePayment({
-    paymentMethod: { type: "sparkAddress" }, 
-  });
-  
-  const sparkAddress = receiveResponse.paymentRequest;
+  let amount: bigint;
+  if (!isStableBalance) {
+    const fiatValue = (Number(currentBalance) / 100_000_000) * usdRate;
+    amount = BigInt(Math.round(fiatValue * 1_000_000));
+  } else {
+    const satsValue = (Number(currentBalance) / 1_000_000 / usdRate) * 100_000_000;
+    amount = BigInt(Math.round(satsValue));
+  }
 
-  const conversionOptions = !isStableBalance
-    ? { conversionType: { type: "fromBitcoin" as const } }
-    : { 
-        conversionType: { 
-          type: "toBitcoin" as const, 
-          fromTokenIdentifier: USDB_TOKEN_IDENTIFIER 
-        } 
-      };
+  if (minToAmount > BigInt(0) && amount < minToAmount) {
+    return null;
+  }
 
   try {
+    const receiveResponse = await sdk.receivePayment({
+      paymentMethod: { type: "sparkAddress" }, 
+    });
+
     const prepareResponse = await sdk.prepareSendPayment({
-      paymentRequest: { type: "input", input: sparkAddress },
+      paymentRequest: { type: "input", input: receiveResponse.paymentRequest },
       amount,
       tokenIdentifier: !isStableBalance ? USDB_TOKEN_IDENTIFIER : undefined,
-      conversionOptions,
+      conversionOptions: !isStableBalance
+        ? { conversionType: { type: "fromBitcoin" as const } }
+        : { conversionType: { type: "toBitcoin" as const, fromTokenIdentifier: USDB_TOKEN_IDENTIFIER } }
     });
 
     if (prepareResponse.conversionEstimate) {
-      const feeInBaseUnits = Number(prepareResponse.conversionEstimate.fee);
-      const feeInUSD = feeInBaseUnits / 1_000_000;
-
-      if (feeInUSD === 0) return "$0.00";
-
-      return `$${feeInUSD.toFixed(6)}`; 
+      const feeInUSD = Number(prepareResponse.conversionEstimate.fee) / 1_000_000;
+      return feeInUSD; 
     }
   } catch (e) {
     console.warn("Estimation failed: ", e);
-    return "$0.00";
   }
 
-  return "$0.00";
+  return null;
 };
 
 
