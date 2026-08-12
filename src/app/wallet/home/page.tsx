@@ -33,7 +33,7 @@ import {
 } from "@/hooks/use-breez";
 import { useT } from "@/lib/i18n/hook";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
-import type { Payment } from "@/lib/lightning/types";
+import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
 
 const CONN_DOT: Record<"offline" | "syncing" | "synced" | "failed", string> = {
   offline: "bg-gray-400",
@@ -92,6 +92,10 @@ export default function WalletHomePage() {
   isLoading: isEstimating 
 } = useSwapFee({ 
   enabled: showSwapModal && usdRate !== undefined && usdRate !== 0,
+  balances: balances as Balances,
+  userSettings: userSettings as UserSettings,
+  usdRate: usdRate as number,
+  conversionLimits: conversionLimits as ConversionLimits
 });
 
   useEffect(() => {

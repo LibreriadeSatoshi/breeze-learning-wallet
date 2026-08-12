@@ -26,16 +26,20 @@ import {
   enableStableBalance,
   fetchConversionLimit,
   estimateSwapFee,
-  getUserSettings,
+  getUserSettings
 } from "@/lib/lightning/breez-service";
 import type {
   LnurlPayRequestDetails,
   Fee,
 } from "@breeztech/breez-sdk-spark";
-import type { Payment } from "@/lib/lightning/types";
+import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
 
 interface UseSwapFeeParams { 
   enabled?: boolean; 
+  userSettings: UserSettings;
+  usdRate: number;
+  balances: Balances;
+  conversionLimits: ConversionLimits
 }
 
 const breezKeys = {
@@ -94,13 +98,17 @@ export function useConversionLimit(enabled: boolean) {
 }
 
 export function useSwapFee({ 
-  enabled = true, 
+  enabled = true,
+  userSettings,
+  usdRate,
+  balances,
+  conversionLimits
 }: UseSwapFeeParams) {
   return useQuery({
     queryKey: [
       ...breezKeys.estimatedSwapFee(),
     ],
-    queryFn: () => estimateSwapFee(),
+    queryFn: () => estimateSwapFee({userSettings, usdRate, balances, conversionLimits}),
     enabled,
     refetchInterval: 60000,
     staleTime: 10000
