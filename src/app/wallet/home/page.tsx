@@ -36,6 +36,7 @@ import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
 import { useWalletData } from "@/hooks/use-wallet-data";
 import { useWalletStore } from "@/store/wallet-store";
+import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
 
 const CONN_DOT: Record<"offline" | "syncing" | "synced" | "failed", string> = {
   offline: "bg-gray-400",
@@ -253,7 +254,7 @@ export default function WalletHomePage() {
 
     const formattedAmount = amount.toLocaleString(undefined, {
       style: "currency",
-      currency: "USD",
+      currency: DEFAULT_FIAT_CURRENCY,
       minimumFractionDigits: amount == 0 ? 2 : 6,
     });
     return formattedAmount;
@@ -262,7 +263,7 @@ export default function WalletHomePage() {
   const isLoading = balanceLoading || paymentsLoading ||isSwapPending || userSettingsLoading || convertionLimitLoading;
 
   return (
-    <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen min-w-80 bg-gray-50 dark:bg-gray-900">
       <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 text-white px-6 pt-6 pb-20">
         <div className="max-w-4xl mx-auto min-w-[280px]">
           <div className="flex justify-between items-center gap-2 mb-8">
@@ -301,7 +302,7 @@ export default function WalletHomePage() {
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
               >
                 <ArrowDownUp className="w-4 h-4" />
-                <span>{isStableBalance ? ticker : "BTC"}</span>
+                <span className="hidden sm:inline">{isStableBalance ? ticker : "BTC"}</span>
               </button>
               <button
                 type="button"

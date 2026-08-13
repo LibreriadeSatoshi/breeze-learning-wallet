@@ -26,6 +26,7 @@ import {
 } from "@/lib/lightning/breez-service";
 import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
 import { estimateSats } from "@/components/wallet/balance-display";
+import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -53,7 +54,7 @@ export default function SendPage() {
   const [error, setError] = useState("");
 
   const { data: balances } = useBalance(true);
-  const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
+  const { estableRate: usdRate } = useFiat(true);
   const {data: userSettings} = useUserSettings(true);
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
@@ -87,10 +88,10 @@ export default function SendPage() {
       const cleanSatsText = value.replace(/\D/g, "");
       return Number.parseInt(cleanSatsText, 10) || 0;
     } else {
-      if (!fiatRate) return undefined;
+      if (!usdRate) return undefined;
       const cleanFiatText = value.replace(/[^0-9.]/g, "");
-      const fiat = Number.parseFloat(cleanFiatText) || 0;
-      return Math.round((fiat / fiatRate) * SATS_PER_BTC);
+      const usd = Number.parseFloat(cleanFiatText) || 0;
+      return Math.round((usd / usdRate) * SATS_PER_BTC);
     }
   };
 
@@ -197,7 +198,7 @@ export default function SendPage() {
       return;
     }
 
-    if (!fiatRate) return;
+    if (!usdRate) return;
     let cleanFiatText = rawText.replace(/[^0-9.]/g, "");
     const parts = cleanFiatText.split(".");
 
@@ -224,8 +225,8 @@ export default function SendPage() {
 
       if (nextIsSats) {
         setInputValue(rawSats.toString());
-      } else if (fiatRate) {
-        const fiat = (rawSats / SATS_PER_BTC) * fiatRate;
+      } else if (usdRate) {
+        const fiat = (rawSats / SATS_PER_BTC) * usdRate;
         setInputValue(fiat.toFixed(2));
       }
 
@@ -235,7 +236,7 @@ export default function SendPage() {
 
   if (!isUnlocked) return null;
 
-  const isFiatRateAvailable: boolean = fiatRate !== undefined && fiatRate !== null && fiatCurrency !== undefined && fiatCurrency !== null;
+  const isUsdRateAvailable: boolean = usdRate !== undefined && usdRate !== null;
 
   if (step === "input") {
     return (
@@ -285,7 +286,7 @@ export default function SendPage() {
               />
               <div className="flex flex-row">
                 <Input
-                  label={isSats ? t("send.amount.label") : t("send.amount.fiat", { currency: fiatCurrency.toLocaleLowerCase() })}
+                  label={isSats ? t("send.amount.label") : t("send.amount.fiat", { currency: DEFAULT_FIAT_CURRENCY.toLocaleLowerCase() })}
                   placeholder={t("send.amount.placeholder")}
                   value={inputValue}
                   onChange={(e) => {
@@ -298,9 +299,9 @@ export default function SendPage() {
                   className="px-2 h-16 flex items-end justify-center"
                   onClick={toggleIsSats}
                   type="button"
-                  disabled={!isFiatRateAvailable}
+                  disabled={!isUsdRateAvailable}
                 >
-                  <ArrowDownUp opacity={!isFiatRateAvailable ? 0.5 : 1 }/>
+                  <ArrowDownUp opacity={!isUsdRateAvailable ? 0.5 : 1 }/>
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-3">
@@ -373,9 +374,9 @@ export default function SendPage() {
                   {amountSat.toLocaleString()}
                 </p>
                 <p className="text-lg text-gray-600 dark:text-gray-400">{t("send.sats")}</p>
-                {fiatRate !== undefined && (
+                {usdRate !== undefined && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    ≈ {convertSatsToFiat({sats: amountSat, ratePerBtc: fiatRate, currency: fiatCurrency})}
+                    ≈ {convertSatsToFiat({sats: amountSat, ratePerBtc: usdRate, currency: DEFAULT_FIAT_CURRENCY})}
                   </p>
                 )}
               </div>

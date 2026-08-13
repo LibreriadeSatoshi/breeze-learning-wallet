@@ -4,6 +4,7 @@ import { useT } from '@/lib/i18n/hook';
 import { usdbTicker } from '@/lib/lightning/breez-service';
 import { Balances } from '@/lib/lightning/types';
 import { convertSatsToFiat } from '@/lib/wallet/format-fiat';
+import { DEFAULT_FIAT_CURRENCY } from '@/lib/wallet/prefs';
 import { useWalletStore } from '@/store/wallet-store';
 import { Eye, EyeOff } from 'lucide-react';
 import React from 'react';
@@ -43,7 +44,7 @@ export function formatTokenToUSD({amount, decimals = 6, fraction = 2}: {amount: 
   
   return new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency: "USD",
+    currency: DEFAULT_FIAT_CURRENCY,
     minimumFractionDigits: fraction,
     maximumFractionDigits: fraction
   }).format(numericBalance);
