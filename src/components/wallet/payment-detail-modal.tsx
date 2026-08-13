@@ -6,9 +6,9 @@ import type { Payment } from "@/lib/lightning/types";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat } from "@/lib/wallet/format-fiat";
+import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
-import { SensitiveAmount } from "./balance-display";
+import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
 
 const statusStyles = {
   pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
@@ -17,8 +17,8 @@ const statusStyles = {
 } as const;
 
 interface PaymentDetailModalProps {
-  payment: Payment | null;
-  onClose: () => void;
+  readonly payment: Payment | null;
+  readonly onClose: () => void;
 }
 
 export function PaymentDetailModal({ payment, onClose }: PaymentDetailModalProps) {
@@ -30,26 +30,58 @@ export function PaymentDetailModal({ payment, onClose }: PaymentDetailModalProps
   );
 }
 
+function getFiatData(payment: Payment, fiatRate: number | undefined, fiatCurrency: string) {
+  const sats = payment.amount;
+  const feeSats = payment.fees;
+
+  const amountFiat = fiatRate !== undefined ? convertSatsToFiat({ sats: sats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
+  const feeFiat = fiatRate !== undefined && feeSats > 0 ? convertSatsToFiat({ sats: feeSats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
+
+  return { amountFiat, feeFiat };
+}
+
 function PaymentDetailContent({
   payment,
   onClose,
 }: {
-  payment: Payment;
-  onClose: () => void;
+  readonly payment: Payment;
+  readonly onClose: () => void;
 }) {
   const t = useT();
-  const sats = payment.amountSat;
-  const feeSats = payment.feeSat;
   const isReceived = payment.paymentType === "received";
+  const isToken = payment.method === "token";
   const date = new Date(payment.paymentTime * 1000);
-  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
-  const amountFiat =
-    fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
-    const feeFiat =
-    fiatRate !== undefined && feeSats > 0
-    ? formatFiat(feeSats, fiatRate, fiatCurrency)
-    : null;
 
+  const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
+
+  const amount = payment.amount
+  const amountSats = estimateSats(payment.amount, usdRate || 0); 
+  const { amountFiat } = getFiatData(payment, fiatRate, fiatCurrency)
+
+  let feeSats = payment.fees || 0;
+  let feeUSD;
+
+  if (payment.conversionDetails) {
+    const { from, to } = payment.conversionDetails;
+    
+    const fromFee = from?.fee || 0;
+    const toFee = to?.fee || 0;
+
+    if (from?.ticker === "BTC") {
+      feeSats += fromFee + estimateSats(toFee, usdRate, to?.decimals);
+      feeUSD = formatTokenToUSD({ amount: toFee, fraction: 6 });
+
+    } else if (to?.ticker === "BTC") {
+      feeSats += toFee + estimateSats(fromFee, usdRate, from?.decimals);
+      feeUSD = formatTokenToUSD({ amount: fromFee, fraction: 6 });
+
+    } else {
+      feeUSD = convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6 });
+    }
+  } else {
+    feeUSD = convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6 });
+  }
+  
   return (
     <div className="space-y-5">
       <div className="text-center">
@@ -70,12 +102,12 @@ function PaymentDetailContent({
           }`}
         >
           {isReceived ? "+" : "-"}
-          <SensitiveAmount>{sats.toLocaleString()}</SensitiveAmount>
+          <SensitiveAmount>{isToken ? `${formatTokenToUSD({amount: amount}).replace("$", "")}` : amount.toLocaleString()}</SensitiveAmount>
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">{t("send.sats")}</div>
+        <div className="text-sm text-gray-500 dark:text-gray-400">{isToken ? payment.conversionDetails?.to.ticker : t("send.sats")}</div>
         {amountFiat && (
             <SensitiveAmount className="text-sm text-gray-500 dark:text-gray-400 mt-1"> 
-              ≈ {amountFiat}
+              ≈ {isToken ? `${amountSats} sats` : amountFiat}
             </SensitiveAmount>
         )}
         <span
@@ -90,17 +122,16 @@ function PaymentDetailContent({
         <DetailRow
           label={t("paymentDetail.fee")}
           value={
-            feeFiat
-              ? (<>
-              <SensitiveAmount>
-                {feeSats.toLocaleString()}
-              </SensitiveAmount>{" "}
-              {t("send.sats")}{" · ≈ "}
-              <SensitiveAmount>
-                {feeFiat}
-              </SensitiveAmount>
-              </>)
-              : `${feeSats.toLocaleString()} ${t("send.sats")}`
+              <>
+                <SensitiveAmount>
+                  {`${feeSats}  ${t("send.sats")}`}
+                </SensitiveAmount>
+                {" "}
+                {" · ≈ "}
+                <SensitiveAmount>
+                  {`${feeUSD}`}
+                </SensitiveAmount>
+              </>
           }
         />
         <DetailRow
@@ -125,15 +156,17 @@ function PaymentDetailContent({
   );
 }
 
+interface DetailRowProps {
+  readonly label: string;
+  readonly value: string | ReactElement;
+  readonly wrap?: boolean;
+}
+
 function DetailRow({
   label,
   value,
   wrap = false,
-}: {
-  label: string;
-  value: string | ReactElement;
-  wrap?: boolean;
-}) {
+}: DetailRowProps) {
   return (
     <div className="py-3 flex items-start gap-4">
       <dt className="text-gray-500 dark:text-gray-400 shrink-0">{label}</dt>
@@ -148,7 +181,12 @@ function DetailRow({
   );
 }
 
-function CopyRow({ label, value }: { label: string; value: string }) {
+interface CopyRowProps {
+  readonly label: string;
+  readonly value: string;
+}
+
+function CopyRow({ label, value }: CopyRowProps) {
   const t = useT();
   const [copied, setCopied] = useState(false);
   const truncated = value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;

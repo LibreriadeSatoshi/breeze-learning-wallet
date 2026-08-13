@@ -11,5 +11,6 @@ export function useFiat(enabled: boolean = true) {
   }, []);
 
   const rate = rates.find((r) => r.coin === currency)?.value;
-  return { rate, currency };
+  const estableRate = rates.find((r) => r.coin === "USD")?.value;
+  return { rate, currency, estableRate };
 }

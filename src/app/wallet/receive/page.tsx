@@ -28,7 +28,7 @@ import {
 import { onSdkEvent } from "@/lib/lightning/breez-service";
 import { generateRandomUsername } from "@/lib/wallet/username";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat } from "@/lib/wallet/format-fiat";
+import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 import { EditUsernameModal } from "@/components/wallet/edit-username-modal";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
@@ -305,7 +305,7 @@ function InvoiceCreator({
   const amountSat = parseInt(amount, 10) || 0;
   const fiatPreview =
     amountSat > 0 && fiatRate !== undefined
-      ? formatFiat(amountSat, fiatRate, fiatCurrency)
+      ? convertSatsToFiat({sats:amountSat, ratePerBtc: fiatRate, currency: fiatCurrency})
       : null;
   const receiveMutation = useReceiveLightning();
 

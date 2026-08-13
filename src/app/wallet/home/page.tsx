@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowDownToLine,
+  ArrowDownUp,
   ArrowUpFromLine,
   CreditCard,
   Key,
@@ -11,32 +12,30 @@ import {
   Settings as SettingsIcon,
   TriangleAlert,
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { useWalletStore } from "@/store/wallet-store";
-import {
-  BalanceDisplay,
-} from "@/components/wallet/balance-display";
+import { BalanceDisplay } from "@/components/wallet/balance-display";
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { TransactionList } from "@/components/wallet/transaction-list";
 import { PaymentDetailModal } from "@/components/wallet/payment-detail-modal";
 import { BuyBitcoinModal } from "@/components/wallet/buy-bitcoin-modal";
 import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
-import { onSdkEvent } from "@/lib/lightning/breez-service";
+import {
+  onSdkEvent,
+  usdbTicker,
+} from "@/lib/lightning/breez-service";
 import { signInWithPasskey, seedToMnemonic } from "@/lib/auth/passkey";
 import {
-  useBalance,
-  usePayments,
-  useUnclaimedDeposits,
-  useRefreshBreez,
+  useSwapFee,
 } from "@/hooks/use-breez";
-import { useFiat } from "@/hooks/use-fiat";
 import { useT } from "@/lib/i18n/hook";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
-import type { Payment } from "@/lib/lightning/types";
+import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
+import { useWalletData } from "@/hooks/use-wallet-data";
+import { useWalletStore } from "@/store/wallet-store";
 
 const CONN_DOT: Record<"offline" | "syncing" | "synced" | "failed", string> = {
   offline: "bg-gray-400",
@@ -50,14 +49,6 @@ export default function WalletHomePage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
-  const isUnlocked = useWalletStore((s) => s.isUnlocked);
-  const lock = useWalletStore((s) => s.lock);
-  const bootstrap = useWalletStore((s) => s.bootstrap);
-  const isBootstrapped = useWalletStore((s) => s.isBootstrapped);
-  const verifyPasswordAndReveal = useWalletStore((s) => s.verifyPasswordAndReveal);
-  const authMode = useWalletStore((s) => s.authMode);
-  const getMnemonic = useWalletStore((s) => s.getMnemonic);
-
   const [isReady, setIsReady] = useState(false);
   const initializingRef = useRef(false);
   const [conn, setConn] = useState<"offline" | "syncing" | "synced" | "failed">("offline");
@@ -65,21 +56,49 @@ export default function WalletHomePage() {
 
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSeedModal, setShowSeedModal] = useState(false);
+  const [showSwapModal, setShowSwapModal] = useState(false);
   const [seedPassword, setSeedPassword] = useState("");
   const [seedError, setSeedError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [revealedSeed, setRevealedSeed] = useState<string[] | null>(null);
+  const [isStableBalance, setIsStableBalance] = useState(false);
 
+  const {isUnlocked, lock, bootstrap, isBootstrapped, verifyPasswordAndReveal, authMode, getMnemonic} = useWalletStore()
 
-  const { data: balance, isLoading: balanceLoading } = useBalance(isReady);
-  const { data: payments = [], isLoading: paymentsLoading } =
-    usePayments(isReady);
-  const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
-  const { refresh } = useRefreshBreez();
-  const { rate: fiatRate, currency: selectedCurrency } = useFiat(isReady);
+  const {
+    balances,
+    balanceLoading,
+    payments,
+    paymentsLoading,
+    rejectedDeposits,
+    fiatRate,
+    selectedCurrency,
+    estableRate: usdRate,
+    toggleStableAsync,
+    isSwapPending,
+    isSwapError,
+    conversionLimits,
+    convertionLimitLoading,
+    userSettings,
+    userSettingsLoading,
+    unclaimedDeposits,
+    refresh,
+  } = useWalletData(isReady);
 
-  const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
+  const token = balances?.tokenUSDB;
+  const ticker = token?.tokenMetadata?.ticker ?? usdbTicker;
+
   const needsAttention = rejectedDeposits.length;
+  const { 
+  data: conversionFeeUSD,
+  isLoading: isEstimating 
+} = useSwapFee({ 
+  enabled: showSwapModal && usdRate !== undefined && usdRate !== 0,
+  balances: balances as Balances,
+  userSettings: userSettings as UserSettings,
+  usdRate: usdRate as number,
+  conversionLimits: conversionLimits as ConversionLimits
+});
 
   useEffect(() => {
     setMounted(true);
@@ -140,6 +159,14 @@ export default function WalletHomePage() {
     return onSdkEvent(handleEvent);
   }, [isReady, refresh]);
 
+  useEffect(() => {
+    if (userSettings?.stableBalanceActiveLabel === usdbTicker) {
+      setIsStableBalance(true);
+    } else {
+      setIsStableBalance(false);
+    }
+  }, [userSettings]);
+
   const handleLock = () => {
     lock();
     router.push("/welcome");
@@ -190,7 +217,49 @@ export default function WalletHomePage() {
 
   if (!mounted || !isUnlocked) return null;
 
-  const isLoading = balanceLoading || paymentsLoading;
+  const canConvert = () => {
+  const { fromBitcoin, toBitcoin } = conversionLimits ?? {};
+
+    if (!isStableBalance) {
+      const min = BigInt(fromBitcoin?.minFromAmount ?? 0);
+      const current = BigInt(balances?.totalSats ?? 0);
+      return min > BigInt(0) && current >= min;
+    } else {
+      const min = BigInt(toBitcoin?.minFromAmount ?? 0);
+      const current = BigInt(token?.balance ?? 0);
+      return min > BigInt(0) && current >= min;
+    }
+  };
+
+  const handleSwap = async () => {
+    try {
+      const nextState = !isStableBalance;
+
+      await toggleStableAsync({
+        enable: nextState,
+        label: usdbTicker,
+      });
+
+      await refresh();
+
+      setIsStableBalance(nextState);
+      setShowSwapModal(false);
+    } catch (err) {
+      console.error("Error toggling stable balance: ", err);
+    }
+  };
+  const formatConversionFee = (amount: number | null | undefined) => {
+    if (!amount || amount === null || amount === undefined) return "";
+
+    const formattedAmount = amount.toLocaleString(undefined, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: amount == 0 ? 2 : 6,
+    });
+    return formattedAmount;
+    
+  }
+  const isLoading = balanceLoading || paymentsLoading ||isSwapPending || userSettingsLoading || convertionLimitLoading;
 
   return (
     <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
@@ -225,7 +294,17 @@ export default function WalletHomePage() {
                   <span className="hidden sm:inline">{t("home.buy")}</span>
                 </button>
               )}
-              <button type="button"
+              <button
+                type="button"
+                onClick={() => setShowSwapModal(true)}
+                disabled={isLoading}
+                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
+              >
+                <ArrowDownUp className="w-4 h-4" />
+                <span>{isStableBalance ? ticker : "BTC"}</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowSeedModal(true)}
                 className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
                 aria-label={t("home.phraseAria")}
@@ -251,9 +330,12 @@ export default function WalletHomePage() {
             </div>
           </div>
           <BalanceDisplay
-            balanceSat={balance?.totalSats ?? 0}
+            balanceSat={balances?.totalSats || 0}
             fiatRate={fiatRate}
             fiatCurrency={selectedCurrency}
+            token={token}
+            isStableBalance={isStableBalance}
+            usdRate={usdRate}
           />
         </div>
       </div>
@@ -331,7 +413,61 @@ export default function WalletHomePage() {
         onClose={() => setSelectedPayment(null)}
       />
 
-      {showBuyModal && <BuyBitcoinModal onClose={() => setShowBuyModal(false)} />}
+      {showBuyModal && (
+        <BuyBitcoinModal onClose={() => setShowBuyModal(false)} />
+      )}
+
+      {showSwapModal && (
+        <Modal
+          open={showSwapModal}
+          onClose={() => setShowSwapModal(false)}
+          title={t("home.swap.title", { token: isStableBalance ? "sats" : ticker})}
+          description={t("home.swap.description", { token: isStableBalance ? "sats" : ticker})}
+        >
+          <div className="py-4 text-center">
+            {canConvert() ? (
+              <div className="space-y-1">
+                <p className="text-sm text-gray-400">
+                  {t("home.swap.conversionFee")}{" "}
+                  <span className="text-white font-medium">
+                    {isEstimating ? (
+                      <span className="animate-pulse">{t("home.swap.calculatingFee")}</span>
+                    ) : (
+                      formatConversionFee(conversionFeeUSD)
+                    )}
+                  </span>
+                </p>
+                {isSwapError && (
+                  <p className="text-sm text-amber-500 dark:text-amber-400">
+                    {t("home.swap.unknownError")}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-amber-500 dark:text-amber-400">
+                {t("home.swap.insufficientBalance")}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-center gap-4 w-full mt-2">
+            <Button
+              className="flex-1 py-2.5 px-4 font-medium rounded-xl transition-colors"
+              onClick={() => setShowSwapModal(false)}
+              disabled={isEstimating}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              className="flex-1 py-2.5 px-4 font-medium rounded-xl transition-colors"
+              onClick={handleSwap}
+              disabled={isEstimating}
+            >
+              {t("common.confirm")}
+            </Button>
+          </div>
+        </Modal>
+      )}
 
       <Modal
         open={showSeedModal}

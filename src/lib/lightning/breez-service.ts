@@ -15,8 +15,9 @@ import type {
   Payment as SdkPayment,
   BuyBitcoinRequest,
   BuyBitcoinResponse,
+  Conversion,
 } from "@breeztech/breez-sdk-spark";
-import type { Payment } from "./types";
+import type { Balances, ConversionLimits, Payment, UserSettings } from "./types";
 
 type SparkSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-spark").connect>>;
 
@@ -29,6 +30,8 @@ let activeMnemonic: string | null = null;
 
 type EventCallback = (event: SdkEvent) => void;
 const eventCallbacks: EventCallback[] = [];
+
+export const USDB_TOKEN_IDENTIFIER = 'btkn1xgrvjwey5ngcagvap2dzzvsy4uk8ua9x69k82dwvt5e7ef9drm9qztux87'
 
 async function getBreezApiKey(): Promise<string> {
   if (cachedApiKey) return cachedApiKey;
@@ -56,6 +59,8 @@ export interface BreezSparkConfig {
   lnurlDomain?: string;
   claimLeewaySatPerVbyte?: number;
 }
+
+export const usdbTicker = "USDB";
 
 export async function initBreez(config: BreezSparkConfig): Promise<void> {
   if (isInitializing) return;
@@ -85,6 +90,13 @@ export async function initBreez(config: BreezSparkConfig): Promise<void> {
         type: "networkRecommended",
         leewaySatPerVbyte: config.claimLeewaySatPerVbyte,
       };
+    }
+
+    sdkConfig.stableBalanceConfig = {
+      tokens: [{
+        label: usdbTicker,
+        tokenIdentifier: USDB_TOKEN_IDENTIFIER
+      }]
     }
 
     if (!config.mnemonic) {
@@ -147,15 +159,130 @@ export async function getNodeState(): Promise<{ id?: string } | null> {
   }
 }
 
-export async function getBalance(): Promise<{ totalSats: number }> {
+export async function getBalance(): Promise<Balances> {
   if (!sdk) return { totalSats: 0 };
+  
   try {
     const info = await sdk.getInfo({});
-    return { totalSats: info.balanceSats };
+    const USDB_TOKEN = info.tokenBalances.get(USDB_TOKEN_IDENTIFIER);
+
+    return { 
+      totalSats: info.balanceSats || 0, 
+      tokenUSDB: USDB_TOKEN ? {balance: Number(USDB_TOKEN.balance), tokenMetadata: USDB_TOKEN.tokenMetadata} : undefined
+    };
   } catch (error) {
     console.error("Failed to get balance:", error);
     return { totalSats: 0 };
   }
+}
+
+export async function enableStableBalance(label: string): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  await sdk.updateUserSettings({
+    stableBalanceActiveLabel: { type: 'set', label },
+  });
+}
+
+export async function disableStableBalance(): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  await sdk.updateUserSettings({
+    stableBalanceActiveLabel: { type: 'unset' },
+  });
+}
+
+export async function fetchConversionLimits() {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  const fromBitcoinResponse = await sdk.fetchConversionLimits({
+    conversionType: { type: 'fromBitcoin' },
+    tokenIdentifier: USDB_TOKEN_IDENTIFIER
+  })
+
+  const toBitcoinResponse = await sdk.fetchConversionLimits({
+    conversionType: {
+      type: 'toBitcoin',
+      fromTokenIdentifier: USDB_TOKEN_IDENTIFIER
+    },
+    tokenIdentifier: undefined
+  })
+  
+  return {
+    fromBitcoin: fromBitcoinResponse,
+    toBitcoin: toBitcoinResponse
+  }
+}
+
+export interface EstimatedSwapFeeParams {
+  userSettings: UserSettings,
+  usdRate: number,
+  balances: Balances,
+  conversionLimits?: ConversionLimits
+}
+
+export const estimateSwapFee = async ({userSettings, usdRate, balances, conversionLimits}: EstimatedSwapFeeParams): Promise<number | null> => {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  const isStableBalance = userSettings.stableBalanceActiveLabel !== undefined;
+  
+  const currentBalance = isStableBalance 
+    ? balances?.tokenUSDB?.balance || BigInt(0)
+    : BigInt(balances.totalSats || 0);
+
+  const limits = isStableBalance 
+    ? conversionLimits?.toBitcoin 
+    : conversionLimits?.fromBitcoin;
+
+  const minFromAmount = BigInt(limits?.minFromAmount ?? 0);
+  const minToAmount = BigInt(limits?.minToAmount ?? 0);
+
+  if (currentBalance === BigInt(0) || minFromAmount === BigInt(0) || currentBalance < minFromAmount) {
+    return null; 
+  }
+
+  let amount: bigint;
+  if (!isStableBalance) {
+    const fiatValue = (Number(currentBalance) / 100_000_000) * usdRate;
+    amount = BigInt(Math.round(fiatValue * 1_000_000));
+  } else {
+    const satsValue = (Number(currentBalance) / 1_000_000 / usdRate) * 100_000_000;
+    amount = BigInt(Math.round(satsValue));
+  }
+
+  if (minToAmount > BigInt(0) && amount < minToAmount) {
+    return null;
+  }
+
+  try {
+    const receiveResponse = await sdk.receivePayment({
+      paymentMethod: { type: "sparkAddress" }, 
+    });
+
+    const prepareResponse = await sdk.prepareSendPayment({
+      paymentRequest: { type: "input", input: receiveResponse.paymentRequest },
+      amount,
+      tokenIdentifier: !isStableBalance ? USDB_TOKEN_IDENTIFIER : undefined,
+      conversionOptions: !isStableBalance
+        ? { conversionType: { type: "fromBitcoin" as const } }
+        : { conversionType: { type: "toBitcoin" as const, fromTokenIdentifier: USDB_TOKEN_IDENTIFIER } }
+    });
+
+    if (prepareResponse.conversionEstimate) {
+      const feeInUSD = Number(prepareResponse.conversionEstimate.fee) / 1_000_000;
+      return feeInUSD; 
+    }
+  } catch (e) {
+    console.warn("Estimation failed: ", e);
+  }
+
+  return null;
+};
+
+
+export async function getUserSettings(): Promise<UserSettings> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.getUserSettings();
 }
 
 export async function parseInput(input: string): Promise<InputType> {
@@ -291,22 +418,55 @@ export async function recommendedFees(): Promise<RecommendedFees> {
 
 function mapPayment(p: SdkPayment): Payment {
   const lightning = p.details?.type === "lightning" ? p.details : null;
-  return {
+  const statusFailed = p.status === "failed"
+          ? "failed"
+          : "pending"
+
+  let personalized_payment: Partial<Payment> = {
     id: p.id,
     paymentType: p.paymentType === "send" ? "sent" : "received",
     paymentTime: p.timestamp,
-    amountSat: Number(p.amount),
-    feeSat: Number(p.fees),
-    status:
-      p.status === "completed"
-        ? "complete"
-        : p.status === "failed"
-          ? "failed"
-          : "pending",
+    amount: Number(p.amount),
+    fees: Number(p.fees),
+    status: p.status === "completed"
+        ? "complete" : statusFailed,
     description: lightning?.description,
     bolt11: lightning?.invoice,
     method: p.method,
   };
+
+  if (p.details?.type !== "withdraw" && p.details?.type !== "deposit" && p.details?.conversionInfo?.type === "amm") {
+    if (p.conversionDetails?.conversions !== undefined && p.conversionDetails?.conversions?.length > 0) {
+      let conversions = p?.conversionDetails?.conversions.map((conversion: Conversion) => {
+        return {
+          from: {
+            amount: Number(conversion?.from?.amount),
+            fee: Number(conversion?.from?.fee),
+            ticker: conversion?.from.asset.ticker,
+            decimals: conversion?.from.asset.decimals
+          },
+          to: {
+            amount: Number(conversion?.to?.amount),
+            fee: Number(conversion?.to?.fee),
+            ticker: conversion.to.asset.ticker,
+            decimals: conversion?.to.asset.decimals
+          }
+        }
+      })
+
+      let conversionDetails = {
+      status: p?.conversionDetails?.status,
+      from: conversions[0].from,
+      to: conversions[0].to,
+      }
+
+      personalized_payment.conversionDetails = conversionDetails
+    }
+    personalized_payment.purpose = p.details?.conversionInfo?.purpose?.type;
+
+  }
+  
+  return personalized_payment as Payment
 }
 
 export async function listPayments(): Promise<Payment[]> {
