@@ -4,9 +4,9 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Payment } from "@/lib/lightning/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat } from "@/lib/wallet/format-fiat";
+import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
-import { SensitiveAmount } from "./balance-display";
+import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
 
 const statusColors = {
   pending: "text-yellow-600 dark:text-yellow-400",
@@ -15,8 +15,8 @@ const statusColors = {
 };
 
 interface TransactionListProps {
-  payments: Payment[];
-  onPaymentClick?: (payment: Payment) => void;
+  readonly payments: Payment[];
+  readonly onPaymentClick?: (payment: Payment) => void;
 }
 
 export function TransactionList({
@@ -63,24 +63,30 @@ export function TransactionList({
 }
 
 interface TransactionItemProps {
-  payment: Payment;
-  onClick?: () => void;
+  readonly payment: Payment;
+  readonly onClick?: () => void;
 }
 
 function TransactionItem({ payment, onClick }: TransactionItemProps) {
   const t = useT();
-  const sats = payment.amountSat;
+  const sats = payment.amount || 0;
   const date = new Date(payment.paymentTime * 1000);
   const isReceived = payment.paymentType === "received";
-  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const isToken = payment.method === "token";
+  const { rate: fiatRate, estableRate: usdRate, currency: fiatCurrency } = useFiat(true);
   const fiat =
-    fiatRate !== undefined ? formatFiat(sats, fiatRate, fiatCurrency) : null;
+    fiatRate !== undefined ? convertSatsToFiat({ sats: sats, ratePerBtc: fiatRate, currency: fiatCurrency }) : null;
 
   const statusLabels: Record<typeof payment.status, string> = {
     pending: t("transactions.statusPending"),
     complete: "",
     failed: t("transactions.statusFailed"),
   };
+
+  const isConversion = payment.purpose === "autoConversion"
+  const ticker = payment.conversionDetails?.to?.ticker || ""
+  const defaultMessage = payment.description || (isReceived ? t("transactions.receivedDefault") : t("transactions.sentDefault"))
+  const conversionMessage = ticker == "BTC" ? t("transactions.conversion.bitcoin") : t("transactions.conversion.token", {token: ticker})
 
   return (
     <button
@@ -102,8 +108,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <div className="font-medium truncate min-w-0">
-                {payment.description ||
-                  (isReceived ? t("transactions.receivedDefault") : t("transactions.sentDefault"))}
+                {isConversion ? conversionMessage : defaultMessage}
               </div>
               {statusLabels[payment.status] && (
                 <span className={`text-xs font-medium shrink-0 ${statusColors[payment.status]}`}>
@@ -130,13 +135,13 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
           >
           {isReceived ? "+" : "-"}
           <SensitiveAmount>
-              {sats.toLocaleString()}
+              {isToken ? formatTokenToUSD({amount: sats}) : sats.toLocaleString()}
           </SensitiveAmount>
           </div>
-          <div className="text-xs text-gray-500">sats</div>
+          <div className="text-xs text-gray-500">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>
           {fiat && (
               <SensitiveAmount className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                ≈ {fiat}
+                ≈ {isToken ? <>{estimateSats(sats, usdRate)} {t("send.sats")}</> : fiat}
               </SensitiveAmount>
           )}
         </div>

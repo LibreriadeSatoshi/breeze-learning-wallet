@@ -2,6 +2,7 @@
   "common": {
     "back": "Atrás",
     "cancel": "Cancelar",
+    "confirm": "Confirmar",
     "continue": "Continuar",
     "save": "Guardar",
     "copy": "Copiar",
@@ -219,6 +220,17 @@
       "verifyWithPasskey": "Verificar",
       "passkeyFailed": "No se pudo verificar con la passkey. Intenta de nuevo.",
       "passkeyMismatch": "Esa passkey pertenece a otra billetera. Usa la passkey con la que creaste esta billetera."
+    },
+    "swap": {
+      "title": "Convertir a {{token}}",
+      "description": "Tu balance será convertido a {{token}}",
+      "conversionFee": "Tarifa de conversión:",
+      "calculatingFee": "Calculando...",
+      "insufficientBalance": "Saldo insuficiente para convertirlo — se mantendrá como cambio",
+      "unknownError": "Ha ocurrido un error. Inténtalo más tarde"
+    },
+    "balance": {
+      "change": "Cambio"
     }
   },
   "send": {
@@ -413,7 +425,11 @@
     "receivedDefault": "Pago recibido",
     "sentDefault": "Pago enviado",
     "statusPending": "Pendiente",
-    "statusFailed": "Fallido"
+    "statusFailed": "Fallido",
+    "conversion": {
+      "token": "Conversión a {{token}}",
+      "bitcoin": "Conversión a Bitcoin"
+    }
   },
   "paymentDetail": {
     "title": "Detalles del pago",

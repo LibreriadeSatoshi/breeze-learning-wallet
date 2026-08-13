@@ -14,15 +14,18 @@ import {
   useExecuteSend,
   usePrepareLnurlPay,
   useExecuteLnurlPay,
+  useUserSettings,
 } from "@/hooks/use-breez";
 import { useFiat } from "@/hooks/use-fiat";
-import { formatFiat, SATS_PER_BTC } from "@/lib/wallet/format-fiat";
+import { convertSatsToFiat, SATS_PER_BTC } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
-import type {
-  PrepareSendResult,
-  PrepareLnurlPayResult,
+import {
+  type PrepareSendResult,
+  type PrepareLnurlPayResult,
+  usdbTicker,
 } from "@/lib/lightning/breez-service";
 import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
+import { estimateSats } from "@/components/wallet/balance-display";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -49,15 +52,19 @@ export default function SendPage() {
   const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
 
-  const { data: balance } = useBalance(true);
-  const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
+  const { data: balances } = useBalance(true);
+  const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
+  const {data: userSettings} = useUserSettings(true);
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
   const executeMutation = useExecuteSend();
   const prepareLnurlMutation = usePrepareLnurlPay();
   const executeLnurlMutation = useExecuteLnurlPay();
 
-  const balanceSat = balance?.totalSats ?? 0;
+  const isStableBalance = userSettings?.stableBalanceActiveLabel === usdbTicker;
+
+  const tokenUSDB = balances?.tokenUSDB;
+  const totalBalanceSats = (estimateSats(tokenUSDB?.balance || 0, usdRate, tokenUSDB?.tokenMetadata?.decimals) || 0) + (balances?.totalSats || 0);
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");
@@ -137,10 +144,10 @@ export default function SendPage() {
           destinationKind: destinationKindForParsed(parsed),
         };
       }
-
       const sendAmountSat = readAmountSat(prep);
-      if (sendAmountSat !== null && sendAmountSat > balanceSat) {
-        setError(t("send.insufficientBalance", { balance: balanceSat.toLocaleString() }));
+
+      if (sendAmountSat !== null && sendAmountSat > totalBalanceSats) {
+        setError(t("send.insufficientBalance", { balance: totalBalanceSats.toLocaleString() }));
         return;
       }
       setPrepareResult(prep);
@@ -252,7 +259,9 @@ export default function SendPage() {
                   {t("send.available")}
                 </p>
                 <p className="text-3xl font-bold text-orange-500">
-                  {balanceSat.toLocaleString()} {t("send.sats")}
+                  {isStableBalance
+                  ? convertSatsToFiat({ sats: totalBalanceSats, ratePerBtc: usdRate || 0 })
+                  : <>{totalBalanceSats.toLocaleString()} {t("send.sats")}</>}
                 </p>
               </div>
             </CardContent>
@@ -366,7 +375,7 @@ export default function SendPage() {
                 <p className="text-lg text-gray-600 dark:text-gray-400">{t("send.sats")}</p>
                 {fiatRate !== undefined && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    ≈ {formatFiat(amountSat, fiatRate, fiatCurrency)}
+                    ≈ {convertSatsToFiat({sats: amountSat, ratePerBtc: fiatRate, currency: fiatCurrency})}
                   </p>
                 )}
               </div>
