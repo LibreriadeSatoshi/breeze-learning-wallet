@@ -1,3 +1,5 @@
+import { DEFAULT_FIAT_CURRENCY } from "./prefs";
+
 export const SATS_PER_BTC = 100_000_000;
 
 // Format a sat amount as fiat using the given rate (price of 1 BTC in fiat).
@@ -6,7 +8,7 @@ export const SATS_PER_BTC = 100_000_000;
 export function convertSatsToFiat({
   sats,
   ratePerBtc,
-  currency = "USD",
+  currency = DEFAULT_FIAT_CURRENCY,
   fractionDigits = 2,
 }: {sats: number; ratePerBtc: number; currency?: string; fractionDigits?: number}): string {
   const fiat = (sats / SATS_PER_BTC) * ratePerBtc;

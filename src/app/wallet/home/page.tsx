@@ -36,6 +36,7 @@ import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
 import { useWalletData } from "@/hooks/use-wallet-data";
 import { useWalletStore } from "@/store/wallet-store";
+import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
 
 const CONN_DOT: Record<"offline" | "syncing" | "synced" | "failed", string> = {
   offline: "bg-gray-400",
@@ -253,7 +254,7 @@ export default function WalletHomePage() {
 
     const formattedAmount = amount.toLocaleString(undefined, {
       style: "currency",
-      currency: "USD",
+      currency: DEFAULT_FIAT_CURRENCY,
       minimumFractionDigits: amount == 0 ? 2 : 6,
     });
     return formattedAmount;

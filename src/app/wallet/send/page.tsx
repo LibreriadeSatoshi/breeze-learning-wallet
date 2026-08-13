@@ -26,6 +26,7 @@ import {
 } from "@/lib/lightning/breez-service";
 import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
 import { estimateSats } from "@/components/wallet/balance-display";
+import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -40,8 +41,6 @@ type SendDestinationKind =
   | "sparkAddress"
   | "sparkInvoice"
   | "bip21";
-
-export const USD_CURRENCY = "USD"; 
 
 export default function SendPage() {
   const t = useT();
@@ -287,7 +286,7 @@ export default function SendPage() {
               />
               <div className="flex flex-row">
                 <Input
-                  label={isSats ? t("send.amount.label") : t("send.amount.fiat", { currency: USD_CURRENCY.toLocaleLowerCase() })}
+                  label={isSats ? t("send.amount.label") : t("send.amount.fiat", { currency: DEFAULT_FIAT_CURRENCY.toLocaleLowerCase() })}
                   placeholder={t("send.amount.placeholder")}
                   value={inputValue}
                   onChange={(e) => {
@@ -377,7 +376,7 @@ export default function SendPage() {
                 <p className="text-lg text-gray-600 dark:text-gray-400">{t("send.sats")}</p>
                 {usdRate !== undefined && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    ≈ {convertSatsToFiat({sats: amountSat, ratePerBtc: usdRate, currency: USD_CURRENCY})}
+                    ≈ {convertSatsToFiat({sats: amountSat, ratePerBtc: usdRate, currency: DEFAULT_FIAT_CURRENCY})}
                   </p>
                 )}
               </div>

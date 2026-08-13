@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useFiatRates } from "@/hooks/use-breez";
-import { getSelectedCurrency } from "@/lib/wallet/prefs";
+import { DEFAULT_FIAT_CURRENCY, getSelectedCurrency } from "@/lib/wallet/prefs";
 
 export function useFiat(enabled: boolean = true) {
   const { data: rates = [] } = useFiatRates(enabled);
@@ -11,6 +11,6 @@ export function useFiat(enabled: boolean = true) {
   }, []);
 
   const rate = rates.find((r) => r.coin === currency)?.value;
-  const estableRate = rates.find((r) => r.coin === "USD")?.value;
+  const estableRate = rates.find((r) => r.coin === DEFAULT_FIAT_CURRENCY)?.value;
   return { rate, currency, estableRate };
 }
