@@ -1,5 +1,7 @@
 export const APP_NAME = 'Satoshi Scholar';
 
+export const COURSES_URL = 'https://moodle.libreriadesatoshi.com/';
+
 export type SparkNetwork = 'mainnet' | 'regtest';
 
 export const SELECTED_BITCOIN_NETWORK: SparkNetwork =

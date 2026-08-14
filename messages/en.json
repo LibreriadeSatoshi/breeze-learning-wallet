@@ -203,7 +203,8 @@
     },
     "actions": {
       "send": "Send",
-      "receive": "Receive"
+      "receive": "Receive",
+      "courses": "Librería courses"
     },
     "recent": {
       "title": "Recent Activity",
