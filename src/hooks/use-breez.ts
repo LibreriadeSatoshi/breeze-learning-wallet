@@ -6,8 +6,10 @@ import {
   prepareSend,
   executeSend,
   receiveLightning,
+  receiveSpark,
   parseInput,
   getBitcoinAddress,
+  getSparkAddress,
   listUnclaimedDeposits,
   claimDeposit,
   refundDeposit,
@@ -54,6 +56,7 @@ const breezKeys = {
   payments: () => [...breezKeys.all, "payments"] as const,
   unclaimedDeposits: () => [...breezKeys.all, "unclaimedDeposits"] as const,
   lightningAddress: () => [...breezKeys.all, "lightningAddress"] as const,
+  sparkAddress: () => [...breezKeys.all, "sparkAddress"] as const,
   fiatCurrencies: () => [...breezKeys.all, "fiatCurrencies"] as const,
   fiatRates: () => [...breezKeys.all, "fiatRates"] as const,
   conversionLimits: () => [...breezKeys.all, "convertionLimits"] as const,
@@ -223,6 +226,22 @@ export function useReceiveLightning() {
   });
 }
 
+export function useReceiveSpark() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      amountSat,
+      description,
+    }: {
+      amountSat: number;
+      description: string;
+    }) => receiveSpark(amountSat, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
+    },
+  });
+}
+
 export function useParseInput() {
   return useMutation({
     mutationFn: async (input: string) => parseInput(input),
@@ -309,6 +328,15 @@ export function useFiatRates(enabled: boolean = true) {
     enabled,
     refetchInterval: enabled ? 60_000 : false,
     staleTime: 30_000,
+  });
+}
+
+export function useSparkAddress(enabled: boolean = true) {
+  return useQuery({
+    queryKey: breezKeys.sparkAddress(),
+    queryFn: getSparkAddress,
+    enabled,
+    staleTime: Infinity,
   });
 }
 

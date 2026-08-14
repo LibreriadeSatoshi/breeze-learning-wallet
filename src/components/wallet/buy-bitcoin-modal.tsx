@@ -10,6 +10,7 @@ import { buyBitcoin, onSdkEvent } from "@/lib/lightning/breez-service";
 import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
+import { useCopy } from "@/hooks/use-copy";
 
 type Provider = "moonpay" | "cashApp";
 type Step = "select" | "amount" | "qr";
@@ -29,7 +30,7 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
   const [cashAppUrl, setCashAppUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, failed, copy } = useCopy();
 
   const { rate: fiatRate, currency: fiatCurrency } = useFiat(true);
 
@@ -109,17 +110,6 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
       setGenerating(false);
     }
   }, [validAmount, amountSats, onClose, t]);
-
-  const handleCopy = useCallback(async () => {
-    if (!cashAppUrl) return;
-    try {
-      await navigator.clipboard.writeText(cashAppUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard blocked, ignore
-    }
-  }, [cashAppUrl]);
 
   const title =
     step === "select"
@@ -243,7 +233,7 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
             </div>
           </div>
           <button type="button"
-            onClick={handleCopy}
+            onClick={() => cashAppUrl && copy(cashAppUrl)}
             className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             {copied ? (
@@ -251,7 +241,7 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
             ) : (
               <CopyIcon className="w-4 h-4" />
             )}
-            <span>{copied ? t("common.copied") : t("buyBitcoin.copyLink")}</span>
+            <span>{copied ? t("common.copied") : failed ? t("common.copyFailed") : t("buyBitcoin.copyLink")}</span>
           </button>
           <p className="text-center text-xs text-gray-500 dark:text-gray-400">
             {t("buyBitcoin.autoRefresh")}

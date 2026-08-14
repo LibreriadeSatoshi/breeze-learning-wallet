@@ -256,12 +256,10 @@ export const estimateSwapFee = async ({userSettings, usdRate, balances, conversi
   }
 
   try {
-    const receiveResponse = await sdk.receivePayment({
-      paymentMethod: { type: "sparkAddress" }, 
-    });
+    const { address: sparkAddress } = await getSparkAddress();
 
     const prepareResponse = await sdk.prepareSendPayment({
-      paymentRequest: { type: "input", input: receiveResponse.paymentRequest },
+      paymentRequest: { type: "input", input: sparkAddress },
       amount,
       tokenIdentifier: !isStableBalance ? USDB_TOKEN_IDENTIFIER : undefined,
       conversionOptions: !isStableBalance
@@ -338,6 +336,38 @@ export async function receiveLightning(
   return {
     paymentRequest: result.paymentRequest,
     expiresAt: Date.now() + 3600 * 1000,
+    fee: Number(result.fee),
+  };
+}
+
+export async function receiveSpark(
+  amountSats: number,
+  description: string,
+): Promise<{ paymentRequest: string; fee: number }> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const result = await sdk.receivePayment({
+    paymentMethod: {
+      type: "sparkInvoice",
+      amount: String(amountSats),
+      description: description || undefined,
+    },
+  });
+  return {
+    paymentRequest: result.paymentRequest,
+    fee: Number(result.fee),
+  };
+}
+
+export async function getSparkAddress(): Promise<{
+  address: string;
+  fee: number;
+}> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const result = await sdk.receivePayment({
+    paymentMethod: { type: "sparkAddress" },
+  });
+  return {
+    address: result.paymentRequest,
     fee: Number(result.fee),
   };
 }

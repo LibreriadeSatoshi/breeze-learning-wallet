@@ -41,6 +41,7 @@ import {
   getDriveEmail,
 } from "@/lib/backup/drive-client";
 import { useT } from "@/lib/i18n/hook";
+import { useCopy } from "@/hooks/use-copy";
 import { useFormatRelativeTime } from "@/lib/wallet/relative-time";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
@@ -557,18 +558,8 @@ function RegisteredAddress({
   onAfterChange: () => void;
 }) {
   const t = useT();
-  const [copied, setCopied] = useState(false);
+  const { copied, failed, copy } = useCopy();
   const [editOpen, setEditOpen] = useState(false);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(info.lightningAddress);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard blocked, ignore
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -596,11 +587,11 @@ function RegisteredAddress({
       <div className="grid grid-cols-2 gap-3">
         <Button
           variant="primary"
-          onClick={copy}
+          onClick={() => copy(info.lightningAddress)}
           className="inline-flex items-center justify-center gap-2"
         >
           {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-          <span>{copied ? t("common.copied") : t("common.copy")}</span>
+          <span>{copied ? t("common.copied") : failed ? t("common.copyFailed") : t("common.copy")}</span>
         </Button>
         <Button
           variant="outline"

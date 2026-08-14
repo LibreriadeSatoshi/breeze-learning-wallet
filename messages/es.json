@@ -7,6 +7,7 @@
     "save": "Guardar",
     "copy": "Copiar",
     "copied": "Copiado",
+    "copyFailed": "No se pudo copiar",
     "loading": "Cargando…",
     "retry": "Reintentar",
     "goBack": "Volver",
@@ -317,9 +318,11 @@
     "title": "Recibir",
     "methods": {
       "lightning": "Lightning",
-      "lightningSubtitle": "Instantáneo",
+      "lightningSubtitle": "Instantáneo y reutilizable",
       "bitcoin": "Bitcoin",
-      "bitcoinSubtitle": "Agregado a tu billetera al confirmar"
+      "bitcoinSubtitle": "Agregado a tu billetera al confirmar",
+      "spark": "Spark",
+      "sparkSubtitle": "Instantáneo y reutilizable"
     },
     "lightning": {
       "settingUp": "Configurando tu dirección Lightning…",
@@ -340,7 +343,6 @@
       "amountInvalid": "Introduce un monto válido",
       "generate": "Generar invoice",
       "generateFailed": "No se pudo generar el invoice",
-      "shareTitle": "Invoice Lightning",
       "newInvoice": "Nuevo invoice"
     },
     "bitcoin": {
@@ -349,6 +351,15 @@
       "generating": "Generando dirección Bitcoin…",
       "addressFailed": "No se pudo generar la dirección",
       "copyAddress": "Copiar dirección"
+    },
+    "spark": {
+      "title": "Tu dirección Spark",
+      "subtitle": "Reutilizable. Compártela con quien quiera pagarte desde una billetera Spark.",
+      "generating": "Obteniendo tu dirección Spark…",
+      "addressFailed": "No se pudo obtener la dirección Spark",
+      "copyAddress": "Copiar dirección",
+      "invoiceTitle": "Factura Spark",
+      "invoiceOpenLink": "O crea una factura Spark por un monto específico"
     },
     "success": {
       "title": "Pago recibido",
