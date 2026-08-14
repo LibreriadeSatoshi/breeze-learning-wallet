@@ -33,6 +33,9 @@ import { Modal } from "@/components/ui/modal";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
+const AMOUNT_CONTROL_CLASS =
+  "shrink-0 self-stretch inline-flex items-center px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:pointer-events-none";
+
 type PrepareResult =
   | { kind: "send"; data: PrepareSendResult; destinationKind: SendDestinationKind }
   | { kind: "lnurlPay"; data: PrepareLnurlPayResult; domain: string };
@@ -58,6 +61,7 @@ export default function SendPage() {
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [isContactSelected, setIsContactSelected] = useState(false);
   const [contact, setContact] = useState<Contact>({name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0})
+  const maxedRef = useRef(false);
 
   const { data: balances } = useBalance(true);
   const { estableRate: usdRate } = useFiat(true);
@@ -101,6 +105,18 @@ export default function SendPage() {
     }
   };
 
+  const satsToInputValue = (sats: number, forSats: boolean = isSats): string => {
+    if (forSats) return sats.toString();
+    if (!usdRate) return "";
+    return ((sats / SATS_PER_BTC) * usdRate).toFixed(2);
+  };
+
+  const handleMax = () => {
+    setInputValue(satsToInputValue(totalBalanceSats));
+    maxedRef.current = true;
+    setError("");
+  };
+
 
   const handleContinue = async () => {
     setError("");
@@ -119,41 +135,51 @@ export default function SendPage() {
 
       const amountSat = inputValue ? parseSats(inputValue) : undefined;
 
-      let prep: PrepareResult;
-      if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
-        const payRequest: LnurlPayRequestDetails =
-          parsed.type === "lightningAddress"
-            ? parsed.payRequest
-            : pickLnurlPayDetails(parsed);
-        if (!amountSat || amountSat <= 0) {
-          setError(t("send.lnurlAmountRequired"));
-          return;
+      const prepareFor = async (
+        amt: number | undefined,
+      ): Promise<PrepareResult | null> => {
+        if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
+          const payRequest: LnurlPayRequestDetails =
+            parsed.type === "lightningAddress"
+              ? parsed.payRequest
+              : pickLnurlPayDetails(parsed);
+          if (!amt || amt <= 0) {
+            setError(t("send.lnurlAmountRequired"));
+            return null;
+          }
+          const minSat = Math.ceil(payRequest.minSendable / 1000);
+          const maxSat = Math.floor(payRequest.maxSendable / 1000);
+          if (amt < minSat || amt > maxSat) {
+            setError(t("send.lnurlRange", { min: minSat.toLocaleString(), max: maxSat.toLocaleString() }));
+            return null;
+          }
+          const lnurlPrep = await prepareLnurlMutation.mutateAsync({
+            payRequest,
+            amountSat: amt,
+          });
+          return { kind: "lnurlPay", data: lnurlPrep, domain: payRequest.domain };
         }
-        const minSat = Math.ceil(payRequest.minSendable / 1000);
-        const maxSat = Math.floor(payRequest.maxSendable / 1000);
-        if (amountSat < minSat || amountSat > maxSat) {
-          setError(t("send.lnurlRange", { min: minSat.toLocaleString(), max: maxSat.toLocaleString() }));
-          return;
-        }
-        const lnurlPrep = await prepareLnurlMutation.mutateAsync({
-          payRequest,
-          amountSat,
-        });
-        prep = { kind: "lnurlPay", data: lnurlPrep, domain: payRequest.domain };
-      } else {
         const sendPrep = await prepareMutation.mutateAsync({
           destination: dest,
-          amountSat,
+          amountSat: amt,
         });
-        prep = {
+        return {
           kind: "send",
           data: sendPrep,
           destinationKind: destinationKindForParsed(parsed),
         };
-      }
-      const sendAmountSat = readAmountSat(prep);
+      };
 
-      if (sendAmountSat !== null && sendAmountSat > totalBalanceSats) {
+      let prep = await prepareFor(amountSat);
+      if (!prep) return;
+
+      const net = totalBalanceSats - readFeeSat(prep);
+      if (maxedRef.current && net > 0 && overspends(prep, totalBalanceSats)) {
+        prep = await prepareFor(net);
+        if (!prep) return;
+      }
+
+      if (overspends(prep, totalBalanceSats)) {
         setError(t("send.insufficientBalance", { balance: totalBalanceSats.toLocaleString() }));
         return;
       }
@@ -194,10 +220,12 @@ export default function SendPage() {
     setDestination("");
     setInputValue("");
     setPrepareResult(null);
+    maxedRef.current = false;
   };
 
   const handleAmountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawText = e.target.value;
+    maxedRef.current = false;
 
     if (isSats) {
       setInputValue(rawText.replace(/\D/g, ""));
@@ -229,12 +257,7 @@ export default function SendPage() {
         return nextIsSats;
       }
 
-      if (nextIsSats) {
-        setInputValue(rawSats.toString());
-      } else if (usdRate) {
-        const fiat = (rawSats / SATS_PER_BTC) * usdRate;
-        setInputValue(fiat.toFixed(2));
-      }
+      setInputValue(satsToInputValue(rawSats, nextIsSats));
 
       return nextIsSats;
     });
@@ -246,12 +269,14 @@ export default function SendPage() {
     setStep("input")
     setShowContactsModal(false)
     setIsContactSelected(true)
+    maxedRef.current = false
   }, [])
 
   const handleRemoveContact = useCallback(() => {
     setContact({ name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0 })
     setDestination("")
     setIsContactSelected(false)
+    maxedRef.current = false
   }, [])
 
   if (!isUnlocked) return null;
@@ -301,31 +326,51 @@ export default function SendPage() {
                 onChange={(e) => {
                   setDestination(e.target.value);
                   setError("");
+                  maxedRef.current = false;
                 }}
                 error={error || undefined}
                 helperText={t("send.destination.helper")}
                 inputType={isContactSelected ? "element" : "input"}
                 element={<ContactElement contact={contact} removeContact={handleRemoveContact} />}
               />
-              <div className="flex flex-row">
-                <Input
-                  label={isSats ? t("send.amount.label") : t("send.amount.fiat", { currency: DEFAULT_FIAT_CURRENCY.toLocaleLowerCase() })}
-                  placeholder={t("send.amount.placeholder")}
-                  value={inputValue}
-                  onChange={(e) => {
-                    handleAmountInput(e);
-                  }}
-                  inputMode={isSats ? "numeric" : "decimal"}
-                  helperText={t("send.amount.helper")}
-                />
-                <button
-                  className="px-2 h-16 flex items-end justify-center"
-                  onClick={toggleIsSats}
-                  type="button"
-                  disabled={!isUsdRateAvailable}
+              <div>
+                <label
+                  htmlFor="send-amount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
-                  <ArrowDownUp opacity={!isUsdRateAvailable ? 0.5 : 1 }/>
-                </button>
+                  {isSats ? t("send.amount.label") : t("send.amount.fiat", { currency: DEFAULT_FIAT_CURRENCY.toLocaleLowerCase() })}
+                </label>
+                <div className="flex flex-row gap-2">
+                  <div className="flex-1 min-w-0">
+                    <Input
+                      id="send-amount"
+                      placeholder={t("send.amount.placeholder")}
+                      value={inputValue}
+                      onChange={handleAmountInput}
+                      inputMode={isSats ? "numeric" : "decimal"}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleIsSats}
+                    disabled={!isUsdRateAvailable}
+                    aria-label={t("send.amount.toggleUnit")}
+                    className={AMOUNT_CONTROL_CLASS}
+                  >
+                    <ArrowDownUp className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleMax}
+                    disabled={totalBalanceSats <= 0 || (!isSats && !isUsdRateAvailable)}
+                    className={AMOUNT_CONTROL_CLASS}
+                  >
+                    {t("send.amount.max")}
+                  </button>
+                </div>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  {t("send.amount.helper")}
+                </p>
               </div>
               <div className="grid grid-cols-1 gap-3">
                 <Button
@@ -532,6 +577,18 @@ function readAmountSat(prep: PrepareResult): number | null {
   return Number(prep.data.amount);
 }
 
+function overspends(prep: PrepareResult, balanceSat: number): boolean {
+  if (prep.kind === "send") {
+    const { tokenIdentifier, paymentMethod } = prep.data;
+    if (tokenIdentifier || paymentMethod.type === "crossChainAddress") return false;
+  }
+  const amountSat = readAmountSat(prep);
+  if (amountSat === null) return false;
+  const spend =
+    prep.data.feePolicy === "feesIncluded" ? amountSat : amountSat + readFeeSat(prep);
+  return spend > balanceSat;
+}
+
 function readFeeSat(prep: PrepareResult): number {
   if (prep.kind === "lnurlPay") return prep.data.feeSats;
   const m = prep.data.paymentMethod;
@@ -542,9 +599,10 @@ function readFeeSat(prep: PrepareResult): number {
       return m.feeQuote.speedMedium.userFeeSat + m.feeQuote.speedMedium.l1BroadcastFeeSat;
     case "sparkAddress":
     case "sparkInvoice":
-      return Number(m.fee);
+      return m.tokenIdentifier ? 0 : Number(m.fee);
     case "crossChainAddress":
-      return Number(m.feeAmount) + m.sourceTransferFeeSats;
+      // feeAmount is in the destination asset's base units, not sats.
+      return m.sourceTransferFeeSats;
   }
 }
 

@@ -252,6 +252,8 @@
       "label": "Monto (sats)",
       "fiat": "Monto ({{currency}})",
       "placeholder": "0",
+      "max": "Máx",
+      "toggleUnit": "Cambiar entre sats y USD",
       "helper": "Opcional para invoices que ya tienen un monto codificado"
     },
     "paste": "Pegar",

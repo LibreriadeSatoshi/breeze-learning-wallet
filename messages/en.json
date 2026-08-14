@@ -252,6 +252,8 @@
       "label": "Amount (sats)",
       "fiat": "Amount ({{currency}})",
       "placeholder": "0",
+      "max": "Max",
+      "toggleUnit": "Switch between sats and USD",
       "helper": "Optional for invoices that already encode an amount"
     },
     "paste": "Paste",
