@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDownUp, ArrowLeft, Check, Clipboard, X } from "lucide-react";
+import { ArrowDownUp, ArrowLeft, Check, Clipboard, X, Contact as ContactIcon, UserRoundPlus, SquarePen } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import {
   usePrepareLnurlPay,
   useExecuteLnurlPay,
   useUserSettings,
+  useContacts,
+  useContactsAction,
 } from "@/hooks/use-breez";
 import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat, SATS_PER_BTC } from "@/lib/wallet/format-fiat";
@@ -24,9 +26,10 @@ import {
   type PrepareLnurlPayResult,
   usdbTicker,
 } from "@/lib/lightning/breez-service";
-import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
+import type {  Contact, InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
 import { estimateSats } from "@/components/wallet/balance-display";
 import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
+import { Modal } from "@/components/ui/modal";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -52,6 +55,7 @@ export default function SendPage() {
   const [isSats, setIsSats] = useState(true);
   const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
+  const [showContactsModal, setShowContactsModal] = useState(false);
 
   const { data: balances } = useBalance(true);
   const { estableRate: usdRate } = useFiat(true);
@@ -234,6 +238,12 @@ export default function SendPage() {
     });
   };
 
+  const onClickContact = useCallback((contactDestination: string) => {
+    setDestination(contactDestination)
+    setStep("input")
+    setShowContactsModal(false)
+  }, [])
+
   if (!isUnlocked) return null;
 
   const isUsdRateAvailable: boolean = usdRate !== undefined && usdRate !== null;
@@ -269,8 +279,9 @@ export default function SendPage() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row justify-between">
               <h2 className="text-lg font-semibold">{t("send.destination.title")}</h2>
+              <button type="button" onClick={() => setShowContactsModal(true)}><ContactIcon className="min-w-6 min-h-6" /></button>
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
@@ -341,6 +352,7 @@ export default function SendPage() {
             </CardContent>
           </Card>
         </div>
+        {showContactsModal && <ContactsModal onClose={() => setShowContactsModal(false)} onChange={onClickContact} />}
       </div>
     );
   }
@@ -570,3 +582,200 @@ function describeUnsupported(
       return null;
   }
 }
+
+const AddContactModal = ({ onClick }: { onClick: () => void }) => {
+    return (
+      <button type="button" onClick={onClick}>
+        <UserRoundPlus className="w-6 h-6"/>
+      </button>
+    )
+}
+
+const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (paymentIdentifier: string) => void }) => {
+  type ContactStep = "list" | "add" | "update"
+
+  const [step, setStep] = useState<ContactStep>("list")
+  const [error, setError] = useState<string | null>(null)
+  const [contact, setContact] = useState<Contact>({name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0})
+  const [search, setSearch] = useState("")
+  const { mutateAsync: contactActions } = useContactsAction();
+
+  const handleAddContact = () => {
+    setStep("add")
+  }
+
+  const handleUpdateContact = (contact: Contact) => {
+    setStep("update")
+    setContact(contact)
+  }
+
+  const deleteContact = async (contact: Contact) => {
+    try {
+      await contactActions({action: "remove", id: contact.id})
+    } catch (error) {
+      setError((error as Error).message)
+    }
+  }
+
+  const saveContact = async () => {
+    if (contact.name === "" && contact.paymentIdentifier === "") {
+      setError("Can't save empty contact")
+      return
+    }
+    if (contact.name === "") {
+      setError("Can't save contact without name")
+      return
+    }
+    if (contact.paymentIdentifier === "") {
+      setError("Can't save contact without address")
+      return
+    }
+
+    try {
+      if (step === "add") {
+        await contactActions({action: "add", name: contact.name, paymentIdentifier: contact.paymentIdentifier})
+        setStep("list")
+        setContact({name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0})
+      }
+      if (step === "update") {
+        await contactActions({action: "update", id: contact.id, name: contact.name, paymentIdentifier: contact.paymentIdentifier})
+        setStep("list")
+        setContact({name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0})
+      }
+    } catch (err) {
+      let errorMsg = (err as Error).message
+      if (errorMsg.includes("Invalid input")) {
+        setError("Invalid input: use a valid lightning address")
+      }
+    }
+  }
+  
+  const handleAddress = (e: ChangeEvent<HTMLInputElement>) => {
+    setError(null)
+    setContact({...contact, paymentIdentifier: e.target.value})
+  }
+
+  const handleName = (e: ChangeEvent<HTMLInputElement>) => {
+    setError(null)
+    setContact({...contact, name: e.target.value})
+  }
+
+
+  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value)
+  }
+
+  return (
+    <>
+      {step === "list" && 
+        <Modal open={true} onClose={onClose} title={"Contacts"} headerRight={<AddContactModal onClick={handleAddContact}/>}>
+          <div className="flex flex-col gap-3">
+            <Input className="h-10" placeholder="search..." label={"Search Contact"} onChange={handleSearch}></Input>
+            <ContactList deleteContact={deleteContact} onChange={onChange} search={search} handleUpdateContact={handleUpdateContact}/>
+          </div>
+        </Modal>
+      }
+      {step === "add" && 
+        <Modal open={true} onClose={onClose} title={"Add Contact"}>
+            <div className="flex flex-col gap-3">
+              <Input className="h-10" label={"Name"} placeholder="Contact Name" onChange={handleName}></Input>
+              <Input className="h-10" label={"Lightning Address"} placeholder="user@domain.com" onChange={handleAddress}></Input>
+              {error && <span className="text-red-500">{error}</span>}
+            </div>
+            <div className="flex flex-row justify-between, gap-3 mt-6">
+              <Button className="flex-1" onClick={() => setStep("list")}>Cancel</Button>
+              <Button className="flex-1" onClick={saveContact}>Save</Button>
+            </div>
+        </Modal>
+        }
+      {step === "update" && 
+      <Modal open={true} onClose={onClose} title={"Update Contact"} headerRight={<button type="button" onClick={() => setStep("list")}><ContactIcon /></button>}>
+        <div className="flex flex-col gap-3">
+          <Input value={contact.name} className="h-10" label={"Name"} placeholder="Contact Name" onChange={handleName}></Input>
+          <Input value={contact.paymentIdentifier} className="h-10" label={"Lightning Address"} placeholder="user@domain.com" onChange={handleAddress}></Input>
+          {error && <span className="text-red-500">{error}</span>}
+        </div>
+        <div className="flex flex-row justify-between, gap-3 mt-6">
+          <Button className="flex-1" onClick={() => setStep("list")}>Cancel</Button>
+          <Button className="flex-1" onClick={saveContact}>Save</Button>
+        </div>
+      </Modal>}
+  </>
+  )
+}
+
+const ContactList = ({deleteContact, onChange, search, handleUpdateContact}: {deleteContact: (contact: Contact) => void, search: string, onChange: (paymentIdentifier: string) => void, handleUpdateContact: (contact: Contact) => void}) => {
+  const {
+    data: contacts,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useContacts(true);
+
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  let filteredContacts = contacts?.pages.flat().filter((contact) => contact.name.toLowerCase().includes(search.toLowerCase())) || []
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = bottomRef.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  return (
+    <div className="flex flex-col gap-2 max-h-80 overflow-y-scroll">
+      {filteredContacts.map((contact) => (
+        <ContactItem 
+          key={contact.id} 
+          onClick={onChange} 
+          contact={contact} 
+          deleteContact={deleteContact} 
+          handleUpdateContact={handleUpdateContact}
+        />
+      ))}
+      <div ref={bottomRef} className="py-2 text-center text-xs text-gray-400">
+        {isFetchingNextPage
+          ? "Fetching more contacts..."
+          : !hasNextPage && filteredContacts.length > 5
+          ? "No more contacts to fetch"
+          : null}
+      </div>
+    </div>
+  )
+}
+
+const ContactItem = ({contact, deleteContact, onClick, handleUpdateContact}: {contact: Contact, deleteContact: (contact: Contact) => void, onClick: (contactIdentifier: string) => void, handleUpdateContact: (contact: Contact) => void}) => {
+  return (
+    <div className="flex p-2 flex-row justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors rounded-lg">
+      <button type="button" onClick={() => onClick(contact.paymentIdentifier)} className="flex flex-col w-full items-start">
+        <span>{contact.name}</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{contact.paymentIdentifier}</span>
+      </button>
+      <div className="flex flex-row">
+        <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={(_) => handleUpdateContact(contact)}>
+          <SquarePen className="w-5 h-5"/>
+        </button>
+        <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={() => deleteContact(contact)}>
+          <X className="w-5 h-5"/>
+        </button>
+      </div>
+    </div>
+  )
+}
+

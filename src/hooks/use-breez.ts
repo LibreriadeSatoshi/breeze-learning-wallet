@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import {
   getBalance,
   getNodeState,
@@ -26,13 +26,18 @@ import {
   enableStableBalance,
   fetchConversionLimits,
   estimateSwapFee,
-  getUserSettings
+  getUserSettings,
+  getContactList,
+  addContact,
+  deleteContact,
+  updateContact
 } from "@/lib/lightning/breez-service";
 import type {
   LnurlPayRequestDetails,
   Fee,
+  Contact
 } from "@breeztech/breez-sdk-spark";
-import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
+import type { Balances, ContactAction, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
 
 interface UseSwapFeeParams { 
   enabled?: boolean; 
@@ -53,7 +58,8 @@ const breezKeys = {
   fiatRates: () => [...breezKeys.all, "fiatRates"] as const,
   conversionLimits: () => [...breezKeys.all, "convertionLimits"] as const,
   estimatedSwapFee: () => [...breezKeys.all, "estimatedFees"] as const,
-  userSettings: () => [...breezKeys.all, "userSettings"] as const
+  userSettings: () => [...breezKeys.all, "userSettings"] as const,
+  contactList: () => [...breezKeys.all, "contactList"] as const
 };
 
 export function useBalance(enabled: boolean = true) {
@@ -92,6 +98,45 @@ export function useConversionLimits(enabled: boolean) {
     enabled
   });
 }
+
+const PAGE_SIZE = 40;
+
+export function useContacts(enable: boolean) {
+  return useInfiniteQuery({
+    queryKey: breezKeys.contactList(),
+    queryFn: ({ pageParam = 0 }) =>
+      getContactList({ offset: pageParam, limit: PAGE_SIZE }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) {
+        return undefined;
+      }
+      return allPages.length * PAGE_SIZE;
+    },
+    enabled: enable,
+    staleTime: 60_000,
+  });
+}
+
+export function useContactsAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({action, id, name, paymentIdentifier}: {action: ContactAction, id?: string, name?: string, paymentIdentifier?: string}): Promise<Contact | null> => {
+      if (action === "add" && name && paymentIdentifier) {
+        return await addContact(name, paymentIdentifier);
+      } else if (action === "update" && id && name && paymentIdentifier) {
+        return await updateContact(id, name, paymentIdentifier);
+      } else if (action === "remove" && id) {
+        await deleteContact(id);
+      } 
+      return null
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: breezKeys.contactList() }); 
+    }
+  });
+}
+
 
 export function useSwapFee({ 
   enabled = true,

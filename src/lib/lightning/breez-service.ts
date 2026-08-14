@@ -16,6 +16,7 @@ import type {
   BuyBitcoinRequest,
   BuyBitcoinResponse,
   Conversion,
+  Contact,
 } from "@breeztech/breez-sdk-spark";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "./types";
 
@@ -283,6 +284,37 @@ export const estimateSwapFee = async ({userSettings, usdRate, balances, conversi
 export async function getUserSettings(): Promise<UserSettings> {
   if (!sdk) throw new Error("Wallet not ready.");
   return sdk.getUserSettings();
+}
+
+export async function getContactList({ offset, limit }: { offset: number; limit: number }): Promise<Contact[]> {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  return sdk.listContacts({
+    offset,
+    limit
+  });
+}
+
+export async function addContact(name: string, paymentIdentifier: string): Promise<Contact | null> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  let validate_payment = await sdk.parse(paymentIdentifier);
+
+  if (validate_payment.type !== "lightningAddress") {
+    throw new Error("Invalid input: use a valid lightning address");
+  }
+
+  return await sdk.addContact({ name, paymentIdentifier });
+}
+
+
+export async function deleteContact(id: string): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  await sdk.deleteContact(id);
+}
+
+export async function updateContact(id: string, name: string, paymentIdentifier: string): Promise<Contact> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.updateContact({ id, name, paymentIdentifier });
 }
 
 export async function parseInput(input: string): Promise<InputType> {
