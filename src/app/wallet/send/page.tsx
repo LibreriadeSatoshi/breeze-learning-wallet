@@ -186,8 +186,7 @@ export default function SendPage() {
       setPrepareResult(prep);
       setStep("confirm");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t("send.parseFailed");
-      setError(msg);
+      setError(sendErrorMessage(err, t, "send.parseFailed"));
     }
   };
 
@@ -204,7 +203,7 @@ export default function SendPage() {
       setStep("success");
       setTimeout(() => router.push("/wallet/home"), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("send.failed"));
+      setError(sendErrorMessage(err, t, "send.failed"));
       setStep("error");
     }
   };
@@ -575,6 +574,16 @@ function pickLnurlPayDetails(
 function readAmountSat(prep: PrepareResult): number | null {
   if (prep.kind === "lnurlPay") return prep.data.amountSats;
   return Number(prep.data.amount);
+}
+
+function sendErrorMessage(
+  err: unknown,
+  t: (k: string) => string,
+  fallbackKey: string,
+): string {
+  const raw = err instanceof Error ? err.message : "";
+  if (/self payment/i.test(raw)) return t("send.selfPayment");
+  return raw || t(fallbackKey);
 }
 
 function overspends(prep: PrepareResult, balanceSat: number): boolean {

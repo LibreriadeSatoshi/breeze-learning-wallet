@@ -275,6 +275,7 @@
     "sent": "Payment sent",
     "backToWallet": "Back to wallet",
     "failed": "Payment failed",
+    "selfPayment": "You can't pay yourself. Use a different destination.",
     "genericError": "Something went wrong. Please try again.",
     "tryAgain": "Try Again",
     "destinationKind": {

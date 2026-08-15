@@ -275,6 +275,7 @@
     "sent": "Pago enviado",
     "backToWallet": "Volver a la billetera",
     "failed": "Pago fallido",
+    "selfPayment": "No puedes pagarte a ti mismo. Usa otro destino.",
     "genericError": "Algo salió mal. Intenta de nuevo.",
     "tryAgain": "Reintentar",
     "destinationKind": {
