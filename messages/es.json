@@ -16,7 +16,9 @@
     "hide": "Ocultar",
     "share": "Compartir",
     "never": "Nunca",
-    "justNow": "hace un momento"
+    "justNow": "hace un momento",
+    "delete": "Eliminar",
+    "search": "Buscar..."
   },
   "welcome": {
     "tagline": "Una billetera Bitcoin y Lightning no custodial. Tus claves, tus monedas.",
@@ -285,6 +287,27 @@
       "lnurlWithdraw": "LNURL-withdraw es para recibir, no para enviar.",
       "url": "Eso parece un enlace web, no un destino de pago.",
       "silentPayment": "Las direcciones silent payment aún no están soportadas."
+    },
+    "contacts": {
+      "title": "Contactos",
+      "confirmTitle": "Eliminar contacto",
+      "updateTitle": "Actualizar contacto",
+      "addTitle": "Agregar contacto",
+      "deleteConfirm": "¿Estás seguro de que deseas eliminar a {{name}}?",
+      "inputs": {
+        "search": "Buscar contacto",
+        "paymentIdentifier": "Dirección Lightning",
+        "paymentIdentifierPlaceholder": "usuario@dominio.com",
+        "name": "Nombre",
+        "namePlaceholder": "Nombre del contacto"
+      },
+      "errors": {
+        "invalid": "Dirección Lightning inválida: ingresa una dirección Lightning válida",
+        "emptyName": "El nombre es requerido",
+        "emptyPaymentIdentifier": "La dirección Lightning es requerida"
+      },
+      "loading": "Cargando más contactos...",
+      "noMoreContacts": "No hay más contactos para cargar"
     }
   },
   "receive": {

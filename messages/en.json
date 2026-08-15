@@ -16,7 +16,9 @@
     "hide": "Hide",
     "share": "Share",
     "never": "Never",
-    "justNow": "just now"
+    "justNow": "just now",
+    "delete": "Delete",
+    "search": "Search..."
   },
   "welcome": {
     "tagline": "A non-custodial Bitcoin & Lightning wallet. Your keys, your coins.",
@@ -285,6 +287,27 @@
       "lnurlWithdraw": "LNURL-withdraw is for receiving, not sending.",
       "url": "That looks like a web link, not a payment destination.",
       "silentPayment": "Silent payment addresses aren't supported yet."
+    },
+    "contacts": {
+      "title": "Contacts",
+      "confirmTitle": "Delete contact",
+      "updateTitle": "Update Contact",
+      "addTitle": "Add Contact",
+      "deleteConfirm": "Are you sure you want to delete {{name}}?",
+      "inputs": {
+        "search": "Search Contact",
+        "paymentIdentifier": "Lightning Address",
+        "paymentIdentifierPlaceholder": "username@domain.com",
+        "name": "Name",
+        "namePlaceholder": "Contact Name"
+      },
+      "errors": {
+        "invalid": "Invalid lightning address: use a valid lightning address",
+        "emptyName": "Name is required",
+        "emptyPaymentIdentifier": "Lightning address is required"
+      },
+      "loading": "Loading more contacts...",
+      "noMoreContacts": "No more contacts to load"
     }
   },
   "receive": {

@@ -592,7 +592,9 @@ const AddContactModal = ({ onClick }: { onClick: () => void }) => {
 }
 
 const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (paymentIdentifier: string) => void }) => {
-  type ContactStep = "list" | "add" | "update"
+  type ContactStep = "list" | "add" | "update" | "confirm"
+
+  const t = useT()
 
   const [step, setStep] = useState<ContactStep>("list")
   const [error, setError] = useState<string | null>(null)
@@ -609,25 +611,27 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
     setContact(contact)
   }
 
+  const handleConfirm = (contact: Contact) => {
+    setStep("confirm")
+    setContact(contact)
+  }
+
   const deleteContact = async (contact: Contact) => {
     try {
       await contactActions({action: "remove", id: contact.id})
     } catch (error) {
       setError((error as Error).message)
     }
+    setStep("list")
   }
 
   const saveContact = async () => {
-    if (contact.name === "" && contact.paymentIdentifier === "") {
-      setError("Can't save empty contact")
-      return
-    }
     if (contact.name === "") {
-      setError("Can't save contact without name")
+      setError(t("send.contacts.errors.emptyName"))
       return
     }
     if (contact.paymentIdentifier === "") {
-      setError("Can't save contact without address")
+      setError(t("send.contacts.errors.emptyPaymentIdentifier"))
       return
     }
 
@@ -645,7 +649,7 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
     } catch (err) {
       let errorMsg = (err as Error).message
       if (errorMsg.includes("Invalid input")) {
-        setError("Invalid input: use a valid lightning address")
+        setError(t("send.contacts.errors.invalid"))
       }
     }
   }
@@ -668,18 +672,18 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
   return (
     <>
       {step === "list" && 
-        <Modal open={true} onClose={onClose} title={"Contacts"} headerRight={<AddContactModal onClick={handleAddContact}/>}>
+        <Modal open={true} onClose={onClose} title={t("send.contacts.title")} headerRight={<AddContactModal onClick={handleAddContact}/>}>
           <div className="flex flex-col gap-3">
-            <Input className="h-10" placeholder="search..." label={"Search Contact"} onChange={handleSearch}></Input>
-            <ContactList deleteContact={deleteContact} onChange={onChange} search={search} handleUpdateContact={handleUpdateContact}/>
+            <Input className="h-10" placeholder={t("common.search")} label={t("send.contacts.inputs.search")} onChange={handleSearch}></Input>
+            <ContactList handleConfirm={handleConfirm} onChange={onChange} search={search} handleUpdateContact={handleUpdateContact}/>
           </div>
         </Modal>
       }
       {step === "add" && 
-        <Modal open={true} onClose={onClose} title={"Add Contact"}>
+        <Modal open={true} onClose={onClose} title={t("send.contacts.addTitle")}>
             <div className="flex flex-col gap-3">
-              <Input className="h-10" label={"Name"} placeholder="Contact Name" onChange={handleName}></Input>
-              <Input className="h-10" label={"Lightning Address"} placeholder="user@domain.com" onChange={handleAddress}></Input>
+              <Input className="h-10" label={t("send.contacts.inputs.name")} placeholder={t("send.contacts.inputs.namePlaceholder")} onChange={handleName}></Input>
+              <Input className="h-10" label={t("send.contacts.inputs.paymentIdentifier")} placeholder={t("send.contacts.inputs.paymentIdentifierPlaceholder")} onChange={handleAddress}></Input>
               {error && <span className="text-red-500">{error}</span>}
             </div>
             <div className="flex flex-row justify-between, gap-3 mt-6">
@@ -689,22 +693,34 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
         </Modal>
         }
       {step === "update" && 
-      <Modal open={true} onClose={onClose} title={"Update Contact"} headerRight={<button type="button" onClick={() => setStep("list")}><ContactIcon /></button>}>
+      <Modal open={true} onClose={onClose} title={t("send.contacts.updateTitle")} headerRight={<button type="button" onClick={() => setStep("list")}><ContactIcon /></button>}>
         <div className="flex flex-col gap-3">
-          <Input value={contact.name} className="h-10" label={"Name"} placeholder="Contact Name" onChange={handleName}></Input>
-          <Input value={contact.paymentIdentifier} className="h-10" label={"Lightning Address"} placeholder="user@domain.com" onChange={handleAddress}></Input>
+          <Input value={contact.name} className="h-10" label={t("send.contacts.inputs.name")} placeholder={t("send.contacts.inputs.namePlaceholder")} onChange={handleName}></Input>
+          <Input value={contact.paymentIdentifier} className="h-10" label={t("send.contacts.inputs.paymentIdentifier")} placeholder={t("send.contacts.inputs.paymentIdentifierPlaceholder")} onChange={handleAddress}></Input>
           {error && <span className="text-red-500">{error}</span>}
         </div>
         <div className="flex flex-row justify-between, gap-3 mt-6">
-          <Button className="flex-1" onClick={() => setStep("list")}>Cancel</Button>
-          <Button className="flex-1" onClick={saveContact}>Save</Button>
+          <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+          <Button className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
         </div>
       </Modal>}
+      {step === "confirm" && 
+      <Modal open={true} onClose={onClose} title={t("send.contacts.confirmTitle")} headerRight={<button type="button" onClick={() => setStep("list")}><ContactIcon /></button>}>
+        <div className="flex flex-col gap-3">
+          <span>{t("send.contacts.deleteConfirm", {name: contact.name})}</span>
+        </div>
+        <div className="flex flex-row justify-between, gap-3 mt-6">
+          <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+          <Button className="flex-1" onClick={() => deleteContact(contact)}>{t("common.delete")}</Button>
+        </div>
+      </Modal>
+      }
   </>
   )
 }
 
-const ContactList = ({deleteContact, onChange, search, handleUpdateContact}: {deleteContact: (contact: Contact) => void, search: string, onChange: (paymentIdentifier: string) => void, handleUpdateContact: (contact: Contact) => void}) => {
+const ContactList = ({handleConfirm, onChange, search, handleUpdateContact}: {handleConfirm: (contact: Contact) => void, search: string, onChange: (paymentIdentifier: string) => void, handleUpdateContact: (contact: Contact) => void}) => {
+  const t = useT()
   const {
     data: contacts,
     fetchNextPage,
@@ -745,22 +761,22 @@ const ContactList = ({deleteContact, onChange, search, handleUpdateContact}: {de
           key={contact.id} 
           onClick={onChange} 
           contact={contact} 
-          deleteContact={deleteContact} 
+          handleConfirm={handleConfirm} 
           handleUpdateContact={handleUpdateContact}
         />
       ))}
       <div ref={bottomRef} className="py-2 text-center text-xs text-gray-400">
         {isFetchingNextPage
-          ? "Fetching more contacts..."
+          ? t("send.contacts.loading")
           : !hasNextPage && filteredContacts.length > 5
-          ? "No more contacts to fetch"
+          ? t("send.contacts.noMoreContacts")
           : null}
       </div>
     </div>
   )
 }
 
-const ContactItem = ({contact, deleteContact, onClick, handleUpdateContact}: {contact: Contact, deleteContact: (contact: Contact) => void, onClick: (contactIdentifier: string) => void, handleUpdateContact: (contact: Contact) => void}) => {
+const ContactItem = ({contact, handleConfirm, onClick, handleUpdateContact}: {contact: Contact, handleConfirm: (contact: Contact) => void, onClick: (contactIdentifier: string) => void, handleUpdateContact: (contact: Contact) => void}) => {
   return (
     <div className="flex p-2 flex-row justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors rounded-lg">
       <button type="button" onClick={() => onClick(contact.paymentIdentifier)} className="flex flex-col w-full items-start">
@@ -771,7 +787,7 @@ const ContactItem = ({contact, deleteContact, onClick, handleUpdateContact}: {co
         <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={(_) => handleUpdateContact(contact)}>
           <SquarePen className="w-5 h-5"/>
         </button>
-        <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={() => deleteContact(contact)}>
+        <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={() => handleConfirm(contact)}>
           <X className="w-5 h-5"/>
         </button>
       </div>
