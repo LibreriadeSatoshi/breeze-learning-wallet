@@ -757,6 +757,9 @@ const ContactList = ({handleConfirm, onChange, search, handleUpdateContact}: {ha
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const noMoreContacts = !hasNextPage && filteredContacts.length > 0;
+  const message = noMoreContacts ? t("send.contacts.noMoreContacts") : null;
+
   return (
     <div className="flex flex-col gap-2 max-h-80 overflow-y-scroll">
       {filteredContacts.map((contact) => (
@@ -771,9 +774,7 @@ const ContactList = ({handleConfirm, onChange, search, handleUpdateContact}: {ha
       <div ref={bottomRef} className="py-2 text-center text-xs text-gray-400">
         {isFetchingNextPage
           ? t("send.contacts.loading")
-          : !hasNextPage && filteredContacts.length > 5
-          ? t("send.contacts.noMoreContacts")
-          : null}
+          : message}
       </div>
     </div>
   )
