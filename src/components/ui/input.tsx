@@ -4,7 +4,11 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
+  inputType?: InputType;
+  element?: React.ReactNode;
 }
+
+type InputType = "input" | "element"
 
 export function Input({
   label,
@@ -12,6 +16,8 @@ export function Input({
   helperText,
   className = '',
   id,
+  inputType = "input",
+  element,
   ...props
 }: InputProps) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
@@ -26,7 +32,21 @@ export function Input({
           {label}
         </label>
       )}
-      <input
+      
+      {inputType === "element" && 
+      <div className={`
+          w-full px-4 py-3 rounded-lg border
+          bg-white dark:bg-gray-800
+          text-gray-900 dark:text-gray-100
+          placeholder-gray-400 dark:placeholder-gray-500
+          focus:outline-none focus:ring-2 focus:ring-offset-0
+          disabled:opacity-50 disabled:cursor-not-allowed
+          transition-colors
+          flex flex-row justify-between
+          items-center
+        `}>{element}</div>}
+    
+      {inputType === "input" && <input
         id={inputId}
         className={`
           w-full px-4 py-3 rounded-lg border
@@ -43,7 +63,7 @@ export function Input({
           ${className}
         `}
         {...props}
-      />
+      />}
       {error && (
         <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}

@@ -11,6 +11,7 @@ interface ModalProps {
   children: React.ReactNode;
   /** Disable backdrop click + Esc close while a critical action is in flight. */
   dismissable?: boolean;
+  headerRight?: React.ReactNode
 }
 
 const FOCUSABLE_SELECTOR =
@@ -23,6 +24,7 @@ export function Modal({
   description,
   children,
   dismissable = true,
+  headerRight,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -105,9 +107,12 @@ export function Modal({
         className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl outline-none max-h-[90vh] flex flex-col"
       >
         <div className="px-6 pt-6 pb-4">
+          <div className="flex justify-between items-center">
           <h2 id={titleId} className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {title}
           </h2>
+          {headerRight}
+          </div>
           {description && (
             <p id={descId} className="mt-1 text-sm text-gray-600 dark:text-gray-400">
               {description}
