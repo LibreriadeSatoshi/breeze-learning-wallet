@@ -297,9 +297,9 @@ export async function getContactList({ offset, limit }: { offset: number; limit:
 
 export async function addContact(name: string, paymentIdentifier: string): Promise<Contact | null> {
   if (!sdk) throw new Error("Wallet not ready.");
-  let validate_payment = await sdk.parse(paymentIdentifier);
+  const validatePayment = await sdk.parse(paymentIdentifier);
 
-  if (validate_payment.type !== "lightningAddress") {
+  if (validatePayment.type !== "lightningAddress") {
     throw new Error("Invalid input: use a valid lightning address");
   }
 

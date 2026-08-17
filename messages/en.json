@@ -303,6 +303,7 @@
       },
       "errors": {
         "invalid": "Invalid lightning address: use a valid lightning address",
+        "somethingWentBad": "Something went wrong. Please try again.",
         "emptyName": "Name is required",
         "emptyPaymentIdentifier": "Lightning address is required"
       },

@@ -303,6 +303,7 @@
       },
       "errors": {
         "invalid": "Dirección Lightning inválida: ingresa una dirección Lightning válida",
+        "somethingWentBad": "Algo salió mal. Intenta de nuevo.",
         "emptyName": "El nombre es requerido",
         "emptyPaymentIdentifier": "La dirección Lightning es requerida"
       },

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ChangeEvent, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDownUp, ArrowLeft, Check, Clipboard, X, Contact as ContactIcon, UserRoundPlus, SquarePen } from "lucide-react";
+import { ArrowDownUp, ArrowLeft, Check, Clipboard, X, Contact as ContactIcon, UserRoundPlus, SquarePen, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -583,7 +583,7 @@ function describeUnsupported(
   }
 }
 
-const AddContactModal = ({ onClick }: { onClick: () => void }) => {
+const AddContactButton = ({ onClick }: { onClick: () => void }) => {
     return (
       <button type="button" onClick={onClick}>
         <UserRoundPlus className="w-6 h-6"/>
@@ -651,6 +651,9 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
       if (errorMsg.includes("Invalid input")) {
         setError(t("send.contacts.errors.invalid"))
       }
+      if (errorMsg.includes("something went bad")) {
+        setError(t("send.contacts.errors.somethingWentBad"))
+      }
     }
   }
   
@@ -672,7 +675,7 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
   return (
     <>
       {step === "list" && 
-        <Modal open={true} onClose={onClose} title={t("send.contacts.title")} headerRight={<AddContactModal onClick={handleAddContact}/>}>
+        <Modal open={true} onClose={onClose} title={t("send.contacts.title")} headerRight={<AddContactButton onClick={handleAddContact}/>}>
           <div className="flex flex-col gap-3">
             <Input className="h-10" placeholder={t("common.search")} label={t("send.contacts.inputs.search")} onChange={handleSearch}></Input>
             <ContactList handleConfirm={handleConfirm} onChange={onChange} search={search} handleUpdateContact={handleUpdateContact}/>
@@ -687,8 +690,8 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
               {error && <span className="text-red-500">{error}</span>}
             </div>
             <div className="flex flex-row justify-between, gap-3 mt-6">
-              <Button className="flex-1" onClick={() => setStep("list")}>Cancel</Button>
-              <Button className="flex-1" onClick={saveContact}>Save</Button>
+              <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+              <Button className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
             </div>
         </Modal>
         }
@@ -699,7 +702,7 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
           <Input value={contact.paymentIdentifier} className="h-10" label={t("send.contacts.inputs.paymentIdentifier")} placeholder={t("send.contacts.inputs.paymentIdentifierPlaceholder")} onChange={handleAddress}></Input>
           {error && <span className="text-red-500">{error}</span>}
         </div>
-        <div className="flex flex-row justify-between, gap-3 mt-6">
+        <div className="flex flex-row justify-between gap-3 mt-6">
           <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
           <Button className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
         </div>
@@ -709,7 +712,7 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
         <div className="flex flex-col gap-3">
           <span>{t("send.contacts.deleteConfirm", {name: contact.name})}</span>
         </div>
-        <div className="flex flex-row justify-between, gap-3 mt-6">
+        <div className="flex flex-row justify-between gap-3 mt-6">
           <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
           <Button className="flex-1" onClick={() => deleteContact(contact)}>{t("common.delete")}</Button>
         </div>
@@ -788,7 +791,7 @@ const ContactItem = ({contact, handleConfirm, onClick, handleUpdateContact}: {co
           <SquarePen className="w-5 h-5"/>
         </button>
         <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={() => handleConfirm(contact)}>
-          <X className="w-5 h-5"/>
+          <Trash2 className="w-5 h-5" />
         </button>
       </div>
     </div>
