@@ -290,6 +290,7 @@
     },
     "contacts": {
       "title": "Contactos",
+      "payToContact": "Pagar a {{name}}",
       "confirmTitle": "Eliminar contacto",
       "updateTitle": "Actualizar contacto",
       "addTitle": "Agregar contacto",

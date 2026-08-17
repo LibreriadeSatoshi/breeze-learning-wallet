@@ -56,6 +56,8 @@ export default function SendPage() {
   const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
   const [showContactsModal, setShowContactsModal] = useState(false);
+  const [isContactSelected, setIsContactSelected] = useState(false);
+  const [contact, setContact] = useState<Contact>({name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0})
 
   const { data: balances } = useBalance(true);
   const { estableRate: usdRate } = useFiat(true);
@@ -238,10 +240,18 @@ export default function SendPage() {
     });
   };
 
-  const onClickContact = useCallback((contactDestination: string) => {
-    setDestination(contactDestination)
+  const onClickContact = useCallback((contact: Contact) => {
+    setContact(contact)
+    setDestination(contact.paymentIdentifier)
     setStep("input")
     setShowContactsModal(false)
+    setIsContactSelected(true)
+  }, [])
+
+  const handleRemoveContact = useCallback(() => {
+    setContact({ name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0 })
+    setDestination("")
+    setIsContactSelected(false)
   }, [])
 
   if (!isUnlocked) return null;
@@ -294,6 +304,8 @@ export default function SendPage() {
                 }}
                 error={error || undefined}
                 helperText={t("send.destination.helper")}
+                inputType={isContactSelected ? "element" : "input"}
+                element={<ContactElement contact={contact} removeContact={handleRemoveContact} />}
               />
               <div className="flex flex-row">
                 <Input
@@ -352,7 +364,7 @@ export default function SendPage() {
             </CardContent>
           </Card>
         </div>
-        {showContactsModal && <ContactsModal onClose={() => setShowContactsModal(false)} onChange={onClickContact} />}
+        {showContactsModal && <ContactsModal contact={contact} setContact={setContact} onClose={() => setShowContactsModal(false)} onClickContact={onClickContact} />}
       </div>
     );
   }
@@ -591,14 +603,15 @@ const AddContactButton = ({ onClick }: { onClick: () => void }) => {
     )
 }
 
-const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (paymentIdentifier: string) => void }) => {
+
+
+const ContactsModal = ({ onClose, onClickContact, setContact, contact }: { onClose: () => void, onClickContact: (contact: Contact) => void, setContact: (contact: Contact) => void, contact: Contact}) => {
   type ContactStep = "list" | "add" | "update" | "confirm"
 
   const t = useT()
 
   const [step, setStep] = useState<ContactStep>("list")
   const [error, setError] = useState<string | null>(null)
-  const [contact, setContact] = useState<Contact>({name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0})
   const [search, setSearch] = useState("")
   const { mutateAsync: contactActions } = useContactsAction();
 
@@ -670,7 +683,7 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
         <Modal open={true} onClose={onClose} title={t("send.contacts.title")} headerRight={<AddContactButton onClick={handleAddContact}/>}>
           <div className="flex flex-col gap-3">
             <Input className="h-10" placeholder={t("common.search")} label={t("send.contacts.inputs.search")} onChange={handleSearch}></Input>
-            <ContactList handleConfirm={handleConfirm} onChange={onChange} search={search} handleUpdateContact={handleUpdateContact}/>
+            <ContactList handleConfirm={handleConfirm} onClickContact={onClickContact} search={search} handleUpdateContact={handleUpdateContact}/>
           </div>
         </Modal>
       }
@@ -714,7 +727,7 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
   )
 }
 
-const ContactList = ({handleConfirm, onChange, search, handleUpdateContact}: {handleConfirm: (contact: Contact) => void, search: string, onChange: (paymentIdentifier: string) => void, handleUpdateContact: (contact: Contact) => void}) => {
+const ContactList = ({handleConfirm, onClickContact, search, handleUpdateContact}: {handleConfirm: (contact: Contact) => void, search: string, onClickContact: (contact: Contact) => void, handleUpdateContact: (contact: Contact) => void}) => {
   const t = useT()
   const {
     data: contacts,
@@ -757,7 +770,7 @@ const ContactList = ({handleConfirm, onChange, search, handleUpdateContact}: {ha
       {filteredContacts.map((contact) => (
         <ContactItem 
           key={contact.id} 
-          onClick={onChange} 
+          onClickContact={onClickContact}
           contact={contact} 
           handleConfirm={handleConfirm} 
           handleUpdateContact={handleUpdateContact}
@@ -772,10 +785,10 @@ const ContactList = ({handleConfirm, onChange, search, handleUpdateContact}: {ha
   )
 }
 
-const ContactItem = ({contact, handleConfirm, onClick, handleUpdateContact}: {contact: Contact, handleConfirm: (contact: Contact) => void, onClick: (contactIdentifier: string) => void, handleUpdateContact: (contact: Contact) => void}) => {
+const ContactItem = ({contact, handleConfirm, onClickContact, handleUpdateContact}: {contact: Contact, handleConfirm: (contact: Contact) => void, onClickContact: (contact: Contact) => void, handleUpdateContact: (contact: Contact) => void}) => {
   return (
     <div className="flex p-2 flex-row justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors rounded-lg">
-      <button type="button" onClick={() => onClick(contact.paymentIdentifier)} className="flex flex-col w-full items-start">
+      <button type="button" onClick={() => onClickContact(contact)} className="flex flex-col w-full items-start">
         <span>{contact.name}</span>
         <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{contact.paymentIdentifier}</span>
       </button>
@@ -788,6 +801,22 @@ const ContactItem = ({contact, handleConfirm, onClick, handleUpdateContact}: {co
         </button>
       </div>
     </div>
+  )
+}
+
+const ContactElement = ({contact, removeContact}: {contact: Contact, removeContact: () => void}) => {
+  const t = useT()
+  
+  return (
+    <>
+      <div className="flex flex-col w-full items-start">
+      <span>{t("send.contacts.payToContact", {name: contact.name})}</span>
+      <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{contact.paymentIdentifier}</span>
+      </div>
+      <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={removeContact}>
+        <X className="w-5 h-5" />
+      </button>
+    </>
   )
 }
 

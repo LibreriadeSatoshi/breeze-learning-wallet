@@ -290,6 +290,7 @@
     },
     "contacts": {
       "title": "Contacts",
+      "payToContact": "Pay to {{name}}",
       "confirmTitle": "Delete contact",
       "updateTitle": "Update Contact",
       "addTitle": "Add Contact",
