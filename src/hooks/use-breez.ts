@@ -99,7 +99,7 @@ export function useConversionLimits(enabled: boolean) {
   });
 }
 
-const PAGE_SIZE = 40;
+const PAGE_SIZE = 200;
 
 export function useContacts(enable: boolean) {
   return useInfiniteQuery({
@@ -122,14 +122,21 @@ export function useContactsAction() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({action, id, name, paymentIdentifier}: {action: ContactAction, id?: string, name?: string, paymentIdentifier?: string}): Promise<Contact | null> => {
-      if (action === "add" && name && paymentIdentifier) {
+      if (action === "add") {
+        if (!name) throw new Error("Name is required");
+        if (!paymentIdentifier) throw new Error("Payment Identifier is required");
         return await addContact(name, paymentIdentifier);
-      } else if (action === "update" && id && name && paymentIdentifier) {
+      } else if (action === "update") {
+        if (!id) throw new Error("Id is required");
+        if (!name) throw new Error("Name is required");
+        if (!paymentIdentifier) throw new Error("Payment Identifier is required");
         return await updateContact(id, name, paymentIdentifier);
-      } else if (action === "remove" && id) {
+      } else if (action === "remove") {
+        if (!id) throw new Error("Id is required");
         await deleteContact(id);
-      } 
-      return null
+        return null
+      }
+      throw new Error("Invalid action");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.contactList() }); 

@@ -626,15 +626,6 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
   }
 
   const saveContact = async () => {
-    if (contact.name === "") {
-      setError(t("send.contacts.errors.emptyName"))
-      return
-    }
-    if (contact.paymentIdentifier === "") {
-      setError(t("send.contacts.errors.emptyPaymentIdentifier"))
-      return
-    }
-
     try {
       if (step === "add") {
         await contactActions({action: "add", name: contact.name, paymentIdentifier: contact.paymentIdentifier})
@@ -650,10 +641,11 @@ const ContactsModal = ({ onClose, onChange }: { onClose: () => void, onChange: (
       let errorMsg = (err as Error).message
       if (errorMsg.includes("Invalid input")) {
         setError(t("send.contacts.errors.invalid"))
-      }
-      if (errorMsg.includes("something went bad")) {
-        setError(t("send.contacts.errors.somethingWentBad"))
-      }
+      } else if (errorMsg.includes("Name is required")) {
+        setError(t("send.contacts.errors.emptyName"))
+      } else if (errorMsg.includes("Payment Identifier is required")) {
+        setError(t("send.contacts.errors.emptyPaymentIdentifier"))
+      } else { setError(t("send.contacts.errors.somethingWentBad")) }
     }
   }
   
