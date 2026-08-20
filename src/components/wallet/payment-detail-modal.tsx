@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, ReactElement } from "react";
-import { ArrowDownLeft, ArrowUpRight, Copy as CopyIcon, Check } from "lucide-react";
+import { ReactElement } from "react";
+import { ArrowDownLeft, ArrowUpRight, Copy as CopyIcon, Check, X } from "lucide-react";
 import type { Payment } from "@/lib/lightning/types";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
+import { useCopy } from "@/hooks/use-copy";
 import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
 
 const statusStyles = {
@@ -188,33 +189,22 @@ interface CopyRowProps {
 
 function CopyRow({ label, value }: CopyRowProps) {
   const t = useT();
-  const [copied, setCopied] = useState(false);
+  const { copied, failed, copy } = useCopy();
   const truncated = value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard blocked, ignore
-    }
-  };
 
   return (
     <div className="py-3 flex items-center gap-4">
       <dt className="text-gray-500 dark:text-gray-400 shrink-0">{label}</dt>
       <button type="button"
-        onClick={copy}
+        onClick={() => copy(value)}
         className="ml-auto inline-flex items-center gap-2 font-mono text-xs text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1.5 py-0.5"
         aria-label={t("paymentDetail.copyAria", { label: label.toLowerCase() })}
       >
         <span>{truncated}</span>
-        {copied ? (
-          <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
-        ) : (
-          <CopyIcon className="w-3.5 h-3.5 text-gray-400" />
-        )}
+        {copied && <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />}
+        {failed && <X className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />}
+        {!copied && !failed && <CopyIcon className="w-3.5 h-3.5 text-gray-400" />}
       </button>
     </div>
   );

@@ -7,6 +7,7 @@
     "save": "Save",
     "copy": "Copy",
     "copied": "Copied",
+    "copyFailed": "Couldn't copy",
     "loading": "Loading…",
     "retry": "Try again",
     "goBack": "Go back",
@@ -203,7 +204,8 @@
     },
     "actions": {
       "send": "Send",
-      "receive": "Receive"
+      "receive": "Receive",
+      "courses": "Librería courses"
     },
     "recent": {
       "title": "Recent Activity",
@@ -250,6 +252,8 @@
       "label": "Amount (sats)",
       "fiat": "Amount ({{currency}})",
       "placeholder": "0",
+      "max": "Max",
+      "toggleUnit": "Switch between sats and USD",
       "helper": "Optional for invoices that already encode an amount"
     },
     "paste": "Paste",
@@ -271,6 +275,7 @@
     "sent": "Payment sent",
     "backToWallet": "Back to wallet",
     "failed": "Payment failed",
+    "selfPayment": "You can't pay yourself. Use a different destination.",
     "genericError": "Something went wrong. Please try again.",
     "tryAgain": "Try Again",
     "destinationKind": {
@@ -316,9 +321,11 @@
     "title": "Receive",
     "methods": {
       "lightning": "Lightning",
-      "lightningSubtitle": "Instant",
+      "lightningSubtitle": "Instant, reusable",
       "bitcoin": "Bitcoin",
-      "bitcoinSubtitle": "Added to your wallet on confirmation"
+      "bitcoinSubtitle": "Added to your wallet on confirmation",
+      "spark": "Spark",
+      "sparkSubtitle": "Instant, reusable"
     },
     "lightning": {
       "settingUp": "Setting up your Lightning address…",
@@ -339,7 +346,6 @@
       "amountInvalid": "Enter a valid amount",
       "generate": "Generate invoice",
       "generateFailed": "Failed to generate invoice",
-      "shareTitle": "Lightning invoice",
       "newInvoice": "New invoice"
     },
     "bitcoin": {
@@ -348,6 +354,15 @@
       "generating": "Generating Bitcoin address…",
       "addressFailed": "Failed to generate address",
       "copyAddress": "Copy address"
+    },
+    "spark": {
+      "title": "Your Spark address",
+      "subtitle": "Reusable. Share it with anyone paying you from a Spark wallet.",
+      "generating": "Getting your Spark address…",
+      "addressFailed": "Failed to get Spark address",
+      "copyAddress": "Copy address",
+      "invoiceTitle": "Spark invoice",
+      "invoiceOpenLink": "Or create a Spark invoice for a specific amount"
     },
     "success": {
       "title": "Payment received",

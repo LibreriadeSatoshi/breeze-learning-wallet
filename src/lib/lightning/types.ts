@@ -47,3 +47,12 @@ export interface ConversionLimits {
 }
 
 export type { UserSettings } from "@breeztech/breez-sdk-spark/web";
+
+export interface ReceivedPaymentDetails {
+  id: string;
+  amountSat: number;
+  feesSat: number;
+  timestamp: number;
+  method: "lightning" | "spark" | "deposit" | "token";
+  status: string;
+}

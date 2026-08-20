@@ -7,6 +7,8 @@ import {
   ArrowDownUp,
   ArrowUpFromLine,
   CreditCard,
+  ExternalLink,
+  GraduationCap,
   Key,
   Lock,
   Settings as SettingsIcon,
@@ -21,7 +23,7 @@ import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { TransactionList } from "@/components/wallet/transaction-list";
 import { PaymentDetailModal } from "@/components/wallet/payment-detail-modal";
 import { BuyBitcoinModal } from "@/components/wallet/buy-bitcoin-modal";
-import { SELECTED_BITCOIN_NETWORK } from "@/lib/config";
+import { COURSES_URL, SELECTED_BITCOIN_NETWORK } from "@/lib/config";
 import { initializeBreezWallet } from "@/lib/lightning/breez-init";
 import {
   onSdkEvent,
@@ -388,6 +390,17 @@ export default function WalletHomePage() {
             <span className="font-semibold text-lg">{t("home.actions.receive")}</span>
           </Button>
         </div>
+
+        <a
+          href={COURSES_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-6 h-14 w-full inline-flex items-center justify-center gap-3 rounded-lg border-2 border-gray-300 bg-white dark:bg-gray-800 font-medium text-lg shadow-lg hover:shadow-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-300"
+        >
+          <GraduationCap className="w-5 h-5 min-w-5" />
+          <span>{t("home.actions.courses")}</span>
+          <ExternalLink className="w-4 h-4 min-w-4 text-gray-500" />
+        </a>
 
         <div className="mb-6">
           {isLoading ? (
