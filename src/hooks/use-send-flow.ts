@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWalletStore } from "@/store/wallet-store";
 import {
@@ -14,7 +14,7 @@ import { useAmountInput } from "@/hooks/use-amount-input";
 import { useContactSelection } from "@/hooks/use-contact-selection";
 import { useSpendableBalance } from "@/hooks/use-spendable-balance";
 import { useT } from "@/lib/i18n/hook";
-import type { Contact, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
+import type { Contact, InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
 import {
   type PrepareResult,
   describeUnsupported,
@@ -36,6 +36,7 @@ export function useSendFlow() {
   const [destination, setDestination] = useState("");
   const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
   const [error, setError] = useState("");
+  const [isMaxing, setIsMaxing] = useState(false);
   const parseMutation = useParseInput();
   const prepareMutation = usePrepareSend();
   const executeMutation = useExecuteSend();
@@ -44,18 +45,7 @@ export function useSendFlow() {
 
   const { usdRate, totalBalanceSats, isStableBalance } = useSpendableBalance();
   const amount = useAmountInput(usdRate);
-  const { resetMaxed } = amount;
-  // Shared by typing and by picking a contact; each adds its own extras.
-  const setDestinationValue = useCallback(
-    (value: string) => {
-      setDestination(value);
-      resetMaxed();
-    },
-    [resetMaxed],
-  );
-  const contacts = useContactSelection(setDestinationValue);
-
-
+  const contacts = useContactSelection(setDestination);
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");
@@ -73,81 +63,100 @@ export function useSendFlow() {
     }
   };
 
-
-
   const handleDestinationChange = (value: string) => {
-    setDestinationValue(value);
+    setDestination(value);
     setError("");
   };
 
-  const handleMax = () => {
-    amount.setFromSats(totalBalanceSats);
-    setError("");
+  const preparePayment = async (
+    parsed: InputType,
+    dest: string,
+    amt: number | undefined,
+  ): Promise<PrepareResult | null> => {
+    if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
+      const payRequest: LnurlPayRequestDetails =
+        parsed.type === "lightningAddress"
+          ? parsed.payRequest
+          : pickLnurlPayDetails(parsed);
+      if (!amt || amt <= 0) {
+        setError(t("send.lnurlAmountRequired"));
+        return null;
+      }
+      const minSat = Math.ceil(payRequest.minSendable / 1000);
+      const maxSat = Math.floor(payRequest.maxSendable / 1000);
+      if (amt < minSat || amt > maxSat) {
+        setError(t("send.lnurlRange", { min: minSat.toLocaleString(), max: maxSat.toLocaleString() }));
+        return null;
+      }
+      const lnurlPrep = await prepareLnurlMutation.mutateAsync({
+        payRequest,
+        amountSat: amt,
+      });
+      return { kind: "lnurlPay", data: lnurlPrep, domain: payRequest.domain };
+    }
+    const sendPrep = await prepareMutation.mutateAsync({
+      destination: dest,
+      amountSat: amt,
+    });
+    return {
+      kind: "send",
+      data: sendPrep,
+      destinationKind: destinationKindForParsed(parsed),
+    };
   };
 
-
-  const handleContinue = async () => {
-    setError("");
+  const resolveDestination = async (): Promise<{ dest: string; parsed: InputType } | null> => {
     const dest = destination.trim();
     if (!dest) {
       setError(t("send.destinationRequired"));
-      return;
+      return null;
     }
+    const parsed = await parseMutation.mutateAsync(dest);
+    const unsupported = describeUnsupported(parsed, t);
+    if (unsupported) {
+      setError(unsupported);
+      return null;
+    }
+    return { dest, parsed };
+  };
+
+  const handleMax = async () => {
+    setError("");
+    setIsMaxing(true);
     try {
-      const parsed = await parseMutation.mutateAsync(dest);
-      const unsupported = describeUnsupported(parsed, t);
-      if (unsupported) {
-        setError(unsupported);
-        return;
-      }
+      const resolved = await resolveDestination();
+      if (!resolved) return;
 
-      const amountSat = amount.amountSat;
-
-      const prepareFor = async (
-        amt: number | undefined,
-      ): Promise<PrepareResult | null> => {
-        if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
-          const payRequest: LnurlPayRequestDetails =
-            parsed.type === "lightningAddress"
-              ? parsed.payRequest
-              : pickLnurlPayDetails(parsed);
-          if (!amt || amt <= 0) {
-            setError(t("send.lnurlAmountRequired"));
-            return null;
-          }
-          const minSat = Math.ceil(payRequest.minSendable / 1000);
-          const maxSat = Math.floor(payRequest.maxSendable / 1000);
-          if (amt < minSat || amt > maxSat) {
-            setError(t("send.lnurlRange", { min: minSat.toLocaleString(), max: maxSat.toLocaleString() }));
-            return null;
-          }
-          const lnurlPrep = await prepareLnurlMutation.mutateAsync({
-            payRequest,
-            amountSat: amt,
-          });
-          return { kind: "lnurlPay", data: lnurlPrep, domain: payRequest.domain };
-        }
-        const sendPrep = await prepareMutation.mutateAsync({
-          destination: dest,
-          amountSat: amt,
-        });
-        return {
-          kind: "send",
-          data: sendPrep,
-          destinationKind: destinationKindForParsed(parsed),
-        };
-      };
-
-      let prep = await prepareFor(amountSat);
+      const prep = await preparePayment(resolved.parsed, resolved.dest, totalBalanceSats);
       if (!prep) return;
 
+      const prepared = readAmountSat(prep);
+      if (prepared !== null && prepared !== totalBalanceSats) return;
+
       const net = totalBalanceSats - readFeeSat(prep);
-      if (amount.isMaxed() && net > 0 && overspends(prep, totalBalanceSats)) {
-        prep = await prepareFor(net);
-        if (!prep) return;
+      if (net <= 0) {
+        setError(t("send.insufficientBalance", { balance: (0).toLocaleString() }));
+        return;
       }
+      amount.setFromSats(net);
+    } catch (err) {
+      setError(sendErrorMessage(err, t, "send.parseFailed"));
+    } finally {
+      setIsMaxing(false);
+    }
+  };
+
+  const handleContinue = async () => {
+    setError("");
+    try {
+      const resolved = await resolveDestination();
+      if (!resolved) return;
+
+      const prep = await preparePayment(resolved.parsed, resolved.dest, amount.amountSat);
+      if (!prep) return;
 
       if (overspends(prep, totalBalanceSats)) {
+        const net = totalBalanceSats - readFeeSat(prep);
         setError(
           t("send.insufficientBalance", {
             balance: Math.max(0, net).toLocaleString(),
@@ -193,10 +202,6 @@ export function useSendFlow() {
     setPrepareResult(null);
   };
 
-
-
-
-
   return {
     isUnlocked,
     step,
@@ -211,10 +216,12 @@ export function useSendFlow() {
     usdRate,
     totalBalanceSats,
     isStableBalance,
+    isMaxing,
     isPreparing:
-      prepareMutation.isPending ||
-      prepareLnurlMutation.isPending ||
-      parseMutation.isPending,
+      !isMaxing &&
+      (prepareMutation.isPending ||
+        prepareLnurlMutation.isPending ||
+        parseMutation.isPending),
     isSending: executeMutation.isPending || executeLnurlMutation.isPending,
     handleDestinationChange,
     setShowContactsModal: contacts.setIsModalOpen,

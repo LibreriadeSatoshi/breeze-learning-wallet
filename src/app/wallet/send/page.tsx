@@ -39,6 +39,7 @@ export default function SendPage() {
     setContact,
     handlePaste,
     handleMax,
+    isMaxing,
     handleContinue,
     handleConfirmPayment,
     handleBack,
@@ -129,10 +130,12 @@ export default function SendPage() {
                   <button
                     type="button"
                     onClick={handleMax}
-                    disabled={totalBalanceSats <= 0 || (!isSats && !isUsdRateAvailable)}
+                    disabled={
+                      isMaxing || totalBalanceSats <= 0 || (!isSats && !isUsdRateAvailable)
+                    }
                     className={AMOUNT_CONTROL_CLASS}
                   >
-                    {t("send.amount.max")}
+                    {isMaxing ? t("send.checking") : t("send.amount.max")}
                   </button>
                 </div>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
