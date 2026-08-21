@@ -148,7 +148,11 @@ export function useSendFlow() {
       }
 
       if (overspends(prep, totalBalanceSats)) {
-        setError(t("send.insufficientBalance", { balance: totalBalanceSats.toLocaleString() }));
+        setError(
+          t("send.insufficientBalance", {
+            balance: Math.max(0, net).toLocaleString(),
+          }),
+        );
         return;
       }
       setPrepareResult(prep);
