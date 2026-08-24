@@ -56,14 +56,12 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact }: 
     try {
       if (step === "add") {
         await contactActions({action: "add", name: contact.name, paymentIdentifier: contact.paymentIdentifier})
-        setStep("list")
-        setContact({name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0})
       }
       if (step === "update") {
         await contactActions({action: "update", id: contact.id, name: contact.name, paymentIdentifier: contact.paymentIdentifier})
+      }
         setStep("list")
         setContact({name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0})
-      }
     } catch (err) {
       let errorMsg = (err as Error).message
       if (errorMsg.includes("Invalid input")) {
