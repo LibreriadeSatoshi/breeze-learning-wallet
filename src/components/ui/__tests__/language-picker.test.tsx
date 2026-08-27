@@ -1,42 +1,42 @@
-import {render, screen} from '@testing-library/react';
+import {screen} from '@testing-library/react';
 import { LanguagePickerSection } from '../language-picker';
 import userEvent from '@testing-library/user-event';
-import { LOCALES } from "@/lib/i18n/types";
+import { renderWithProviders } from '@/test/test-utils';
+import {LOCALES, LOCALE_LABELS} from '@/lib/i18n/types';
 
-const mockedSetLocale = vi.fn();
-
-vi.mock("@/lib/i18n/hook", () => ({
-    useLocale: () => ({
-        locale: "en",
-        setLocale: mockedSetLocale
-    })
-}))
 describe("LanguagePickerSection", () => {
     it("should render a language picker", async () => {
         const user = userEvent.setup();
-
-        render(<LanguagePickerSection />)
+        
+        renderWithProviders(<LanguagePickerSection />)
 
         const languagePicker = screen.getByRole("combobox");
-        
+
+        expect(languagePicker).toBeVisible();
+
         expect(languagePicker).toHaveValue("en");
+        expect(languagePicker).not.toHaveValue("es");
 
         await user.selectOptions(languagePicker, "es");
 
-        expect(mockedSetLocale).toHaveBeenCalledWith("es");  ;
+        expect(languagePicker).toBeVisible();
+        expect(languagePicker).toHaveValue("es");
+        expect(languagePicker).not.toHaveValue("en");
     })
-    it("should render all available languages", async () => {
-        render(<LanguagePickerSection />)
+    it("check persisted locale and available locales", async () => {
+        const user = userEvent.setup();
+        renderWithProviders(<LanguagePickerSection />)
 
         const languagePicker = screen.getByRole("combobox");
-
         expect(languagePicker).toHaveValue("en");
-        expect(screen.getAllByRole("option")).toHaveLength(LOCALES.length);
-    })
-    it("show correct native name for each language", async () => {
-        render(<LanguagePickerSection />)
 
-        expect(screen.getByRole("option", { name: /español/i })).toBeInTheDocument();
-        expect(screen.getByRole("option", { name: /english/i })).toBeInTheDocument();
+        await user.click(languagePicker);
+
+        const options = screen.getAllByRole("option")
+        expect(options).toHaveLength(LOCALES.length);
+
+        LOCALES.forEach((locale) => {
+            expect(screen.getByRole("option", { name: LOCALE_LABELS[locale] })).toBeVisible();
+        })
     })
 })

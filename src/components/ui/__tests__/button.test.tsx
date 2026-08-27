@@ -9,8 +9,8 @@ describe("Button", () => {
 
         render(<Button onClick={handleClick}>test</Button>)
 
-        const botton = screen.getByRole("button", { name: /test/i })
-        await user.click(botton)
+        const button = screen.getByRole("button", { name: /test/i })
+        await user.click(button)
 
         expect(handleClick).toHaveBeenCalledTimes(1)
     })
@@ -20,12 +20,12 @@ describe("Button", () => {
 
         render(<Button loading={true} onClick={handleClick}>test</Button>)
 
-        const botton = screen.getByRole("button", { name: /loading.../i })
+        const button = screen.getByRole("button", { name: /loading.../i })
 
-        expect(botton).toBeDisabled()
+        expect(button).toBeDisabled()
         expect(screen.queryByText("test")).not.toBeInTheDocument()
         
-        await user.click(botton)
+        await user.click(button)
 
         expect(handleClick).not.toHaveBeenCalled()
     })
@@ -35,11 +35,11 @@ describe("Button", () => {
 
         render(<Button disabled={true} onClick={handleClick}>test</Button>)
 
-        const botton = screen.getByRole("button", { name: /test/i })
+        const button = screen.getByRole("button", { name: /test/i })
         
-        await user.click(botton)
+        await user.click(button)
 
         expect(handleClick).not.toHaveBeenCalled()
-        expect(botton).toBeDisabled()
+        expect(button).toBeDisabled()
     })
 })
