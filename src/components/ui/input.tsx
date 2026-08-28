@@ -22,6 +22,11 @@ export function Input({
 }: InputProps) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
+  const errorId = `${inputId}-error`;
+  const helperId = `${inputId}-helper`;
+
+  const ariaDescribedBy = error ? errorId : helperText ? helperId : undefined;
+
   return (
     <div className="w-full">
       {label && (
@@ -48,6 +53,8 @@ export function Input({
     
       {inputType === "input" && <input
         id={inputId}
+        aria-invalid={!!error}
+        aria-describedby={ariaDescribedBy}
         className={`
           w-full px-4 py-3 rounded-lg border
           ${error
@@ -65,10 +72,10 @@ export function Input({
         {...props}
       />}
       {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p id={errorId} className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
       {helperText && !error && (
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{helperText}</p>
+        <p  id={helperId} className="mt-2 text-sm text-gray-500 dark:text-gray-400">{helperText}</p>
       )}
     </div>
   );
