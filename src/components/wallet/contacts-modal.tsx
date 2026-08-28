@@ -9,17 +9,17 @@ import { useContacts, useContactsAction } from "@/hooks/use-breez";
 import { useT } from "@/lib/i18n/hook";
 import type { Contact } from "@breeztech/breez-sdk-spark";
 
+const EMPTY: Contact = { name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0 };
+
 const AddContactButton = ({ onClick }: { onClick: () => void }) => {
     return (
-      <button type="button" onClick={onClick}>
-        <UserRoundPlus className="w-6 h-6"/>
+      <button aria-label="Add contact" itemID="addContact" type="button" onClick={onClick}>
+        <UserRoundPlus className="w-6 h-6" />
       </button>
     )
 }
 
-
-
-export const ContactsModal = ({ onClose, onClickContact, setContact, contact }: { onClose: () => void, onClickContact: (contact: Contact) => void, setContact: (contact: Contact) => void, contact: Contact}) => {
+export const ContactsModal = ({ onClose, onClickContact, setContact, contact = EMPTY }: { onClose: () => void, onClickContact: (contact: Contact) => void, setContact: (contact: Contact) => void, contact: Contact | undefined}) => {
   type ContactStep = "list" | "add" | "update" | "confirm"
 
   const t = useT()
@@ -73,7 +73,7 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact }: 
       } else { setError(t("send.contacts.errors.somethingWentBad")) }
     }
   }
-  
+
   const handleAddress = (e: ChangeEvent<HTMLInputElement>) => {
     setError(null)
     setContact({...contact, paymentIdentifier: e.target.value})
@@ -83,7 +83,6 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact }: 
     setError(null)
     setContact({...contact, name: e.target.value})
   }
-
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value)
@@ -101,15 +100,15 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact }: 
       }
       {step === "add" && 
         <Modal open={true} onClose={onClose} title={t("send.contacts.addTitle")}>
-            <div className="flex flex-col gap-3">
-              <Input className="h-10" label={t("send.contacts.inputs.name")} placeholder={t("send.contacts.inputs.namePlaceholder")} onChange={handleName}></Input>
-              <Input className="h-10" label={t("send.contacts.inputs.paymentIdentifier")} placeholder={t("send.contacts.inputs.paymentIdentifierPlaceholder")} onChange={handleAddress}></Input>
-              {error && <span className="text-red-500">{error}</span>}
-            </div>
-            <div className="flex flex-row justify-between, gap-3 mt-6">
-              <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
-              <Button className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
-            </div>
+          <div className="flex flex-col gap-3">
+            <Input className="h-10" label={t("send.contacts.inputs.name")} placeholder={t("send.contacts.inputs.namePlaceholder")} onChange={handleName}></Input>
+            <Input className="h-10" label={t("send.contacts.inputs.paymentIdentifier")} placeholder={t("send.contacts.inputs.paymentIdentifierPlaceholder")} onChange={handleAddress}></Input>
+            {error && <span className="text-red-500">{error}</span>}
+          </div>
+          <div className="flex flex-row justify-between, gap-3 mt-6">
+            <Button aria-label="Cancel" className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+            <Button aria-label="Save contact" className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
+          </div>
         </Modal>
         }
       {step === "update" && 
@@ -126,12 +125,12 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact }: 
       </Modal>}
       {step === "confirm" && 
       <Modal open={true} onClose={onClose} title={t("send.contacts.confirmTitle")} headerRight={<button type="button" onClick={() => setStep("list")}><ContactIcon /></button>}>
-        <div className="flex flex-col gap-3">
+        <div aria-label={t("send.contacts.deleteConfirm", {name: contact.name})} className="flex flex-col gap-3">
           <span>{t("send.contacts.deleteConfirm", {name: contact.name})}</span>
         </div>
         <div className="flex flex-row justify-between gap-3 mt-6">
-          <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
-          <Button className="flex-1" onClick={() => deleteContact(contact)}>{t("common.delete")}</Button>
+          <Button aria-labelledby={"cancel"} aria-label={t("common.cancel")} className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+          <Button aria-labelledby={`contact-${contact.id}`} aria-label={t("common.confirm")} className="flex-1" onClick={() => deleteContact(contact)}>{t("common.delete")}</Button>
         </div>
       </Modal>
       }
@@ -178,7 +177,7 @@ const ContactList = ({handleConfirm, onClickContact, search, handleUpdateContact
   const message = noMoreContacts ? t("send.contacts.noMoreContacts") : null;
 
   return (
-    <div className="flex flex-col gap-2 max-h-80 overflow-y-scroll">
+    <ul className="flex flex-col gap-2 max-h-80 overflow-y-scroll">
       {filteredContacts.map((contact) => (
         <ContactItem 
           key={contact.id} 
@@ -193,26 +192,28 @@ const ContactList = ({handleConfirm, onClickContact, search, handleUpdateContact
           ? t("send.contacts.loading")
           : message}
       </div>
-    </div>
+    </ul>
   )
 }
 
 const ContactItem = ({contact, handleConfirm, onClickContact, handleUpdateContact}: {contact: Contact, handleConfirm: (contact: Contact) => void, onClickContact: (contact: Contact) => void, handleUpdateContact: (contact: Contact) => void}) => {
+  const t = useT()
+
   return (
-    <div className="flex p-2 flex-row justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors rounded-lg">
+    <li aria-labelledby={`contact-${contact.id}`} aria-label={t("send.contacts.payToContact", {name: contact.name})} className="flex p-2 flex-row justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors rounded-lg">
       <button type="button" onClick={() => onClickContact(contact)} className="flex flex-col w-full items-start">
         <span>{contact.name}</span>
         <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{contact.paymentIdentifier}</span>
       </button>
       <div className="flex flex-row">
-        <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={(_) => handleUpdateContact(contact)}>
+        <button type="button" aria-label="Update contact" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={(_) => handleUpdateContact(contact)}>
           <SquarePen className="w-5 h-5"/>
         </button>
-        <button type="button" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={() => handleConfirm(contact)}>
+        <button type="button" aria-label="Delete contact" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={() => handleConfirm(contact)}>
           <Trash2 className="w-5 h-5" />
         </button>
       </div>
-    </div>
+    </li>
   )
 }
 
