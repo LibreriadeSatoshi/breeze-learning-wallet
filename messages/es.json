@@ -7,6 +7,7 @@
     "save": "Guardar",
     "copy": "Copiar",
     "copied": "Copiado",
+    "copyFailed": "No se pudo copiar",
     "loading": "Cargando…",
     "retry": "Reintentar",
     "goBack": "Volver",
@@ -16,7 +17,9 @@
     "hide": "Ocultar",
     "share": "Compartir",
     "never": "Nunca",
-    "justNow": "hace un momento"
+    "justNow": "hace un momento",
+    "delete": "Eliminar",
+    "search": "Buscar..."
   },
   "welcome": {
     "tagline": "Una billetera Bitcoin y Lightning no custodial. Tus claves, tus monedas.",
@@ -201,7 +204,8 @@
     },
     "actions": {
       "send": "Enviar",
-      "receive": "Recibir"
+      "receive": "Recibir",
+      "courses": "Cursos de la Librería"
     },
     "recent": {
       "title": "Actividad reciente",
@@ -248,6 +252,8 @@
       "label": "Monto (sats)",
       "fiat": "Monto ({{currency}})",
       "placeholder": "0",
+      "max": "Máx",
+      "toggleUnit": "Cambiar entre sats y USD",
       "helper": "Opcional para invoices que ya tienen un monto codificado"
     },
     "paste": "Pegar",
@@ -269,6 +275,7 @@
     "sent": "Pago enviado",
     "backToWallet": "Volver a la billetera",
     "failed": "Pago fallido",
+    "selfPayment": "No puedes pagarte a ti mismo. Usa otro destino.",
     "genericError": "Algo salió mal. Intenta de nuevo.",
     "tryAgain": "Reintentar",
     "destinationKind": {
@@ -285,15 +292,40 @@
       "lnurlWithdraw": "LNURL-withdraw es para recibir, no para enviar.",
       "url": "Eso parece un enlace web, no un destino de pago.",
       "silentPayment": "Las direcciones silent payment aún no están soportadas."
+    },
+    "contacts": {
+      "title": "Contactos",
+      "payToContact": "Pagar a {{name}}",
+      "confirmTitle": "Eliminar contacto",
+      "updateTitle": "Actualizar contacto",
+      "addTitle": "Agregar contacto",
+      "deleteConfirm": "¿Estás seguro de que deseas eliminar a {{name}}?",
+      "inputs": {
+        "search": "Buscar contacto",
+        "paymentIdentifier": "Dirección Lightning",
+        "paymentIdentifierPlaceholder": "usuario@dominio.com",
+        "name": "Nombre",
+        "namePlaceholder": "Nombre del contacto"
+      },
+      "errors": {
+        "invalid": "Dirección Lightning inválida: ingresa una dirección Lightning válida",
+        "somethingWentBad": "Algo salió mal. Intenta de nuevo.",
+        "emptyName": "El nombre es requerido",
+        "emptyPaymentIdentifier": "La dirección Lightning es requerida"
+      },
+      "loading": "Cargando más contactos...",
+      "noMoreContacts": "No hay más contactos para cargar"
     }
   },
   "receive": {
     "title": "Recibir",
     "methods": {
       "lightning": "Lightning",
-      "lightningSubtitle": "Instantáneo",
+      "lightningSubtitle": "Instantáneo y reutilizable",
       "bitcoin": "Bitcoin",
-      "bitcoinSubtitle": "Agregado a tu billetera al confirmar"
+      "bitcoinSubtitle": "Agregado a tu billetera al confirmar",
+      "spark": "Spark",
+      "sparkSubtitle": "Instantáneo y reutilizable"
     },
     "lightning": {
       "settingUp": "Configurando tu dirección Lightning…",
@@ -314,7 +346,6 @@
       "amountInvalid": "Introduce un monto válido",
       "generate": "Generar invoice",
       "generateFailed": "No se pudo generar el invoice",
-      "shareTitle": "Invoice Lightning",
       "newInvoice": "Nuevo invoice"
     },
     "bitcoin": {
@@ -323,6 +354,15 @@
       "generating": "Generando dirección Bitcoin…",
       "addressFailed": "No se pudo generar la dirección",
       "copyAddress": "Copiar dirección"
+    },
+    "spark": {
+      "title": "Tu dirección Spark",
+      "subtitle": "Reutilizable. Compártela con quien quiera pagarte desde una billetera Spark.",
+      "generating": "Obteniendo tu dirección Spark…",
+      "addressFailed": "No se pudo obtener la dirección Spark",
+      "copyAddress": "Copiar dirección",
+      "invoiceTitle": "Factura Spark",
+      "invoiceOpenLink": "O crea una factura Spark por un monto específico"
     },
     "success": {
       "title": "Pago recibido",

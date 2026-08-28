@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import {
   getBalance,
   getNodeState,
@@ -6,8 +6,10 @@ import {
   prepareSend,
   executeSend,
   receiveLightning,
+  receiveSpark,
   parseInput,
   getBitcoinAddress,
+  getSparkAddress,
   listUnclaimedDeposits,
   claimDeposit,
   refundDeposit,
@@ -26,13 +28,18 @@ import {
   enableStableBalance,
   fetchConversionLimits,
   estimateSwapFee,
-  getUserSettings
+  getUserSettings,
+  getContactList,
+  addContact,
+  deleteContact,
+  updateContact
 } from "@/lib/lightning/breez-service";
 import type {
   LnurlPayRequestDetails,
   Fee,
+  Contact
 } from "@breeztech/breez-sdk-spark";
-import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
+import type { Balances, ContactAction, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
 
 interface UseSwapFeeParams { 
   enabled?: boolean; 
@@ -49,11 +56,13 @@ const breezKeys = {
   payments: () => [...breezKeys.all, "payments"] as const,
   unclaimedDeposits: () => [...breezKeys.all, "unclaimedDeposits"] as const,
   lightningAddress: () => [...breezKeys.all, "lightningAddress"] as const,
+  sparkAddress: () => [...breezKeys.all, "sparkAddress"] as const,
   fiatCurrencies: () => [...breezKeys.all, "fiatCurrencies"] as const,
   fiatRates: () => [...breezKeys.all, "fiatRates"] as const,
   conversionLimits: () => [...breezKeys.all, "convertionLimits"] as const,
   estimatedSwapFee: () => [...breezKeys.all, "estimatedFees"] as const,
-  userSettings: () => [...breezKeys.all, "userSettings"] as const
+  userSettings: () => [...breezKeys.all, "userSettings"] as const,
+  contactList: () => [...breezKeys.all, "contactList"] as const
 };
 
 export function useBalance(enabled: boolean = true) {
@@ -92,6 +101,52 @@ export function useConversionLimits(enabled: boolean) {
     enabled
   });
 }
+
+const PAGE_SIZE = 200;
+
+export function useContacts(enable: boolean) {
+  return useInfiniteQuery({
+    queryKey: breezKeys.contactList(),
+    queryFn: ({ pageParam = 0 }) =>
+      getContactList({ offset: pageParam, limit: PAGE_SIZE }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) {
+        return undefined;
+      }
+      return allPages.length * PAGE_SIZE;
+    },
+    enabled: enable,
+    staleTime: 60_000,
+  });
+}
+
+export function useContactsAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({action, id, name, paymentIdentifier}: {action: ContactAction, id?: string, name?: string, paymentIdentifier?: string}): Promise<Contact | null> => {
+      if (action === "add") {
+        if (!name) throw new Error("Name is required");
+        if (!paymentIdentifier) throw new Error("Payment Identifier is required");
+        return await addContact(name, paymentIdentifier);
+      } else if (action === "update") {
+        if (!id) throw new Error("Id is required");
+        if (!name) throw new Error("Name is required");
+        if (!paymentIdentifier) throw new Error("Payment Identifier is required");
+        return await updateContact(id, name, paymentIdentifier);
+      } else if (action === "remove") {
+        if (!id) throw new Error("Id is required");
+        await deleteContact(id);
+        return null
+      }
+      throw new Error("Invalid action");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: breezKeys.contactList() }); 
+    }
+  });
+}
+
 
 export function useSwapFee({ 
   enabled = true,
@@ -165,6 +220,22 @@ export function useReceiveLightning() {
       amountSat: number;
       description: string;
     }) => receiveLightning(amountSat, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
+    },
+  });
+}
+
+export function useReceiveSpark() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      amountSat,
+      description,
+    }: {
+      amountSat: number;
+      description: string;
+    }) => receiveSpark(amountSat, description),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
     },
@@ -257,6 +328,15 @@ export function useFiatRates(enabled: boolean = true) {
     enabled,
     refetchInterval: enabled ? 60_000 : false,
     staleTime: 30_000,
+  });
+}
+
+export function useSparkAddress(enabled: boolean = true) {
+  return useQuery({
+    queryKey: breezKeys.sparkAddress(),
+    queryFn: getSparkAddress,
+    enabled,
+    staleTime: Infinity,
   });
 }
 

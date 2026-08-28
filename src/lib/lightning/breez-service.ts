@@ -16,6 +16,7 @@ import type {
   BuyBitcoinRequest,
   BuyBitcoinResponse,
   Conversion,
+  Contact,
 } from "@breeztech/breez-sdk-spark";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "./types";
 
@@ -255,12 +256,10 @@ export const estimateSwapFee = async ({userSettings, usdRate, balances, conversi
   }
 
   try {
-    const receiveResponse = await sdk.receivePayment({
-      paymentMethod: { type: "sparkAddress" }, 
-    });
+    const { address: sparkAddress } = await getSparkAddress();
 
     const prepareResponse = await sdk.prepareSendPayment({
-      paymentRequest: { type: "input", input: receiveResponse.paymentRequest },
+      paymentRequest: { type: "input", input: sparkAddress },
       amount,
       tokenIdentifier: !isStableBalance ? USDB_TOKEN_IDENTIFIER : undefined,
       conversionOptions: !isStableBalance
@@ -285,6 +284,37 @@ export async function getUserSettings(): Promise<UserSettings> {
   return sdk.getUserSettings();
 }
 
+export async function getContactList({ offset, limit }: { offset: number; limit: number }): Promise<Contact[]> {
+  if (!sdk) throw new Error("Wallet not ready.");
+
+  return sdk.listContacts({
+    offset,
+    limit
+  });
+}
+
+export async function addContact(name: string, paymentIdentifier: string): Promise<Contact | null> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const validatePayment = await sdk.parse(paymentIdentifier);
+
+  if (validatePayment.type !== "lightningAddress") {
+    throw new Error("Invalid input: use a valid lightning address");
+  }
+
+  return await sdk.addContact({ name, paymentIdentifier });
+}
+
+
+export async function deleteContact(id: string): Promise<void> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  await sdk.deleteContact(id);
+}
+
+export async function updateContact(id: string, name: string, paymentIdentifier: string): Promise<Contact> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.updateContact({ id, name, paymentIdentifier });
+}
+
 export async function parseInput(input: string): Promise<InputType> {
   if (!sdk) throw new Error("Wallet not ready.");
   return sdk.parse(input);
@@ -306,6 +336,38 @@ export async function receiveLightning(
   return {
     paymentRequest: result.paymentRequest,
     expiresAt: Date.now() + 3600 * 1000,
+    fee: Number(result.fee),
+  };
+}
+
+export async function receiveSpark(
+  amountSats: number,
+  description: string,
+): Promise<{ paymentRequest: string; fee: number }> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const result = await sdk.receivePayment({
+    paymentMethod: {
+      type: "sparkInvoice",
+      amount: String(amountSats),
+      description: description || undefined,
+    },
+  });
+  return {
+    paymentRequest: result.paymentRequest,
+    fee: Number(result.fee),
+  };
+}
+
+export async function getSparkAddress(): Promise<{
+  address: string;
+  fee: number;
+}> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  const result = await sdk.receivePayment({
+    paymentMethod: { type: "sparkAddress" },
+  });
+  return {
+    address: result.paymentRequest,
     fee: Number(result.fee),
   };
 }

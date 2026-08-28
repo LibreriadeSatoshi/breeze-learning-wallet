@@ -3,6 +3,7 @@ import type { FetchConversionLimitsResponse, TokenMetadata } from "@breeztech/br
 export type PaymentType = "sent" | "received";
 export type PaymentStatus = "pending" | "complete" | "failed";
 export type PaymentMethod = "lightning" | "spark" | "token" | "deposit" | "withdraw" | "unknown";
+export type ContactAction = "add" | "update" | "remove"
 
 export type Balances = {
   totalSats: number;
@@ -46,3 +47,12 @@ export interface ConversionLimits {
 }
 
 export type { UserSettings } from "@breeztech/breez-sdk-spark/web";
+
+export interface ReceivedPaymentDetails {
+  id: string;
+  amountSat: number;
+  feesSat: number;
+  timestamp: number;
+  method: "lightning" | "spark" | "deposit" | "token";
+  status: string;
+}
