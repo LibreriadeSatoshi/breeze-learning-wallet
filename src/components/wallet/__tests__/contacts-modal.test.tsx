@@ -75,12 +75,12 @@ describe("ContactsModal", () => {
 
     const contactsModal = screen.getByRole("dialog", { name: /contacts/i });
     const addContactButton = screen.getByRole("button", { name: /add new contact/i });
-    const search_contact = screen.getByRole("textbox", { name: /search contact/i });
+    const searchContact = screen.getByRole("textbox", { name: /search contact/i });
     const contacts = screen.getAllByRole("listitem");
     
     expect(contactsModal).toBeVisible();
     expect(addContactButton).toBeVisible();
-    expect(search_contact).toBeVisible();
+    expect(searchContact).toBeVisible();
 
     contactsStore.forEach((contact) => {
       expect(screen.getByText(contact.name)).toBeInTheDocument();
@@ -96,15 +96,15 @@ describe("ContactsModal", () => {
       initialContacts: contactsStore
     });
     
-    const initial_contacts = screen.getAllByRole("listitem");
-    const search_contact = screen.getByRole("textbox", { name: /search contact/i });
+    const initialContacts = screen.getAllByRole("listitem");
+    const searchContact = screen.getByRole("textbox", { name: /search contact/i });
 
-    expect(initial_contacts).toHaveLength(contactsStore.length);
+    expect(initialContacts).toHaveLength(contactsStore.length);
     
-    await user.type(search_contact, "test");
+    await user.type(searchContact, "test");
 
     const contacts = screen.getAllByRole("listitem");
-    expect(search_contact).toHaveValue("test");
+    expect(searchContact).toHaveValue("test");
     expect(contacts).toHaveLength(1);
   });
 
@@ -121,21 +121,21 @@ describe("ContactsModal", () => {
     
     await user.click(addContactButton);
 
-    const input_name = screen.getByRole("textbox", { name: /name/i });
-    const input_payment_identifier = screen.getByRole("textbox", { name: /lightning address/i });
-    const save_contact_button = screen.getByRole("button", { name: /save/i });
+    const inputName = screen.getByRole("textbox", { name: /name/i });
+    const inputPaymentIdentifier = screen.getByRole("textbox", { name: /lightning address/i });
+    const saveContactButton = screen.getByRole("button", { name: /save/i });
 
-    expect(input_name).toBeVisible();
-    expect(input_payment_identifier).toBeVisible();
-    expect(save_contact_button).toBeVisible();
+    expect(inputName).toBeVisible();
+    expect(inputPaymentIdentifier).toBeVisible();
+    expect(saveContactButton).toBeVisible();
 
-    await user.type(input_name, "Test User");
-    await user.type(input_payment_identifier, "test@breez.tips");
+    await user.type(inputName, "Test User");
+    await user.type(inputPaymentIdentifier, "test@breez.tips");
     
-    expect(input_name).toHaveValue("Test User");
-    expect(input_payment_identifier).toHaveValue("test@breez.tips");
+    expect(inputName).toHaveValue("Test User");
+    expect(inputPaymentIdentifier).toHaveValue("test@breez.tips");
 
-    await user.click(save_contact_button);
+    await user.click(saveContactButton);
     
     await waitFor(() => {
       expect(screen.getByText("Test User")).toBeInTheDocument();
@@ -150,28 +150,28 @@ describe("ContactsModal", () => {
       initialContacts: contactsStore
     });    
 
-    const satoshi_contact = screen.getAllByRole("listitem").filter((c) => c.getAttribute("aria-labelledby") == `contact-${contact.id}`)[0];
-    const update_button = within(satoshi_contact).getByRole("button", { name: /update/i });
+    const satoshiContact = screen.getAllByRole("listitem").find((c) => c.getAttribute("aria-labelledby") == `contact-${contact.id}`)!;
+    const updateButton = within(satoshiContact).getByRole("button", { name: /update/i });
     
-    await user.click(update_button);
+    await user.click(updateButton);
 
-    const input_name = screen.getByRole("textbox", { name: /name/i });
-    const input_payment_identifier = screen.getByRole("textbox", { name: /lightning address/i });
-    const save_contact_button = screen.getByRole("button", { name: /save/i });
+    const inputName = screen.getByRole("textbox", { name: /name/i });
+    const inputPaymentIdentifier = screen.getByRole("textbox", { name: /lightning address/i });
+    const saveContactButton = screen.getByRole("button", { name: /save/i });
 
-    expect(input_name).toBeVisible();
-    expect(input_name).toHaveValue(contact.name);
-    expect(input_payment_identifier).toBeVisible();
-    expect(input_payment_identifier).toHaveValue(contact.paymentIdentifier);
-    expect(save_contact_button).toBeVisible();
+    expect(inputName).toBeVisible();
+    expect(inputName).toHaveValue(contact.name);
+    expect(inputPaymentIdentifier).toBeVisible();
+    expect(inputPaymentIdentifier).toHaveValue(contact.paymentIdentifier);
+    expect(saveContactButton).toBeVisible();
 
-    await user.clear(input_name);
-    await user.type(input_name, "Edited Test User");
+    await user.clear(inputName);
+    await user.type(inputName, "Edited Test User");
 
-    await user.clear(input_payment_identifier);
-    await user.type(input_payment_identifier, "edited@breez.tips");
+    await user.clear(inputPaymentIdentifier);
+    await user.type(inputPaymentIdentifier, "edited@breez.tips");
     
-    await user.click(save_contact_button);
+    await user.click(saveContactButton);
     
     await waitFor(() => {
     expect(screen.getByText("Edited Test User")).toBeInTheDocument();
@@ -185,19 +185,17 @@ describe("ContactsModal", () => {
     renderWithProviders(<ContactsModalWrapper initialContact={contact} />, {
       initialContacts: contactsStore
     });    
-    screen.debug();
 
-    const satoshi_contact = screen.getAllByRole("listitem").filter((c) => c.getAttribute("aria-labelledby") == `contact-${contact.id}`)[0];
-    const delete_button = within(satoshi_contact).getByRole("button", { name: /delete contact/i });
+    const satoshiContact = screen.getAllByRole("listitem").find((c) => c.getAttribute("aria-labelledby") == `contact-${contact.id}`)!;
+    const deleteButton = within(satoshiContact).getByRole("button", { name: /delete contact/i });
     
-    await user.click(delete_button);
+    await user.click(deleteButton);
 
-    const confirm_delete = screen.getByRole("button", { name: /confirm/i });
+    const confirmDelete = screen.getByRole("button", { name: /confirm/i });
     
-    await user.click(confirm_delete);
+    await user.click(confirmDelete);
     
     await waitFor(() => {
-      screen.debug();
       expect(screen.queryByText(contact.name)).not.toBeInTheDocument();
       expect(screen.queryByText(contact.paymentIdentifier)).not.toBeInTheDocument();
     });

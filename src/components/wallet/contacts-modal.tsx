@@ -9,12 +9,12 @@ import { useContacts, useContactsAction } from "@/hooks/use-breez";
 import { useT } from "@/lib/i18n/hook";
 import type { Contact } from "@breeztech/breez-sdk-spark";
 
-const EMPTY: Contact = { name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0 };
+const EMPTY = { name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0 };
 
 const AddContactButton = ({ onClick }: { onClick: () => void }) => {
   const t = useT()  
   return (
-      <button aria-label={t("send.contacts.aria.add")} itemID="addContact" type="button" onClick={onClick}>
+      <button aria-label={t("send.contacts.aria.add")} type="button" onClick={onClick}>
         <UserRoundPlus className="w-6 h-6" />
       </button>
     )
