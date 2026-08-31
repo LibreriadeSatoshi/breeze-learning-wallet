@@ -1,11 +1,8 @@
 import {render, screen} from '@testing-library/react'
 import { Card, CardHeader, CardContent} from '../card'
-import userEvent from '@testing-library/user-event'
 
 describe("Card", () => {
-    it("should render a card", async () => {
-        const user = userEvent.setup();
-
+    it("should render a card", () => {
         render(
             <Card>
                 <CardHeader>
