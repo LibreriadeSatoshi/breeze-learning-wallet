@@ -68,13 +68,13 @@ describe("ContactsModal", () => {
     contactsStore = [...mockContacts];
   });
 
-  it("should render a list of contacts", async () => {
+  it("should render a list of contacts", () => {
     renderWithProviders(<ContactsModalWrapper />, {
       initialContacts: contactsStore
     });
 
     const contactsModal = screen.getByRole("dialog", { name: /contacts/i });
-    const addContactButton = screen.getByRole("button", { name: /add contact/i });
+    const addContactButton = screen.getByRole("button", { name: /add new contact/i });
     const search_contact = screen.getByRole("textbox", { name: /search contact/i });
     const contacts = screen.getAllByRole("listitem");
     
@@ -115,7 +115,7 @@ describe("ContactsModal", () => {
       initialContacts: contactsStore
     });
     
-    const addContactButton = screen.getByRole("button", { name: /add contact/i });
+    const addContactButton = screen.getByRole("button", { name: /add new contact/i });
 
     expect(screen.getAllByRole("listitem")).toHaveLength(contactsStore.length);
     
@@ -185,6 +185,7 @@ describe("ContactsModal", () => {
     renderWithProviders(<ContactsModalWrapper initialContact={contact} />, {
       initialContacts: contactsStore
     });    
+    screen.debug();
 
     const satoshi_contact = screen.getAllByRole("listitem").filter((c) => c.getAttribute("aria-labelledby") == `contact-${contact.id}`)[0];
     const delete_button = within(satoshi_contact).getByRole("button", { name: /delete contact/i });
@@ -196,6 +197,7 @@ describe("ContactsModal", () => {
     await user.click(confirm_delete);
     
     await waitFor(() => {
+      screen.debug();
       expect(screen.queryByText(contact.name)).not.toBeInTheDocument();
       expect(screen.queryByText(contact.paymentIdentifier)).not.toBeInTheDocument();
     });

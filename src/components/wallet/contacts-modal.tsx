@@ -12,8 +12,9 @@ import type { Contact } from "@breeztech/breez-sdk-spark";
 const EMPTY: Contact = { name: "", paymentIdentifier: "", id: "", createdAt: 0, updatedAt: 0 };
 
 const AddContactButton = ({ onClick }: { onClick: () => void }) => {
-    return (
-      <button aria-label="Add contact" itemID="addContact" type="button" onClick={onClick}>
+  const t = useT()  
+  return (
+      <button aria-label={t("send.contacts.aria.add")} itemID="addContact" type="button" onClick={onClick}>
         <UserRoundPlus className="w-6 h-6" />
       </button>
     )
@@ -38,12 +39,12 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact = E
     setContact(contact)
   }
 
-  const handleConfirm = (contact: Contact) => {
+  const handleDeleteContact = (contact: Contact) => {
     setStep("confirm")
     setContact(contact)
   }
 
-  const deleteContact = async (contact: Contact) => {
+  const confirmDelete = async (contact: Contact) => {
     try {
       await contactActions({action: "remove", id: contact.id})
     } catch (error) {
@@ -94,7 +95,7 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact = E
         <Modal open={true} onClose={onClose} title={t("send.contacts.title")} headerRight={<AddContactButton onClick={handleAddContact}/>}>
           <div className="flex flex-col gap-3">
             <Input className="h-10" placeholder={t("common.search")} label={t("send.contacts.inputs.search")} onChange={handleSearch}></Input>
-            <ContactList handleConfirm={handleConfirm} onClickContact={onClickContact} search={search} handleUpdateContact={handleUpdateContact}/>
+            <ContactList handleDeleteContact={handleDeleteContact} onClickContact={onClickContact} search={search} handleUpdateContact={handleUpdateContact}/>
           </div>
         </Modal>
       }
@@ -106,8 +107,8 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact = E
             {error && <span className="text-red-500">{error}</span>}
           </div>
           <div className="flex flex-row justify-between, gap-3 mt-6">
-            <Button aria-label="Cancel" className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
-            <Button aria-label="Save contact" className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
+            <Button aria-label={t("common.cancel")} className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+            <Button aria-label={t("send.contacts.aria.saveContact", {name: contact.name})} className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
           </div>
         </Modal>
         }
@@ -129,8 +130,8 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact = E
           <span>{t("send.contacts.deleteConfirm", {name: contact.name})}</span>
         </div>
         <div className="flex flex-row justify-between gap-3 mt-6">
-          <Button aria-labelledby={"cancel"} aria-label={t("common.cancel")} className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
-          <Button aria-labelledby={`contact-${contact.id}`} aria-label={t("common.confirm")} className="flex-1" onClick={() => deleteContact(contact)}>{t("common.delete")}</Button>
+          <Button aria-label={t("common.cancel")} className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+          <Button aria-label={t("send.contacts.confirmDelete", {name: contact.name})} className="flex-1" onClick={() => confirmDelete(contact)}>{t("common.delete")}</Button>
         </div>
       </Modal>
       }
@@ -138,7 +139,7 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact = E
   )
 }
 
-const ContactList = ({handleConfirm, onClickContact, search, handleUpdateContact}: {handleConfirm: (contact: Contact) => void, search: string, onClickContact: (contact: Contact) => void, handleUpdateContact: (contact: Contact) => void}) => {
+const ContactList = ({handleDeleteContact, onClickContact, search, handleUpdateContact}: {handleDeleteContact: (contact: Contact) => void, search: string, onClickContact: (contact: Contact) => void, handleUpdateContact: (contact: Contact) => void}) => {
   const t = useT()
   const {
     data: contacts,
@@ -177,26 +178,28 @@ const ContactList = ({handleConfirm, onClickContact, search, handleUpdateContact
   const message = noMoreContacts ? t("send.contacts.noMoreContacts") : null;
 
   return (
-    <ul className="flex flex-col gap-2 max-h-80 overflow-y-scroll">
-      {filteredContacts.map((contact) => (
-        <ContactItem 
-          key={contact.id} 
-          onClickContact={onClickContact}
-          contact={contact} 
-          handleConfirm={handleConfirm} 
-          handleUpdateContact={handleUpdateContact}
-        />
-      ))}
+    <>
+      <ul className="flex flex-col gap-2 max-h-80 overflow-y-scroll">
+        {filteredContacts.map((contact) => (
+          <ContactItem 
+            key={contact.id} 
+            onClickContact={onClickContact}
+            contact={contact} 
+            handleDeleteContact={handleDeleteContact} 
+            handleUpdateContact={handleUpdateContact}
+          />
+        ))}
+      </ul>
       <div ref={bottomRef} className="py-2 text-center text-xs text-gray-400">
-        {isFetchingNextPage
-          ? t("send.contacts.loading")
-          : message}
+          {isFetchingNextPage
+            ? t("send.contacts.loading")
+            : message}
       </div>
-    </ul>
+    </>
   )
 }
 
-const ContactItem = ({contact, handleConfirm, onClickContact, handleUpdateContact}: {contact: Contact, handleConfirm: (contact: Contact) => void, onClickContact: (contact: Contact) => void, handleUpdateContact: (contact: Contact) => void}) => {
+const ContactItem = ({contact, handleDeleteContact, onClickContact, handleUpdateContact}: {contact: Contact, handleDeleteContact: (contact: Contact) => void, onClickContact: (contact: Contact) => void, handleUpdateContact: (contact: Contact) => void}) => {
   const t = useT()
 
   return (
@@ -206,10 +209,10 @@ const ContactItem = ({contact, handleConfirm, onClickContact, handleUpdateContac
         <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{contact.paymentIdentifier}</span>
       </button>
       <div className="flex flex-row">
-        <button type="button" aria-label="Update contact" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={(_) => handleUpdateContact(contact)}>
+        <button type="button" aria-label={t("send.contacts.aria.update", {name: contact.name})} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={(_) => handleUpdateContact(contact)}>
           <SquarePen className="w-5 h-5"/>
         </button>
-        <button type="button" aria-label="Delete contact" className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={() => handleConfirm(contact)}>
+        <button type="button" aria-label={t("send.contacts.aria.delete", {name: contact.name})} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors" onClick={() => handleDeleteContact(contact)}>
           <Trash2 className="w-5 h-5" />
         </button>
       </div>

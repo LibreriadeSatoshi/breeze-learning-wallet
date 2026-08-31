@@ -314,7 +314,14 @@
         "emptyPaymentIdentifier": "Lightning address is required"
       },
       "loading": "Loading more contacts...",
-      "noMoreContacts": "No more contacts to load"
+      "noMoreContacts": "No more contacts to load",
+      "aria": {
+        "add": "Add new contact",
+        "update": "Update contact {{name}}",
+        "delete": "Delete contact {{name}}",
+        "saveContact": "Save {{name}} as a contact",
+        "confirmDelete": "Delete {{name}}"
+      }
     }
   },
   "receive": {

@@ -314,7 +314,14 @@
         "emptyPaymentIdentifier": "La dirección Lightning es requerida"
       },
       "loading": "Cargando más contactos...",
-      "noMoreContacts": "No hay más contactos para cargar"
+      "noMoreContacts": "No hay más contactos para cargar",
+      "aria": {
+        "add": "Agregar nuevo contacto",
+        "update": "Actualizar contacto {{name}}",
+        "delete": "Eliminar contacto {{name}}",
+        "saveContact": "Guardar {{name}} como un contacto",
+        "confirmDelete": "Eliminar {{name}}"
+      }
     }
   },
   "receive": {
