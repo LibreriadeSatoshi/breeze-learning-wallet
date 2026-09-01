@@ -229,7 +229,7 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
           </p>
           <div className="flex justify-center">
             <div className="bg-white p-4 rounded-xl">
-              <QRCodeSVG value={cashAppUrl} size={220} level="M" />
+              <QRCodeSVG aria-label="Cash App QR" value={cashAppUrl} size={220} level="M" />
             </div>
           </div>
           <button type="button"

@@ -10,6 +10,18 @@ class MockIntersectionObserver {
 
 vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
 
+beforeEach(() => {  
+  vi.spyOn(window, "open").mockImplementation(() => ({
+    location: { href: "" },
+    close: vi.fn(),
+  } as any));
+
+  Object.defineProperty(window, "location", {
+    value: { href: "" },
+    writable: true,
+  });
+});
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -28,5 +40,10 @@ vi.mock("@/lib/lightning/breez-service", async (importOriginal) => {
   addContact: vi.fn().mockImplementation(mocks.mockAddContact),
   updateContact: vi.fn().mockImplementation(mocks.mockUpdateContact),
   deleteContact: vi.fn().mockImplementation(mocks.mockDeleteContact),
+  buyBitcoin: vi.fn().mockResolvedValue({
+    url: "https://cash.app/launch/pay/mocked-id",
+  }),
+  onSdkEvent: vi.fn(),
+  listFiatRates: vi.fn().mockResolvedValue([{ usd: 78000 }]),
   };
 });

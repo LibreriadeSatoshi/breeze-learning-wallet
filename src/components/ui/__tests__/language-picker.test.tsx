@@ -42,7 +42,7 @@ describe("LanguagePickerSection", () => {
         renderWithProviders(<LanguagePickerSection />)
 
         const languagePicker = screen.getByRole("combobox");
-        expect(languagePicker).toHaveValue("en");
+        expect(languagePicker).toHaveValue("es");
 
         await user.click(languagePicker);
 
