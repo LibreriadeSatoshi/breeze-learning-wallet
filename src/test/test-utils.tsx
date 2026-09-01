@@ -23,7 +23,7 @@ export function renderWithProviders(
 
   if (initialContacts) {
     queryClient.setQueryData(["breez", "contactList"], {
-    pages: [initialContacts],
+    pages: [[...initialContacts]],
     pageParams: [undefined],
   });
   }

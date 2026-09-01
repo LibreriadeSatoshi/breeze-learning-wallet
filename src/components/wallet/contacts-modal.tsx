@@ -107,13 +107,13 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact = E
             {error && <span className="text-red-500">{error}</span>}
           </div>
           <div className="flex flex-row justify-between, gap-3 mt-6">
-            <Button aria-label={t("common.cancel")} className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
-            <Button aria-label={t("send.contacts.aria.saveContact", {name: contact.name})} className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
+            <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+            <Button className="flex-1" onClick={saveContact}>{t("common.save")}</Button>
           </div>
         </Modal>
         }
       {step === "update" && 
-      <Modal open={true} onClose={onClose} title={t("send.contacts.updateTitle")} headerRight={<button type="button" onClick={() => setStep("list")}><ContactIcon /></button>}>
+      <Modal open={true} onClose={onClose} title={t("send.contacts.updateTitle")}>
         <div className="flex flex-col gap-3">
           <Input value={contact.name} className="h-10" label={t("send.contacts.inputs.name")} placeholder={t("send.contacts.inputs.namePlaceholder")} onChange={handleName}></Input>
           <Input value={contact.paymentIdentifier} className="h-10" label={t("send.contacts.inputs.paymentIdentifier")} placeholder={t("send.contacts.inputs.paymentIdentifierPlaceholder")} onChange={handleAddress}></Input>
@@ -125,19 +125,20 @@ export const ContactsModal = ({ onClose, onClickContact, setContact, contact = E
         </div>
       </Modal>}
       {step === "confirm" && 
-      <Modal open={true} onClose={onClose} title={t("send.contacts.confirmTitle")} headerRight={<button type="button" onClick={() => setStep("list")}><ContactIcon /></button>}>
-        <div aria-label={t("send.contacts.deleteConfirm", {name: contact.name})} className="flex flex-col gap-3">
-          <span>{t("send.contacts.deleteConfirm", {name: contact.name})}</span>
+      <Modal open={true} onClose={onClose} title={t("send.contacts.confirmTitle")}>
+        <div className="flex flex-col gap-3">
+          <span>{t("send.contacts.confirmDelete", {name: contact.name})}</span>
         </div>
         <div className="flex flex-row justify-between gap-3 mt-6">
-          <Button aria-label={t("common.cancel")} className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
-          <Button aria-label={t("send.contacts.confirmDelete", {name: contact.name})} className="flex-1" onClick={() => confirmDelete(contact)}>{t("common.delete")}</Button>
+          <Button className="flex-1" onClick={() => setStep("list")}>{t("common.cancel")}</Button>
+          <Button className="flex-1" onClick={() => confirmDelete(contact)}>{t("common.delete")}</Button>
         </div>
       </Modal>
       }
   </>
   )
 }
+
 
 const ContactList = ({handleDeleteContact, onClickContact, search, handleUpdateContact}: {handleDeleteContact: (contact: Contact) => void, search: string, onClickContact: (contact: Contact) => void, handleUpdateContact: (contact: Contact) => void}) => {
   const t = useT()
@@ -203,7 +204,7 @@ const ContactItem = ({contact, handleDeleteContact, onClickContact, handleUpdate
   const t = useT()
 
   return (
-    <li aria-labelledby={`contact-${contact.id}`} aria-label={t("send.contacts.payToContact", {name: contact.name})} className="flex p-2 flex-row justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors rounded-lg">
+    <li className="flex p-2 flex-row justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors rounded-lg">
       <button type="button" onClick={() => onClickContact(contact)} className="flex flex-col w-full items-start">
         <span>{contact.name}</span>
         <span className="text-sm text-gray-500 dark:text-gray-400 truncate">{contact.paymentIdentifier}</span>

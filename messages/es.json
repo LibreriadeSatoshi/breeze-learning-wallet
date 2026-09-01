@@ -299,7 +299,7 @@
       "confirmTitle": "Eliminar contacto",
       "updateTitle": "Actualizar contacto",
       "addTitle": "Agregar contacto",
-      "deleteConfirm": "¿Estás seguro de que deseas eliminar a {{name}}?",
+      "confirmDelete": "¿Estás seguro de que deseas eliminar a {{name}}?",
       "inputs": {
         "search": "Buscar contacto",
         "paymentIdentifier": "Dirección Lightning",
@@ -319,8 +319,7 @@
         "add": "Agregar nuevo contacto",
         "update": "Actualizar contacto {{name}}",
         "delete": "Eliminar contacto {{name}}",
-        "saveContact": "Guardar {{name}} como un contacto",
-        "confirmDelete": "Eliminar {{name}}"
+        "selectContact": "Seleccionar contacto {{name}}"
       }
     }
   },

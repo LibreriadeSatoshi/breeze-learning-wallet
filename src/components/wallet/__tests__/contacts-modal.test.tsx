@@ -1,7 +1,9 @@
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders,  screen, waitFor, within } from "@/test/test-utils";
+import { contactsStore, setContactsStore } from '@/test/breez/breez-service-mock';
 import { ContactsModal } from '../contacts-modal';
 import { Contact } from '@breeztech/breez-sdk-spark/web';
+import { addContact, deleteContact, updateContact } from "@/lib/lightning/breez-service";
 import { useState } from 'react';
 
 const onClose = vi.fn();
@@ -13,42 +15,9 @@ const mockContacts = [
   { id: "3", name: "Alice", paymentIdentifier: "alice@breez.tips", createdAt: 0, updatedAt: 0 },
 ];
 
-let contactsStore: typeof mockContacts = [];
-
-vi.mock("@/lib/lightning/breez-service", () => ({
-  listContacts: vi.fn().mockImplementation(async () => {
-    return contactsStore;
-  }),
-  addContact: vi.fn().mockImplementation(async (name, paymentIdentifier) => {
-    const newContact = {
-      id: String(Date.now()),
-      name,
-      paymentIdentifier,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    contactsStore.push(newContact);
-    return newContact;
-  }),
-  updateContact: vi.fn().mockImplementation(async (id, name, paymentIdentifier) => {
-    const index = contactsStore.findIndex((c) => c.id === id);
-    if (index !== -1) {
-      contactsStore[index] = {
-        ...contactsStore[index],
-        name,
-        paymentIdentifier,
-        updatedAt: Date.now(),
-      };
-      return contactsStore[index];
-    }
-  }),
-  deleteContact: vi.fn().mockImplementation(async (id) => {
-    const index = contactsStore.findIndex((contact) => contact.id === id);
-    if (index !== -1) {
-      contactsStore.splice(index, 1);
-    }
-  }),
-}));
+beforeEach(() => {
+  setContactsStore(mockContacts)
+});
 
 const ContactsModalWrapper = ({ initialContact = undefined }: { initialContact?: Contact }) => {
   const [contact, setContact] = useState<Contact | undefined>(initialContact);
@@ -64,9 +33,6 @@ const ContactsModalWrapper = ({ initialContact = undefined }: { initialContact?:
 };
 
 describe("ContactsModal", () => {
-  beforeEach(() => {
-    contactsStore = [...mockContacts];
-  });
 
   it("should render a list of contacts", () => {
     renderWithProviders(<ContactsModalWrapper />, {
@@ -136,7 +102,9 @@ describe("ContactsModal", () => {
     expect(inputPaymentIdentifier).toHaveValue("test@breez.tips");
 
     await user.click(saveContactButton);
-    
+
+    expect(addContact).toHaveBeenCalledWith("Test User", "test@breez.tips");
+   
     await waitFor(() => {
       expect(screen.getByText("Test User")).toBeInTheDocument();
     });
@@ -150,9 +118,7 @@ describe("ContactsModal", () => {
       initialContacts: contactsStore
     });    
 
-    const satoshiContact = screen.getAllByRole("listitem").find((c) => c.getAttribute("aria-labelledby") == `contact-${contact.id}`)!;
-    const updateButton = within(satoshiContact).getByRole("button", { name: /update/i });
-    
+    const updateButton = screen.getByRole("button", { name: /update contact satoshi nakamoto/i });
     await user.click(updateButton);
 
     const inputName = screen.getByRole("textbox", { name: /name/i });
@@ -173,6 +139,8 @@ describe("ContactsModal", () => {
     
     await user.click(saveContactButton);
     
+    expect(updateContact).toHaveBeenCalledWith(contact.id, "Edited Test User", "edited@breez.tips");
+
     await waitFor(() => {
     expect(screen.getByText("Edited Test User")).toBeInTheDocument();
     expect(screen.getByText("edited@breez.tips")).toBeInTheDocument();
@@ -185,15 +153,14 @@ describe("ContactsModal", () => {
     renderWithProviders(<ContactsModalWrapper initialContact={contact} />, {
       initialContacts: contactsStore
     });    
-
-    const satoshiContact = screen.getAllByRole("listitem").find((c) => c.getAttribute("aria-labelledby") == `contact-${contact.id}`)!;
-    const deleteButton = within(satoshiContact).getByRole("button", { name: /delete contact/i });
     
+    const deleteButton = screen.getByRole('button', { name: /delete contact satoshi nakamoto/i });
     await user.click(deleteButton);
 
-    const confirmDelete = screen.getByRole("button", { name: /confirm/i });
-    
+    const confirmDelete = screen.getByRole('button', { name: /delete/i });
     await user.click(confirmDelete);
+    
+    expect(deleteContact).toHaveBeenCalledWith(contact.id);
     
     await waitFor(() => {
       expect(screen.queryByText(contact.name)).not.toBeInTheDocument();
