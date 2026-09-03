@@ -508,6 +508,7 @@
     "select": "Comprar Bitcoin",
     "amount": "Comprar con Cash App",
     "qr": "Pagar con Cash App",
+    "cashAppQrAriaLabel": "Codigo QR de Cash App",
     "moonpaySubtitle": "Tarjeta, Apple/Google Pay, transferencia",
     "moonpayRedirecting": "Redirigiendo…",
     "cashAppSubtitle": "Solo EEUU/Reino Unido · paga un invoice Lightning",

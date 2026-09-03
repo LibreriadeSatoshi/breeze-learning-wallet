@@ -46,3 +46,18 @@ export const mockDeleteContact = async (id: string) => {
     contactsStore.splice(index, 1);
   }
 };
+
+export interface Rate {
+  coin: string;
+  value: number;
+}
+
+const fiatRates: Rate[] = [{
+    coin: "USD",
+    value: 78000,
+  }, {
+    coin: "EUR",
+    value: 67000,
+}];
+
+export const mockListFiatRates = () => fiatRates; 

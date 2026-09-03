@@ -1,6 +1,7 @@
 import { renderWithProviders, screen } from "@/test/test-utils";
 import { BuyBitcoinModal } from "../buy-bitcoin-modal";
 import userEvent from '@testing-library/user-event'
+import { buyBitcoin, onSdkEvent } from "@/lib/lightning/breez-service";
 
 const CASH_APP_QUICK_AMOUNTS = ["10,000", "50,000", "100,000"];
 
@@ -16,14 +17,12 @@ describe("BuyBitcoinModal", () => {
     });
     it("click moonpay button", async () => {
         const user = userEvent.setup();
-        const windowOpenSpy = vi.spyOn(window, "open").mockImplementation(() => null);
         renderWithProviders(<BuyBitcoinModal onClose={() => {}} />);
         
         const moonpayButton = screen.getByRole("button", { name: /moonpay/i });
         await user.click(moonpayButton);
 
-        expect(windowOpenSpy).toHaveBeenCalledWith("", "_blank");
-        windowOpenSpy.mockRestore();
+        expect(window.open).toHaveBeenCalledWith("", "_blank");
     });
     it("click cashapp button", async () => {
         const user = userEvent.setup();
@@ -81,22 +80,25 @@ describe("BuyBitcoinModal", () => {
     });
 
     it("renders QR step with QR SVG and allows copying the link", async () => {
-    const user = userEvent.setup();
-    
-    renderWithProviders(<BuyBitcoinModal onClose={() => {}} />);
+        const user = userEvent.setup();
+        
+        renderWithProviders(<BuyBitcoinModal onClose={() => {}} />);
 
-    await user.click(screen.getByRole("button", { name: /cash app/i }));
-    await user.type(screen.getByPlaceholderText(/enter amount in satoshi/i), "100000");
-    await user.click(screen.getByRole("button", { name: /continue/i }));
-    
-    const img = screen.getByRole("img", { name: /cash app qr/i });
-    const copyButton = screen.getByRole("button", { name: /copy/i });
-    
-    expect(img).toBeVisible()
-    expect(copyButton).toBeVisible()
+        await user.click(screen.getByRole("button", { name: /cash app/i }));
+        await user.type(screen.getByPlaceholderText(/enter amount in satoshi/i), "100000");
+        await user.click(screen.getByRole("button", { name: /continue/i }));
+        
+        const img = screen.getByRole("img", { name: /cash app qr/i });
+        const copyButton = screen.getByRole("button", { name: /copy/i });
+        
+        expect(img).toBeVisible()
+        expect(copyButton).toBeVisible()
 
-    await user.click(copyButton);
-    
-    expect(await navigator.clipboard.readText()).toBe("https://cash.app/launch/pay/mocked-id");
+        await user.click(copyButton);
+        
+        expect(await navigator.clipboard.readText()).toBe("https://cash.app/launch/pay/mocked-id");
+        
+        expect(buyBitcoin).toHaveBeenCalled()
+        expect(onSdkEvent).toHaveBeenCalled()
     });
 });
