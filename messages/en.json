@@ -299,7 +299,7 @@
       "confirmTitle": "Delete contact",
       "updateTitle": "Update Contact",
       "addTitle": "Add Contact",
-      "deleteConfirm": "Are you sure you want to delete {{name}}?",
+      "confirmDelete": "Are you sure you want to delete {{name}}?",
       "inputs": {
         "search": "Search Contact",
         "paymentIdentifier": "Lightning Address",
@@ -314,7 +314,13 @@
         "emptyPaymentIdentifier": "Lightning address is required"
       },
       "loading": "Loading more contacts...",
-      "noMoreContacts": "No more contacts to load"
+      "noMoreContacts": "No more contacts to load",
+      "aria": {
+        "add": "Add new contact",
+        "update": "Update contact {{name}}",
+        "delete": "Delete contact {{name}}",
+        "selectContact": "Select contact {{name}}"
+      }
     }
   },
   "receive": {

@@ -1,9 +1,10 @@
 import { render as rtlRender, RenderOptions } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LocaleProvider } from "@/lib/i18n/provider";
+import { Contact } from "@breeztech/breez-sdk-spark/web";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
-  initialContacts?: any[];
+  initialContacts?: Contact[];
 }
 
 export function renderWithProviders(
@@ -22,7 +23,7 @@ export function renderWithProviders(
 
   if (initialContacts) {
     queryClient.setQueryData(["breez", "contactList"], {
-    pages: [initialContacts],
+    pages: [[...initialContacts]],
     pageParams: [undefined],
   });
   }

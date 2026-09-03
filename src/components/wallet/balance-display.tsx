@@ -72,9 +72,7 @@ export function BalanceDisplay({
   let changeText = t("home.balance.change");
 
   const primaryAmount = getPrimaryAmount(balanceSat, token, isStableBalance);
-
   const primaryTicker = getPrimaryTicker(token, isStableBalance);
-
   let secondaryText = getSecondaryText(balanceSat, isStableBalance, changeText, fiatCurrency, fiatRate, usdRate, token);
 
   return (

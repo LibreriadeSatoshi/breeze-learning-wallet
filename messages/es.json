@@ -299,7 +299,7 @@
       "confirmTitle": "Eliminar contacto",
       "updateTitle": "Actualizar contacto",
       "addTitle": "Agregar contacto",
-      "deleteConfirm": "¿Estás seguro de que deseas eliminar a {{name}}?",
+      "confirmDelete": "¿Estás seguro de que deseas eliminar a {{name}}?",
       "inputs": {
         "search": "Buscar contacto",
         "paymentIdentifier": "Dirección Lightning",
@@ -314,7 +314,13 @@
         "emptyPaymentIdentifier": "La dirección Lightning es requerida"
       },
       "loading": "Cargando más contactos...",
-      "noMoreContacts": "No hay más contactos para cargar"
+      "noMoreContacts": "No hay más contactos para cargar",
+      "aria": {
+        "add": "Agregar nuevo contacto",
+        "update": "Actualizar contacto {{name}}",
+        "delete": "Eliminar contacto {{name}}",
+        "selectContact": "Seleccionar contacto {{name}}"
+      }
     }
   },
   "receive": {
