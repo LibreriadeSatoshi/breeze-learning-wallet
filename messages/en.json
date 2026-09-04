@@ -352,7 +352,8 @@
       "amountInvalid": "Enter a valid amount",
       "generate": "Generate invoice",
       "generateFailed": "Failed to generate invoice",
-      "newInvoice": "New invoice"
+      "newInvoice": "New invoice",
+      "qrCodeAriaLabel": "Invoice QR code"
     },
     "bitcoin": {
       "title": "One-time Bitcoin address",

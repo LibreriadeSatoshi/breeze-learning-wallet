@@ -2,6 +2,8 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { useWalletStore } from '@/store/wallet-store';
 import { resetLightningAddress } from './breez/breez-service-mock';
+import { mockWindowOpen, windowDefineProperty } from './window';
+
 class MockIntersectionObserver {
   observe = vi.fn();
   unobserve = vi.fn();
@@ -11,26 +13,12 @@ class MockIntersectionObserver {
 
 vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
 
-delete (window as any).location;
-
-Object.defineProperty(window, "location", {
-  value: {
-    origin: "https://wallet.libreriadesatoshi.com",
-    href: "https://wallet.libreriadesatoshi.com/wallet/home",
-    assign: vi.fn(),
-    replace: vi.fn(),
-  },
-  writable: true,
-  configurable: true,
-});
+windowDefineProperty();
 
 beforeEach(() => {    
   resetLightningAddress();
 
-  vi.spyOn(window, "open").mockImplementation(() => ({
-    location: { href: "" },
-    close: vi.fn(),
-  } as any));
+  vi.spyOn(window, "open").mockImplementation(mockWindowOpen);
 });
 
 afterEach(() => {
@@ -59,5 +47,6 @@ vi.mock("@/lib/lightning/breez-service", async (importOriginal) => {
   getLightningAddress: vi.fn().mockResolvedValue(mocks.mockGetLightningAddress()),
   checkLightningAddressAvailable: vi.fn().mockImplementation(mocks.mockCheckLightningAddressAvailable),
   registerLightningAddress: vi.fn().mockImplementation(mocks.mockRegisterLightningAddress),
-  };
+  receiveLightning: vi.fn().mockImplementation(mocks.mockReceiveLightning),  
+};
 });

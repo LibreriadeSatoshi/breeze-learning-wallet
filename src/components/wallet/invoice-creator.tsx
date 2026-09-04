@@ -191,7 +191,7 @@ export function InvoiceCreator({
             </span>
             <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">{t("send.sats")}</span>
           </p>
-          <QrCode value={invoice.paymentRequest} />
+          <QrCode aria-label={t("receive.invoice.qrCodeAriaLabel")} value={invoice.paymentRequest} />
           <div className="flex items-center justify-center flex-row bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
             {showInvoice ? invoice.paymentRequest : truncate(invoice.paymentRequest, 12, 12)}
             {showInvoice ? <EyeOff className="pl-2 min-w-6" onClick={() => setShowInvoice(false)}/> : <Eye className="pl-2 min-w-6" onClick={() => setShowInvoice(true)}/> }
