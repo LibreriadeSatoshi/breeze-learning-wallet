@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { useWalletStore } from '@/store/wallet-store';
+import { resetLightningAddress } from './breez/breez-service-mock';
 class MockIntersectionObserver {
   observe = vi.fn();
   unobserve = vi.fn();
@@ -23,7 +24,9 @@ Object.defineProperty(window, "location", {
   configurable: true,
 });
 
-beforeEach(() => {  
+beforeEach(() => {    
+  resetLightningAddress();
+
   vi.spyOn(window, "open").mockImplementation(() => ({
     location: { href: "" },
     close: vi.fn(),
@@ -33,6 +36,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.useRealTimers();
   localStorage.clear();
 
   useWalletStore.getState().showBalance = true;

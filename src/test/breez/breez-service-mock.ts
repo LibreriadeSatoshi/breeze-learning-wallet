@@ -71,35 +71,37 @@ export interface LightningAddress {
   username: string;
 }
 
-export const lightningAddresses: Set<LightningAddress> = new Set<LightningAddress>([
-    {
-      description: "Pay to satoshi@pay.santiagobitdevs.org",
-      lightningAddress: "satoshi@pay.santiagobitdevs.org",
-      lnurl: {
-          url: "lnurlp://pay.santiagobitdevs.org/lnurlp/satoshi",
-          bech32: "lnurl1dp68gurn8ghj7urp0yh8xctww35kzem0vf5hger9weejummjvuhkcmn4wfk8qtm5v4ehgvssmnnfx"
-      },
-      username: "satoshi"
+const INITIAL_LIGHTNING_ADDRESSES: LightningAddress[] = [
+  {
+    description: "Pay to satoshi@pay.santiagobitdevs.org",
+    lightningAddress: "satoshi@pay.santiagobitdevs.org",
+    lnurl: {
+      url: "lnurlp://pay.santiagobitdevs.org/lnurlp/satoshi",
+      bech32: "lnurl1dp68gurn8ghj7urp0yh8xctww35kzem0vf5hger9weejummjvuhkcmn4wfk8qtm5v4ehgvssmnnfx"
+    },
+    username: "satoshi"
   },
   {
-      description: "Pay to dorchestra@pay.santiagobitdevs.org",
-      lightningAddress: "dorchestra@pay.santiagobitdevs.org",
-      lnurl: {
-          url: "lnurlp://pay.santiagobitdevs.org/lnurlp/dorchestra",
-          bech32: "lnurl1dp68gurn8ghj7urp0yh8xctww35kzem0vf5hger9weejummjvuhkcmn4wfk8qtm5v4ehgvssmnnfx"
-      },
-      username: "dorchestra"
+    description: "Pay to dorchestra@pay.santiagobitdevs.org",
+    lightningAddress: "dorchestra@pay.santiagobitdevs.org",
+    lnurl: {
+      url: "lnurlp://pay.santiagobitdevs.org/lnurlp/dorchestra",
+      bech32: "lnurl1dp68gurn8ghj7urp0yh8xctww35kzem0vf5hger9weejummjvuhkcmn4wfk8qtm5v4ehgvssmnnfx"
+    },
+    username: "dorchestra"
   },
   {
-      description: "Pay to devs@pay.santiagobitdevs.org",
-      lightningAddress: "devs@pay.santiagobitdevs.org",
-      lnurl: {
-          url: "lnurlp://pay.santiagobitdevs.org/lnurlp/devs",
-          bech32: "lnurl1dp68gurn8ghj7urp0yh8xctww35kzem0vf5hger9weejummjvuhkcmn4wfk8qtm5v4ehgvssmnnfx"
-      },
-      username: "devs"
+    description: "Pay to devs@pay.santiagobitdevs.org",
+    lightningAddress: "devs@pay.santiagobitdevs.org",
+    lnurl: {
+      url: "lnurlp://pay.santiagobitdevs.org/lnurlp/devs",
+      bech32: "lnurl1dp68gurn8ghj7urp0yh8xctww35kzem0vf5hger9weejummjvuhkcmn4wfk8qtm5v4ehgvssmnnfx"
+    },
+    username: "devs"
   },
-]);
+];
+
+const lightningAddresses: Set<LightningAddress> = new Set<LightningAddress>(INITIAL_LIGHTNING_ADDRESSES);
 
 export const mockCheckLightningAddressAvailable = async (username: string) => {
   const target = username.trim().toLowerCase();
@@ -130,6 +132,11 @@ export const mockRegisterLightningAddress = async (
     lightningAddresses.add(newAddress);
 
     return newAddress
+}
+
+export const resetLightningAddress = () => {
+  lightningAddresses.clear();
+  INITIAL_LIGHTNING_ADDRESSES.forEach((address) => lightningAddresses.add({...address}));
 }
 
 export const mockGetLightningAddress = () => {

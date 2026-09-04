@@ -2,6 +2,7 @@ import { act, renderWithProviders, screen, waitFor, within } from "@/test/test-u
 import userEvent from '@testing-library/user-event'
 import { EditUsernameModal } from "../edit-username-modal";
 import { useLightningAddress } from "@/hooks/use-breez";
+import { registerLightningAddress } from "@/lib/lightning/breez-service";
 
 const onClose = vi.fn();
 const save = vi.fn();
@@ -42,28 +43,23 @@ describe("EditUsernameModal", () => {
         expect(input).toHaveValue("test2");
     });
     it("should disable the replace button when the username exists", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
-    renderWithProviders(<EditUsernameModalWithState />);
+        renderWithProviders(<EditUsernameModalWithState />);
 
-    const input = await screen.findByRole("textbox", { name: /username/i });
-    await user.clear(input);
-    await user.type(input, "dorchestra");
+        const input = await screen.findByRole("textbox", { name: /username/i });
+        await user.clear(input);
+        await user.type(input, "dorchestra");
 
-    act(() => {
-        vi.advanceTimersByTimeAsync(850);
-    })
+        await act(() => vi.advanceTimersByTimeAsync(850))
 
-    waitFor(() => {
         expect(screen.getByText(/taken/i)).toBeVisible();
-    })
 
-    const replaceButton = screen.getByRole("button", { name: /replace/i });
-    expect(replaceButton).toBeDisabled();
+        expect(screen.getByRole("button", { name: /replace/i })).toBeDisabled();
 
-    vi.useRealTimers();
-});
+        vi.useRealTimers();
+    });
     it("test the replace button", async () => {
         vi.useFakeTimers({ shouldAdvanceTime: true });
         
@@ -76,16 +72,17 @@ describe("EditUsernameModal", () => {
         await user.clear(input);
         await user.type(input, "tester");
         
-        await vi.advanceTimersByTimeAsync(350);
+        await act(() => vi.advanceTimersByTimeAsync(350));
 
         const replaceButton = screen.getByRole("button", { name: /replace/i });
         expect(replaceButton).not.toBeDisabled();
 
         await user.click(replaceButton);
 
-        await waitFor(() => {
-            expect(save).toHaveBeenCalled();
-        });
+        expect(vi.mocked(registerLightningAddress))
+        .toHaveBeenCalledWith("tester", undefined);
+
+        expect(save).toHaveBeenCalledOnce();
 
         vi.useRealTimers();
     });
