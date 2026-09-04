@@ -144,3 +144,14 @@ export const mockGetLightningAddress = () => {
 
   return addresses ?? null;
 }
+
+export const mockReceiveLightning = async (
+  amountSats: number,
+  description: string,
+): Promise<{ paymentRequest: string; expiresAt: number; fee: number }> => {
+  return {
+    paymentRequest: "lnurl1dp68gurn8ghj7urp0yh8xctww35kzem0vf5hger9weejummjvuhkcmn4wfk8qtm5v4ehgvssmnnfx",
+    fee: 0,
+    expiresAt: 1000
+  }
+}
