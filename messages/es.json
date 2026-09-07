@@ -353,7 +353,7 @@
       "generate": "Generar invoice",
       "generateFailed": "No se pudo generar el invoice",
       "newInvoice": "Nuevo invoice",
-      "qrCodeAriaLabel": "Codigo QR de la invoice"
+      "qrCodeAriaLabel": "Código QR de la invoice"
     },
     "bitcoin": {
       "title": "Dirección Bitcoin de un solo uso",

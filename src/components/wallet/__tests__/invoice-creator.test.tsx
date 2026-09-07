@@ -3,6 +3,7 @@ import { InvoiceCreator } from "../invoice-creator";
 import userEvent from '@testing-library/user-event'
 import { useT } from "@/lib/i18n/hook";
 import { useReceiveLightning } from "@/hooks/use-breez";
+import { receiveLightning } from "@/lib/lightning/breez-service";
 
 const InvoiceCreatorParent = () => {
     const t = useT();
@@ -61,14 +62,17 @@ describe("InvoiceCreator", () => {
         const generateButton = screen.getByRole("button", { name: /generate/i })
         await user.type(screen.getByRole("textbox", { name: /amount/i }), "100000")
         await user.type(screen.getByRole("textbox", { name: /description/i }), "test")
-        await user.click(generateButton)        
-        
+        await user.click(generateButton)  
+            
         waitFor(() => {
+            expect(receiveLightning).toHaveBeenCalledWith(100000, "test")
+            
             const qrCode = screen.getByRole("img", { name: /qr code/i })
             const truncatedInvoice = screen.getByText(/lnurl1dp68gu\.\.\.4ehgvssmnnfx/i)
 
             expect(qrCode).toBeVisible()
             expect(truncatedInvoice).toBeVisible()
+            expect(screen.getByText(/100,000/i)).toBeVisible()
         })
     })
     it("should copy the invoice", async () => {

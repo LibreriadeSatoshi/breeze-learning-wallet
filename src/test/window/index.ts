@@ -9,10 +9,10 @@ export const clipboardMock = {
     }),
 };
 
-export const mockWindowOpen = () => ({
-    location: { href: "" },
-    close: vi.fn(),
-} as any)
+export const createMockWindow = (): Partial<Window> => ({
+  location: { href: "" } as Location,
+  close: vi.fn(),
+});
 
 export const windowDefineProperty = () => {
     delete (window as any).location;
