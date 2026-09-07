@@ -25,6 +25,7 @@ Open <http://localhost:3000>.
 - `yarn build` — production build
 - `yarn start` — serve production build
 - `yarn lint` — ESLint
+- `yarn typecheck` — TypeScript validation
 
 ## Stack
 
@@ -52,3 +53,7 @@ src/
 ## Status
 
 Phase 1 work is in progress. See `CLAUDE.md` for the phased roadmap (core wallet → Lightning address → recovery beyond the mnemonic).
+
+## License
+
+Licensed under the [MIT License](./LICENSE).
