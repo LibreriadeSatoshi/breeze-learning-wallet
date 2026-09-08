@@ -100,15 +100,15 @@ describe("TransactionList", () => {
         expect(payments).toHaveLength(mockPayments.length);
 
         expect(typeSent).toHaveTextContent(`${mockPayments[0].description}`);
-        expect(typeSent).toHaveTextContent(`-${mockPayments[0].amount}`);
+        expect(typeSent).toHaveTextContent("-" + `${mockPayments[0].amount}`);
 
         expect(typeReceived).toHaveTextContent(/received payment/i);
-        expect(typeReceived).toHaveTextContent(`+${mockPayments[1].amount}`);
+        expect(typeReceived).toHaveTextContent("+" +`${mockPayments[1].amount}`);
 
         expect(typeReceivedConversion).toHaveTextContent(/conversion to USDB/i);
         expect(typeReceivedConversion).toHaveTextContent(/\+\$0\.63/i);
 
         expect(typeReceivedConversion2).toHaveTextContent(/conversion to bitcoin/i);
-        expect(typeReceivedConversion2).toHaveTextContent(`+${mockPayments[3].amount}`);
+        expect(typeReceivedConversion2).toHaveTextContent("+" + `${mockPayments[3].amount}`);
     });
 });
