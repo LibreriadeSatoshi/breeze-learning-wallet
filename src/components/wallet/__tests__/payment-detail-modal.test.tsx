@@ -1,6 +1,6 @@
 import { renderWithProviders, screen } from "@/test/test-utils";
 import { PaymentDetailModal } from "../payment-detail-modal";
-import UserEvent from "@testing-library/user-event";
+import userEvent from "@testing-library/user-event";
 import { Payment } from "@/lib/lightning/types";
 import { truncateStr } from "@/lib/wallet/truncate-str";
 
@@ -48,7 +48,7 @@ describe("PaymentDetailModal", () => {
         expect(screen.getByRole("button", { name: /close/i })).toBeVisible()
     })
     it("should copy the invoice or payment id", async () => {
-        const user = UserEvent.setup();
+        const user = userEvent.setup();
         renderWithProviders(<PaymentDetailModal payment={payment} onClose={onClose} />);
         const invoiceButton = screen.getByRole("button", { name: /invoice/i });
         const paymentIdButton = screen.getByRole("button", { name: /payment id/i });
@@ -63,7 +63,7 @@ describe("PaymentDetailModal", () => {
         }
     })
     it("should close the modal", async () => {
-        const user = UserEvent.setup();
+        const user = userEvent.setup();
         const {rerender} = renderWithProviders(<PaymentDetailModal payment={payment} onClose={onClose} />);
         const closeButton = screen.getByRole("button", { name: /close/i });
         await user.click(closeButton);
