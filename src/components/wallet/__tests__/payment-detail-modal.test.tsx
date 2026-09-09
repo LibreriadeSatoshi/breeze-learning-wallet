@@ -18,14 +18,21 @@ const payment: Payment = {
 const onClose = vi.fn();
 describe("PaymentDetailModal", () => {
     it("should render the payment details", async () => {
+        const expectedDateStr = `${new Date(payment.paymentTime * 1000).toLocaleDateString()} ${new Date(payment.paymentTime * 1000).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}`
+
         renderWithProviders(<PaymentDetailModal payment={payment} onClose={onClose} />);
+
         expect(screen.getByRole("dialog", { name: /payment details/i })).toBeInTheDocument();
         expect(screen.getByText(payment.amount)).toBeVisible();
         expect(screen.getByText(/complete/i)).toBeVisible();
         expect(screen.getByText("Sent")).toBeVisible();
         expect(screen.getByText(/2 sats/i)).toBeVisible();
         expect(screen.getByText(/\$0\.00/i)).toBeVisible();
-        expect(screen.getByText("9\/8\/2026 11\:39 AM")).toBeVisible();
+        expect(screen.getByText(expectedDateStr)).toBeVisible();
+        
         if (payment.description) {
             expect(screen.getByText(payment.description)).toBeVisible();
         }
@@ -57,12 +64,15 @@ describe("PaymentDetailModal", () => {
     })
     it("should close the modal", async () => {
         const user = UserEvent.setup();
-        renderWithProviders(<PaymentDetailModal payment={payment} onClose={onClose} />);
+        const {rerender} = renderWithProviders(<PaymentDetailModal payment={payment} onClose={onClose} />);
         const closeButton = screen.getByRole("button", { name: /close/i });
         await user.click(closeButton);
         expect(onClose).toHaveBeenCalled();
+
+        rerender(<PaymentDetailModal payment={payment} onClose={onClose} />);
+        
         const backdrop = screen.getByRole("dialog", { name: /payment details/i });
         await user.click(backdrop.parentElement!);
-        expect(onClose).toHaveBeenCalled();
+        expect(onClose).toHaveBeenCalledTimes(2);
     })
 })
