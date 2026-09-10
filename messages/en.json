@@ -468,7 +468,7 @@
   },
   "transactions": {
     "empty": "No transactions yet",
-    "emptyHint": "Your Lightning payments will appear here.",
+    "emptyHint": "Your transactions will appear here.",
     "receivedDefault": "Received payment",
     "sentDefault": "Sent payment",
     "statusPending": "Pending",
