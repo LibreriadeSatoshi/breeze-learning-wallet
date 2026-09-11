@@ -53,18 +53,31 @@ interface BitcoinReceive {
   fee: number;
 }
 
-
-
-
-
-
 export default function ReceivePage() {
   const t = useT();
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
+  const getMutation = useGetBitcoinAddress();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("lightning");
   const [received, setReceived] = useState<ReceivedPaymentDetails | null>(null);
+  const [result, setResult] = useState<BitcoinReceive | null>(null);
+  const [error, setError] = useState("");
+
+  const getBitcoinAddress = useCallback(() => {
+      (async () => {
+        try {
+          const r = await getMutation.mutateAsync();
+          setResult({ address: r.address, fee: r.fee });
+        } catch (e) {
+          setError(e instanceof Error ? e.message : t("receive.bitcoin.addressFailed"));
+        }
+      })();
+  }, []);
+
+  useEffect(() => {
+    getBitcoinAddress();
+  }, [])
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");
@@ -73,6 +86,10 @@ export default function ReceivePage() {
   if (!isUnlocked) return null;
 
   if (received) {
+    if(received.method === "deposit") {
+      getBitcoinAddress()
+    }
+
     return <SuccessView details={received} onDone={() => router.push("/wallet/home")} />;
   }
 
@@ -115,7 +132,7 @@ export default function ReceivePage() {
         </Card>
 
         {paymentMethod === "lightning" && <LightningPanel onReceived={setReceived} />}
-        {paymentMethod === "bitcoin" && <BitcoinPanel onReceived={setReceived} />}
+        {paymentMethod === "bitcoin" && <BitcoinPanel onReceived={setReceived} error={error} result={result} />}
         {paymentMethod === "spark" && <SparkPanel onReceived={setReceived} />}
       </div>
     </div>
@@ -271,28 +288,14 @@ function AddressCard({
 
 function BitcoinPanel({
   onReceived,
+  result,
+  error,
 }: {
   onReceived: (d: ReceivedPaymentDetails) => void;
+  result: { address: string, fee: number } | null;
+  error: string;
 }) {
   const t = useT();
-  const getMutation = useGetBitcoinAddress();
-  const [result, setResult] = useState<BitcoinReceive | null>(null);
-  const [error, setError] = useState("");
-  const requestedRef = useRef(false);
-
-  useEffect(() => {
-    if (requestedRef.current) return;
-    requestedRef.current = true;
-    (async () => {
-      try {
-        const r = await getMutation.mutateAsync();
-        setResult({ address: r.address, fee: r.fee });
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("receive.bitcoin.addressFailed"));
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <AddressPanel
