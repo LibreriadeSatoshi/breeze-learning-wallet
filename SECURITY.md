@@ -4,8 +4,8 @@
 
 Please do not disclose wallet vulnerabilities in a public issue.
 
-Use this repository's **Security** tab to submit a private vulnerability
-report. Include the affected version, reproduction steps, potential impact,
+Email [security@libreriadesatoshi.com](mailto:security@libreriadesatoshi.com)
+directly. Include the affected version, reproduction steps, potential impact,
 and any suggested remediation. Do not include real mnemonics, passwords,
 private keys, or other wallet secrets.
 
