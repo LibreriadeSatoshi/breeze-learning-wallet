@@ -299,7 +299,7 @@
       "confirmTitle": "Delete contact",
       "updateTitle": "Update Contact",
       "addTitle": "Add Contact",
-      "deleteConfirm": "Are you sure you want to delete {{name}}?",
+      "confirmDelete": "Are you sure you want to delete {{name}}?",
       "inputs": {
         "search": "Search Contact",
         "paymentIdentifier": "Lightning Address",
@@ -314,7 +314,13 @@
         "emptyPaymentIdentifier": "Lightning address is required"
       },
       "loading": "Loading more contacts...",
-      "noMoreContacts": "No more contacts to load"
+      "noMoreContacts": "No more contacts to load",
+      "aria": {
+        "add": "Add new contact",
+        "update": "Update contact {{name}}",
+        "delete": "Delete contact {{name}}",
+        "selectContact": "Select contact {{name}}"
+      }
     }
   },
   "receive": {
@@ -346,7 +352,8 @@
       "amountInvalid": "Enter a valid amount",
       "generate": "Generate invoice",
       "generateFailed": "Failed to generate invoice",
-      "newInvoice": "New invoice"
+      "newInvoice": "New invoice",
+      "qrCodeAriaLabel": "Invoice QR code"
     },
     "bitcoin": {
       "title": "One-time Bitcoin address",
@@ -461,7 +468,7 @@
   },
   "transactions": {
     "empty": "No transactions yet",
-    "emptyHint": "Your Lightning payments will appear here.",
+    "emptyHint": "Your transactions will appear here.",
     "receivedDefault": "Received payment",
     "sentDefault": "Sent payment",
     "statusPending": "Pending",
@@ -502,6 +509,7 @@
     "select": "Buy Bitcoin",
     "amount": "Buy with Cash App",
     "qr": "Pay with Cash App",
+    "cashAppQrAriaLabel": "Cash App QR code",
     "moonpaySubtitle": "Card, Apple/Google Pay, bank transfer",
     "moonpayRedirecting": "Redirecting…",
     "cashAppSubtitle": "US/UK only · pays a Lightning invoice",

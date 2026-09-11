@@ -2,9 +2,9 @@
 
 A non-custodial Bitcoin/Lightning wallet, served as a Next.js web app at `wallet.libreriadesatoshi.com`.
 
-The mnemonic is generated in the browser, stored encrypted in the browser, and never sent to any server in plaintext. Lightning routing, swaps, and Liquid transactions are handled by Breez SDK Liquid.
+The mnemonic is generated in the browser, stored encrypted in the browser, and never sent to any server in plaintext. Wallet signing and networking are handled by Breez SDK Spark.
 
-See [`CLAUDE.md`](./CLAUDE.md) for the architectural rules — it is the source of truth for what does and does not belong in this repo.
+See [`AGENTS.md`](./AGENTS.md) for the project's architecture, security boundaries, and development workflow.
 
 ## Getting started
 
@@ -12,7 +12,7 @@ The project uses Nix for the development environment and yarn for packages.
 
 ```bash
 nix develop          # enter dev shell
-yarn install
+yarn install --immutable
 cp .env.example .env.local   # then fill in BREEZ_API_KEY
 yarn dev
 ```
@@ -25,14 +25,15 @@ Open <http://localhost:3000>.
 - `yarn build` — production build
 - `yarn start` — serve production build
 - `yarn lint` — ESLint
+- `yarn typecheck` — TypeScript validation
 
 ## Stack
 
 - Next.js 15 (App Router), TypeScript, Tailwind CSS
-- [`@breeztech/breez-sdk-liquid`](https://sdk-doc-liquid.breez.technology/) — Lightning + Liquid (WASM, browser)
+- `@breeztech/breez-sdk-spark` — Bitcoin, Lightning, and Spark SDK
 - `bip39` — mnemonic generation
-- WebCrypto (AES-256-GCM) + argon2-browser (KDF) — client-side encryption *(in progress)*
-- IndexedDB — encrypted mnemonic storage *(in progress)*
+- WebCrypto (AES-256-GCM) + `hash-wasm` (Argon2id) — client-side encryption
+- IndexedDB — encrypted mnemonic storage
 - Zustand — UI state
 - TanStack Query — SDK data fetching
 
@@ -45,10 +46,9 @@ src/
 ├── hooks/          React Query hooks over the Breez SDK
 ├── lib/            SDK wrappers, crypto, config
 ├── providers/      React providers (Query)
-├── store/          Zustand stores
-└── types/          Shared TypeScript types
+└── store/          Zustand stores
 ```
 
-## Status
+## License
 
-Phase 1 work is in progress. See `CLAUDE.md` for the phased roadmap (core wallet → Lightning address → recovery beyond the mnemonic).
+Licensed under the [MIT License](./LICENSE).

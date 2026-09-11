@@ -10,6 +10,7 @@ import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 import { useCopy } from "@/hooks/use-copy";
 import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
+import { truncateStr } from "@/lib/wallet/truncate-str";
 
 const statusStyles = {
   pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
@@ -52,7 +53,6 @@ function PaymentDetailContent({
   const isReceived = payment.paymentType === "received";
   const isToken = payment.method === "token";
   const date = new Date(payment.paymentTime * 1000);
-
   const { rate: fiatRate, currency: fiatCurrency, estableRate: usdRate } = useFiat(true);
 
   const amount = payment.amount
@@ -190,8 +190,7 @@ interface CopyRowProps {
 function CopyRow({ label, value }: CopyRowProps) {
   const t = useT();
   const { copied, failed, copy } = useCopy();
-  const truncated = value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
-
+  const truncated = truncateStr(value, 8, 6);
 
   return (
     <div className="py-3 flex items-center gap-4">

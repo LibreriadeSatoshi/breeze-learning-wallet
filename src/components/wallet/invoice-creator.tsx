@@ -14,6 +14,7 @@ import { onSdkEvent } from "@/lib/lightning/breez-service";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Payment as SdkPayment } from "@breeztech/breez-sdk-spark";
 import type { ReceivedPaymentDetails } from "@/lib/lightning/types";
+import { truncateStr } from "@/lib/wallet/truncate-str";
 
 interface InvoiceState {
   paymentRequest: string;
@@ -144,17 +145,6 @@ export function InvoiceCreator({
     setTimeRemaining(0);
   };
 
-  const truncate = (text: string, i: number, f: number): string => {
-    if (text.length <= (i + f)) {
-      return text
-    }
-
-    let initial = text.substring(0, i)
-    let final = text.substring(text.length - f, text.length)
-
-    return `${initial}...${final}`
-  }
-
   if (!open) {
     return (
       <div className="text-center">
@@ -191,9 +181,9 @@ export function InvoiceCreator({
             </span>
             <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">{t("send.sats")}</span>
           </p>
-          <QrCode value={invoice.paymentRequest} />
+          <QrCode aria-label={t("receive.invoice.qrCodeAriaLabel")} value={invoice.paymentRequest} />
           <div className="flex items-center justify-center flex-row bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
-            {showInvoice ? invoice.paymentRequest : truncate(invoice.paymentRequest, 12, 12)}
+            {showInvoice ? invoice.paymentRequest : truncateStr(invoice.paymentRequest, 12, 12)}
             {showInvoice ? <EyeOff className="pl-2 min-w-6" onClick={() => setShowInvoice(false)}/> : <Eye className="pl-2 min-w-6" onClick={() => setShowInvoice(true)}/> }
           </div>
           {error && (
