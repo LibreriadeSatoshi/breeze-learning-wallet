@@ -88,7 +88,8 @@ export function useToggleStableBalance() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.balance() }); 
-    }
+    },
+    retry: false
   });
 }
 
