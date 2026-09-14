@@ -40,7 +40,7 @@ Production: https://wallet.libreriadesatoshi.com/
 ### Receive
 - **Lightning must remain primary.** On the first visit to Receive, the wallet must claim a random Lightning address (`<adjective>-<noun>-<NNN>@<lnurl-domain>`). Users may edit the username; replacing it must release the previous address.
 - A one-time BOLT11 invoice must remain a secondary option for specific-amount requests.
-- Bitcoin address must remain a secondary tab, generated when activated and described as funds being added to the wallet after confirmation.
+- Bitcoin address must remain a secondary tab, which is generated each time the receive page mounts and described as funds being added to the wallet after confirmation.
 - The Lightning address domain must come from `NEXT_PUBLIC_LNURL_DOMAIN` (default `pay.libreriadesatoshi.com`) and be whitelisted by Breez using a CNAME to `breez.tips`.
 
 ### On-chain claim handling
