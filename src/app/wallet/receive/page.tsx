@@ -57,7 +57,7 @@ export default function ReceivePage() {
   const t = useT();
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
-  const getMutation = useGetBitcoinAddress();
+  const { mutateAsync: getBtcAddress } = useGetBitcoinAddress();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("lightning");
   const [received, setReceived] = useState<ReceivedPaymentDetails | null>(null);
@@ -67,7 +67,7 @@ export default function ReceivePage() {
   const getBitcoinAddress = useCallback(() => {
       (async () => {
         try {
-          const r = await getMutation.mutateAsync();
+          const r = await getBtcAddress();
           setResult({ address: r.address, fee: r.fee });
         } catch (e) {
           setError(e instanceof Error ? e.message : t("receive.bitcoin.addressFailed"));
@@ -86,10 +86,6 @@ export default function ReceivePage() {
   if (!isUnlocked) return null;
 
   if (received) {
-    if(received.method === "deposit") {
-      getBitcoinAddress()
-    }
-
     return <SuccessView details={received} onDone={() => router.push("/wallet/home")} />;
   }
 
