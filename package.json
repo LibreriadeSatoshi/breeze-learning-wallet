@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@breeztech/breez-sdk-spark": "^0.17.1",
+    "@breeztech/breez-sdk-spark": "^0.21.0",
     "@tanstack/react-query": "^5.90.10",
     "bip39": "^3.1.0",
     "hash-wasm": "^4.12.0",
