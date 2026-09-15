@@ -231,7 +231,15 @@
       "conversionFee": "Conversion fee:",
       "calculatingFee": "Calculating...",
       "insufficientBalance": "Balance too low to convert — it will remain as change",
-      "unknownError": "An error occurred. Please try again later."
+      "unknownError": "An error occurred. Please try again later.",
+      "retryAfterShort": "Try again in {{minutes}}"
+    },
+    "conversionStuck": {
+      "title": "A conversion is stuck",
+      "titleRefunding": "Refunding stuck conversion…",
+      "description": "Bitcoin was converted but the funds didn't arrive yet. It will be refunded automatically.",
+      "refunding": "We're refunding your funds back to your balance. This can take a few minutes.",
+      "retryAfter": "Conversions are paused until Breez responds again. Try again in {{minutes}}."
     },
     "balance": {
       "change": "Change"
@@ -476,7 +484,8 @@
     "conversion": {
       "token": "Conversion to {{token}}",
       "bitcoin": "Conversion to Bitcoin"
-    }
+    },
+    "stuckConversion": "Conversion stuck"
   },
   "paymentDetail": {
     "title": "Payment details",

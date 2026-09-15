@@ -1,5 +1,6 @@
 import { useBalance, useConversionLimits, usePayments, useRefreshBreez, useToggleStableBalance, useUnclaimedDeposits, useUserSettings } from "./use-breez";
 import { useFiat } from "./use-fiat";
+import { useConversionGuard } from "./use-conversion-guard";
 
 export const useWalletData = (isReady: boolean) => {
   const { data: balances, isLoading: balanceLoading } = useBalance(isReady);
@@ -20,6 +21,8 @@ export const useWalletData = (isReady: boolean) => {
   const { data: userSettings, isLoading: userSettingsLoading } =
     useUserSettings(isReady);
 
+  const conversionGuard = useConversionGuard(payments, isReady);
+
   return {
     balances,
     balanceLoading,
@@ -38,5 +41,6 @@ export const useWalletData = (isReady: boolean) => {
     userSettingsLoading,
     refresh,
     unclaimedDeposits,
+    conversionGuard,
   };
 };
