@@ -17,6 +17,7 @@ import type {
   BuyBitcoinResponse,
   Conversion,
   Contact,
+  RefundPendingConversionsResponse,
 } from "@breeztech/breez-sdk-spark";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "./types";
 
@@ -446,6 +447,11 @@ export async function listUnclaimedDeposits(): Promise<DepositInfo[]> {
   if (!sdk) throw new Error("Wallet not ready.");
   const response = await sdk.listUnclaimedDeposits({});
   return response.deposits;
+}
+
+export async function refundPendingConversions(): Promise<RefundPendingConversionsResponse> {
+  if (!sdk) throw new Error("Wallet not ready.");
+  return sdk.refundPendingConversions();
 }
 
 export async function claimDeposit(

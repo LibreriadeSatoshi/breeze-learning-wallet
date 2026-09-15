@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
+import { isStuckConversion } from "@/lib/lightning/conversion-guard";
 import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
 
 const statusColors = {
@@ -113,6 +114,11 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
               {statusLabels[payment.status] && (
                 <span className={`text-xs font-medium shrink-0 ${statusColors[payment.status]}`}>
                   {statusLabels[payment.status]}
+                </span>
+              )}
+              {isStuckConversion(payment) && (
+                <span className="text-xs font-medium shrink-0 text-amber-600 dark:text-amber-400">
+                  {t("transactions.stuckConversion")}
                 </span>
               )}
             </div>

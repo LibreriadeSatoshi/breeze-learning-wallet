@@ -49,7 +49,7 @@ interface UseSwapFeeParams {
   conversionLimits: ConversionLimits
 }
 
-const breezKeys = {
+export const breezKeys = {
   all: ["breez"] as const,
   balance: () => [...breezKeys.all, "balance"] as const,
   nodeState: () => [...breezKeys.all, "nodeState"] as const,
@@ -162,8 +162,7 @@ export function useSwapFee({
     ],
     queryFn: () => estimateSwapFee({userSettings, usdRate, balances, conversionLimits}),
     enabled,
-    refetchInterval: 60000,
-    staleTime: 10000
+    retry: true
   });
 }
 

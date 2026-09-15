@@ -35,6 +35,7 @@ import {
 } from "@/hooks/use-breez";
 import { useT } from "@/lib/i18n/hook";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
+import { isTerminalConversion } from "@/lib/lightning/conversion-guard";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/lightning/types";
 import { useWalletData } from "@/hooks/use-wallet-data";
 import { useWalletStore } from "@/store/wallet-store";
@@ -46,6 +47,13 @@ const CONN_DOT: Record<"offline" | "syncing" | "synced" | "failed", string> = {
   synced: "bg-green-500",
   failed: "bg-red-500",
 };
+
+function formatCooldown(mins: number): string {
+  if (mins <= 1) return "1 min";
+  return `${mins} min`;
+}
+
+const SWAP_MAX_WAIT_MS = 10 * 60_000;
 
 export default function WalletHomePage() {
   const t = useT();
@@ -65,6 +73,8 @@ export default function WalletHomePage() {
   const [verifying, setVerifying] = useState(false);
   const [revealedSeed, setRevealedSeed] = useState<string[] | null>(null);
   const [isStableBalance, setIsStableBalance] = useState(false);
+  const [swapPending, setSwapPending] = useState(false);
+  const swapStart = useRef<{ ids: Set<string>; at: number } | null>(null);
 
   const {isUnlocked, lock, bootstrap, isBootstrapped, verifyPasswordAndReveal, authMode, getMnemonic} = useWalletStore()
 
@@ -86,7 +96,13 @@ export default function WalletHomePage() {
     userSettingsLoading,
     unclaimedDeposits,
     refresh,
+    conversionGuard,
   } = useWalletData(isReady);
+
+  const { cooldownRemainingMs, totalStuck, totalActive, refundInFlight } = conversionGuard;
+  const cooldownMins = Math.ceil(cooldownRemainingMs / 60_000);
+  const isConverting = isSwapPending || refundInFlight || totalActive > 0;
+  const isConversionBlocked = cooldownRemainingMs > 0 || isConverting || swapPending;
 
   const token = balances?.tokenUSDB;
   const ticker = token?.tokenMetadata?.ticker ?? usdbTicker;
@@ -94,7 +110,7 @@ export default function WalletHomePage() {
   const needsAttention = rejectedDeposits.length;
   const { 
   data: conversionFeeUSD,
-  isLoading: isEstimating 
+  isLoading: isConversionFeeLoading 
 } = useSwapFee({ 
   enabled: showSwapModal && usdRate !== undefined && usdRate !== 0,
   balances: balances as Balances,
@@ -170,6 +186,30 @@ export default function WalletHomePage() {
     }
   }, [userSettings]);
 
+  useEffect(() => {
+  if (!swapPending || !swapStart.current) return;
+  const started = swapStart.current;
+  const newConversion = payments.find(
+    (p) => p.conversionDetails !== undefined && !started.ids.has(p.id),
+  );
+  if (newConversion && isTerminalConversion(newConversion)) {
+    setSwapPending(false);
+    swapStart.current = null;
+  }
+}, [payments, swapPending]);
+
+useEffect(() => {
+  if (!swapPending) return;
+  const interval = setInterval(() => {
+    if (swapStart.current && Date.now() - swapStart.current.at > SWAP_MAX_WAIT_MS) {
+      setSwapPending(false);
+      swapStart.current = null;
+    }
+  }, 30_000);
+  return () => clearInterval(interval);
+}, [swapPending]);
+
+
   const handleLock = () => {
     lock();
     router.push("/welcome");
@@ -238,6 +278,15 @@ export default function WalletHomePage() {
     try {
       const nextState = !isStableBalance;
 
+      swapStart.current = {
+        ids: new Set(
+          payments
+            .filter((p) => p.conversionDetails !== undefined)
+            .map((p) => p.id),
+        ),
+        at: Date.now(),
+      };
+
       await toggleStableAsync({
         enable: nextState,
         label: usdbTicker,
@@ -247,23 +296,26 @@ export default function WalletHomePage() {
 
       setIsStableBalance(nextState);
       setShowSwapModal(false);
+      setSwapPending(true);
     } catch (err) {
+      swapStart.current = null;
       console.error("Error toggling stable balance: ", err);
     }
   };
+
   const formatConversionFee = (amount: number | null | undefined) => {
-    if (!amount || amount === null || amount === undefined) return "";
+    if (amount === null || amount === undefined) return "";
 
     const formattedAmount = amount.toLocaleString(undefined, {
       style: "currency",
       currency: DEFAULT_FIAT_CURRENCY,
-      minimumFractionDigits: amount == 0 ? 2 : 6,
+      minimumFractionDigits: amount === 0 ? 2 : 6,
     });
     return formattedAmount;
-    
   }
   const isLoading = balanceLoading || paymentsLoading ||isSwapPending || userSettingsLoading || convertionLimitLoading;
-
+  const isEstimating = isConversionFeeLoading || conversionFeeUSD === null || conversionFeeUSD === undefined 
+  
   return (
     <div className="min-h-screen min-w-80 bg-gray-50 dark:bg-gray-900">
       <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 text-white px-6 pt-6 pb-20">
@@ -300,8 +352,8 @@ export default function WalletHomePage() {
               <button
                 type="button"
                 onClick={() => setShowSwapModal(true)}
-                disabled={isLoading}
-                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
+                disabled={!isReady || isConversionBlocked}
+                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowDownUp className="w-4 h-4" />
                 <span className="hidden sm:inline">{isStableBalance ? ticker : "BTC"}</span>
@@ -344,6 +396,28 @@ export default function WalletHomePage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 -mt-12">
+        {(totalStuck > 0 || refundInFlight) && (
+          <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-1">
+                <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                <h3 className="font-semibold text-amber-900 dark:text-amber-200">
+                  {refundInFlight
+                    ? t("home.conversionStuck.titleRefunding")
+                    : t("home.conversionStuck.title")}
+                </h3>
+              </div>
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                {refundInFlight
+                  ? t("home.conversionStuck.refunding")
+                  : cooldownRemainingMs > 0
+                    ? t("home.conversionStuck.retryAfter", { minutes: formatCooldown(cooldownMins) })
+                    : t("home.conversionStuck.description")}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {needsAttention > 0 && (
           <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
             <CardContent className="pt-6">
@@ -475,9 +549,11 @@ export default function WalletHomePage() {
             <Button
               className="flex-1 py-2.5 px-4 font-medium rounded-xl transition-colors"
               onClick={handleSwap}
-              disabled={isEstimating}
+              disabled={isEstimating || isConversionBlocked}
             >
-              {t("common.confirm")}
+              {isConversionBlocked
+                ? t("home.swap.retryAfterShort", { minutes: formatCooldown(cooldownMins) })
+                : t("common.confirm")}
             </Button>
           </div>
         </Modal>
