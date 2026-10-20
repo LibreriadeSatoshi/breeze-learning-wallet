@@ -19,7 +19,13 @@
     "never": "Never",
     "justNow": "just now",
     "delete": "Delete",
-    "search": "Search..."
+    "search": "Search…",
+    "status": {
+      "note": "NOTE",
+      "done": "DONE",
+      "check": "CHECK THIS",
+      "error": "ERROR"
+    }
   },
   "welcome": {
     "tagline": "A non-custodial Bitcoin & Lightning wallet. Your keys, your coins.",
@@ -36,7 +42,7 @@
     },
     "noVault": {
       "create": "Create new wallet",
-      "creating": "Creating wallet...",
+      "creating": "Creating wallet…",
       "haveWallet": "Already have a wallet?",
       "restore": "Restore wallet",
       "usePasskey": "Use passkey instead"
@@ -56,7 +62,7 @@
       "create": "Create passkey",
       "useExisting": "Use existing passkey"
     },
-    "footer": "By continuing, you agree to our Terms of Service and Privacy Policy"
+    "footer": "By continuing, you agree to our terms of service and privacy policy"
   },
   "forgetWallet": {
     "title": "Forget this wallet?",
@@ -68,9 +74,9 @@
   },
   "create": {
     "heading": {
-      "phrase": "Your Recovery Phrase",
-      "verify": "Verify Your Recovery Phrase",
-      "password": "Set a Wallet Password",
+      "phrase": "Your recovery phrase",
+      "verify": "Verify your recovery phrase",
+      "password": "Set a wallet password",
       "driveOffer": "Back up to Google Drive?"
     },
     "subheading": {
@@ -135,7 +141,7 @@
     }
   },
   "restore": {
-    "title": "Restore Wallet",
+    "title": "Restore wallet",
     "subtitle": {
       "method": "Choose how you want to restore your wallet",
       "phrase": "Enter your 12-word recovery phrase",
@@ -154,9 +160,9 @@
       }
     },
     "phrase": {
-      "title": "Recovery Phrase",
+      "title": "Recovery phrase",
       "wordCount": "{{count}}/12",
-      "placeholder": "word1 word2 word3 ... word12",
+      "placeholder": "word1 word2 word3 … word12",
       "invalid": "Invalid recovery phrase. Please check the words and try again.",
       "chooseDifferent": "Choose a different method",
       "overwriteWarning": "Restoring will replace the existing wallet on this device. Make sure you still have its recovery phrase before continuing."
@@ -182,8 +188,8 @@
     "operationFailed": "Drive operation failed."
   },
   "home": {
-    "title": "My Wallet",
-    "tagline": "Satoshi Scholar",
+    "title": "My wallet",
+    "tagline": "ISMOS Wallet",
     "connection": {
       "offline": "Offline",
       "syncing": "Syncing…",
@@ -205,11 +211,11 @@
     "actions": {
       "send": "Send",
       "receive": "Receive",
-      "courses": "Librería courses"
+      "courses": "ISMOS courses"
     },
     "recent": {
-      "title": "Recent Activity",
-      "loading": "Loading transactions...",
+      "title": "Recent activity",
+      "loading": "Loading transactions…",
       "empty": "No recent activity"
     },
     "seed": {
@@ -229,23 +235,25 @@
       "title": "Convert to {{token}}",
       "description": "Your balance will be converted to {{token}}",
       "conversionFee": "Conversion fee:",
-      "calculatingFee": "Calculating...",
-      "insufficientBalance": "Balance too low to convert — it will remain as change",
+      "calculatingFee": "Calculating…",
+      "insufficientBalance": "Balance too low to convert. It will remain as change",
       "unknownError": "An error occurred. Please try again later."
     },
     "balance": {
-      "change": "Change"
+      "change": "Change",
+      "hide": "Hide balance",
+      "show": "Show balance"
     }
   },
   "send": {
-    "title": "Send Payment",
-    "confirmTitle": "Confirm Payment",
-    "available": "Available to Send",
+    "title": "Send payment",
+    "confirmTitle": "Confirm payment",
+    "available": "Available to send",
     "sats": "sats",
     "destination": {
       "title": "Destination",
       "label": "Invoice, Lightning address, Bitcoin address, or Spark address",
-      "placeholder": "lnbc... | alice@example.com | bc1... | sprt1...",
+      "placeholder": "lnbc… | alice@example.com | bc1… | sprt1…",
       "helper": "The wallet will figure out the payment type"
     },
     "amount": {
@@ -265,19 +273,19 @@
     "parseFailed": "Could not parse destination",
     "checking": "Checking…",
     "youreSending": "You're sending",
-    "details": "Payment Details",
+    "details": "Payment details",
     "type": "Type",
-    "networkFee": "Network Fee",
+    "networkFee": "Network fee",
     "total": "Total",
-    "processing": "Processing...",
-    "confirmSend": "Confirm & Send Payment",
+    "processing": "Processing…",
+    "confirmSend": "Confirm & send payment",
     "sendingPayment": "Sending payment…",
     "sent": "Payment sent",
     "backToWallet": "Back to wallet",
     "failed": "Payment failed",
     "selfPayment": "You can't pay yourself. Use a different destination.",
     "genericError": "Something went wrong. Please try again.",
-    "tryAgain": "Try Again",
+    "tryAgain": "Try again",
     "destinationKind": {
       "bolt11": "Lightning invoice",
       "bolt12": "BOLT12 offer",
@@ -297,15 +305,15 @@
       "title": "Contacts",
       "payToContact": "Pay to {{name}}",
       "confirmTitle": "Delete contact",
-      "updateTitle": "Update Contact",
-      "addTitle": "Add Contact",
+      "updateTitle": "Update contact",
+      "addTitle": "Add contact",
       "confirmDelete": "Are you sure you want to delete {{name}}?",
       "inputs": {
-        "search": "Search Contact",
-        "paymentIdentifier": "Lightning Address",
+        "search": "Search contact",
+        "paymentIdentifier": "Lightning address",
         "paymentIdentifierPlaceholder": "username@domain.com",
         "name": "Name",
-        "namePlaceholder": "Contact Name"
+        "namePlaceholder": "Contact name"
       },
       "errors": {
         "invalid": "Invalid lightning address: use a valid lightning address",
@@ -313,14 +321,15 @@
         "emptyName": "Name is required",
         "emptyPaymentIdentifier": "Lightning address is required"
       },
-      "loading": "Loading more contacts...",
+      "loading": "Loading more contacts…",
       "noMoreContacts": "No more contacts to load",
       "aria": {
         "add": "Add new contact",
         "update": "Update contact {{name}}",
         "delete": "Delete contact {{name}}",
         "selectContact": "Select contact {{name}}"
-      }
+      },
+      "remove": "Remove contact {{name}}"
     }
   },
   "receive": {
@@ -385,7 +394,7 @@
     "amount": "Amount",
     "refundButton": "Refund to Bitcoin",
     "addressLabel": "Bitcoin address",
-    "addressPlaceholder": "bc1...",
+    "addressPlaceholder": "bc1…",
     "feeRate": "Fee rate",
     "feeSlow": "Slow",
     "feeMedium": "Medium",
@@ -524,12 +533,12 @@
     "autoRefresh": "This dialog will refresh automatically once the payment lands."
   },
   "legal": {
-    "title": "Terms & Privacy",
-    "termsTitle": "Terms of Service",
-    "privacyTitle": "Privacy Policy",
+    "title": "Terms & privacy",
+    "termsTitle": "Terms of service",
+    "privacyTitle": "Privacy policy",
     "terms": {
       "s1t": "About this service",
-      "s1b": "Satoshi Scholar is a non-custodial Bitcoin and Lightning wallet that runs entirely in your browser. We provide software, not a financial service: we never hold your funds, your keys, or any account on your behalf.",
+      "s1b": "ISMOS Wallet is a non-custodial Bitcoin and Lightning wallet that runs entirely in your browser. We provide software, not a financial service: we never hold your funds, your keys, or any account on your behalf.",
       "s2t": "You are in control, and responsible",
       "s2b": "Your recovery phrase (and your passkey, if you use one) is the only way to access your funds. If you lose it, nobody, including us, can recover your wallet, and your funds will be permanently lost. Transactions on Bitcoin and Lightning are irreversible.",
       "s3t": "How payments work",

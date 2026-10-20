@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft } from "iconoir-react";
 import { useT } from "@/lib/i18n/hook";
 
 const QUESTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -12,32 +11,30 @@ export default function FaqPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6">
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label={t("common.back")}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold">{t("faq.title")}</h1>
-        </div>
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-reading px-4 py-6 sm:px-6 sm:py-12">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          aria-label={t("common.back")}
+          className="-ml-3 mb-6 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg transition-colors duration-fast hover:bg-raised"
+        >
+          <ArrowLeft aria-hidden="true" className="h-6 w-6" />
+        </button>
+        <h1 className="border-b-2 border-strong pb-4 font-serif text-h2 text-heading sm:text-h1">
+          {t("faq.title")}
+        </h1>
 
-        <Card className="mb-6">
-          <CardContent className="pt-6 space-y-6">
-            {QUESTIONS.map((n) => (
-              <div key={n}>
-                <h2 className="font-semibold mb-1">{t(`faq.q${n}`)}</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
-                  {t(`faq.a${n}`)}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="divide-y divide-hairline">
+          {QUESTIONS.map((n) => (
+            <section key={n} className="py-6">
+              <h2 className="font-serif text-h3 text-heading">{t(`faq.q${n}`)}</h2>
+              <p className="mt-2 whitespace-pre-line text-body text-fg">
+                {t(`faq.a${n}`)}
+              </p>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );

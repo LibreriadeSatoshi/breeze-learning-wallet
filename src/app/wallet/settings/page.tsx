@@ -7,14 +7,15 @@ import {
   ArrowLeft,
   Check,
   Copy as CopyIcon,
-  Pencil,
-  TriangleAlert,
-} from "lucide-react";
+  EditPencil,
+  WarningTriangle,
+} from "iconoir-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { StatusNote } from "@/components/ui/status-note";
 import {
   useLightningAddress,
   useCheckLightningAddressAvailable,
@@ -49,6 +50,9 @@ import { LanguagePickerSection } from "@/components/ui/language-picker";
 
 const USERNAME_RE = /^[a-z0-9._-]{1,32}$/;
 
+const SECTION_TITLE = "font-serif text-h3 text-heading";
+const SECTION_SUBTITLE = "mt-1 text-body-sm text-fg-muted";
+
 export default function SettingsPage() {
   const t = useT();
   const router = useRouter();
@@ -75,29 +79,29 @@ export default function SettingsPage() {
   if (!isUnlocked) return null;
 
   return (
-    <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6">
-        <div className="flex items-center gap-4 mb-6">
+    <div className="min-h-screen min-w-fit bg-surface">
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6">
+        <div className="flex items-center gap-2 mb-6">
           <button type="button"
             onClick={() => router.push("/wallet/home")}
             aria-label={t("common.back")}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            className="-ml-3 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg transition-colors duration-fast hover:bg-raised"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft aria-hidden="true" className="h-6 w-6" />
           </button>
-          <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
+          <h1 className="font-serif text-h2 sm:text-h1 text-heading">{t("settings.title")}</h1>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">{t("settings.lightningAddress.title")}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h2 className={SECTION_TITLE}>{t("settings.lightningAddress.title")}</h2>
+            <p className={SECTION_SUBTITLE}>
               {t("settings.lightningAddress.subtitle")}
             </p>
           </CardHeader>
           <CardContent>
             {loadingAddress ? (
-              <p className="text-sm text-gray-500">{t("settings.lightningAddress.loading")}</p>
+              <p className="text-body-sm text-fg-muted">{t("settings.lightningAddress.loading")}</p>
             ) : lightningAddress ? (
               <RegisteredAddress
                 info={lightningAddress}
@@ -111,12 +115,12 @@ export default function SettingsPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">{t("settings.network.title")}</h2>
+            <h2 className={SECTION_TITLE}>{t("settings.network.title")}</h2>
           </CardHeader>
           <CardContent>
-            <p className="text-sm">
-              <span className="text-gray-600 dark:text-gray-400">{t("settings.network.active")}</span>
-              <span className="font-medium capitalize">
+            <p className="text-body-sm">
+              <span className="text-fg-muted">{t("settings.network.active")}</span>
+              <span className="font-mono font-medium capitalize">
                 {SELECTED_BITCOIN_NETWORK}
               </span>
             </p>
@@ -126,8 +130,8 @@ export default function SettingsPage() {
         {isDriveBackupConfigured() && (
           <Card className="mb-6">
             <CardHeader>
-              <h2 className="text-lg font-semibold">{t("settings.driveBackup.title")}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <h2 className={SECTION_TITLE}>{t("settings.driveBackup.title")}</h2>
+              <p className={SECTION_SUBTITLE}>
                 {t("settings.driveBackup.subtitle")}
               </p>
             </CardHeader>
@@ -139,8 +143,8 @@ export default function SettingsPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">{t("settings.currency.title")}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h2 className={SECTION_TITLE}>{t("settings.currency.title")}</h2>
+            <p className={SECTION_SUBTITLE}>
               {t("settings.currency.subtitle")}
             </p>
           </CardHeader>
@@ -151,8 +155,8 @@ export default function SettingsPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">{t("settings.language.title")}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h2 className={SECTION_TITLE}>{t("settings.language.title")}</h2>
+            <p className={SECTION_SUBTITLE}>
               {t("settings.language.subtitle")}
             </p>
           </CardHeader>
@@ -163,8 +167,8 @@ export default function SettingsPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">{t("settings.claimLeeway.title")}</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h2 className={SECTION_TITLE}>{t("settings.claimLeeway.title")}</h2>
+            <p className={SECTION_SUBTITLE}>
               {t("settings.claimLeeway.subtitle")}
             </p>
           </CardHeader>
@@ -175,27 +179,28 @@ export default function SettingsPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold">{t("settings.help.title")}</h2>
+            <h2 className={SECTION_TITLE}>{t("settings.help.title")}</h2>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="-mt-2 pb-4">
             <Link
               href="/faq"
-              className="block text-sm text-blue-600 dark:text-blue-400 hover:underline underline-offset-2"
+              className="ism-link flex w-fit min-h-control items-center text-body"
             >
               {t("faq.title")}
             </Link>
             <Link
               href="/legal"
-              className="block text-sm text-blue-600 dark:text-blue-400 hover:underline underline-offset-2"
+              className="ism-link flex w-fit min-h-control items-center text-body"
             >
               {t("legal.title")}
             </Link>
           </CardContent>
         </Card>
 
-        <Card className="mb-6 border-red-200 dark:border-red-900">
+        <Card className="mb-6">
           <CardHeader>
-            <h2 className="text-lg font-semibold text-red-700 dark:text-red-300">
+            <h2 className="flex items-center gap-2 font-serif text-h3 text-alert">
+              <WarningTriangle aria-hidden="true" className="h-6 w-6 flex-none" />
               {t("settings.dangerZone.title")}
             </h2>
           </CardHeader>
@@ -279,7 +284,7 @@ function DriveBackupSection() {
           {t("settings.driveBackup.connect")}
         </Button>
         {error && (
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <InlineError message={error} />
         )}
       </div>
     );
@@ -290,13 +295,13 @@ function DriveBackupSection() {
   return (
     <div className="space-y-3">
       {email && (
-        <div className="text-sm flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">{t("settings.driveBackup.account")}</span>
-          <span className="font-medium">{email}</span>
+        <div className="flex justify-between gap-4 text-body-sm">
+          <span className="text-fg-muted">{t("settings.driveBackup.account")}</span>
+          <span className="min-w-0 break-all text-right font-medium">{email}</span>
         </div>
       )}
-      <div className="text-sm flex justify-between">
-        <span className="text-gray-600 dark:text-gray-400">{t("settings.driveBackup.lastBackup")}</span>
+      <div className="flex justify-between gap-4 text-body-sm">
+        <span className="text-fg-muted">{t("settings.driveBackup.lastBackup")}</span>
         <span className="font-medium">{lastSyncLabel}</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -317,7 +322,7 @@ function DriveBackupSection() {
         </Button>
       </div>
       {error && (
-        <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        <InlineError message={error} />
       )}
 
       <Modal
@@ -328,12 +333,9 @@ function DriveBackupSection() {
         description={t("settings.driveBackup.disconnectConfirmDescription")}
       >
         <div className="space-y-4">
-          <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
-            <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
-            <span>
-              {t("settings.driveBackup.disconnectWarning")}
-            </span>
-          </div>
+          <StatusNote status="warning">
+            {t("settings.driveBackup.disconnectWarning")}
+          </StatusNote>
           <div className="flex gap-3">
             <Button
               variant="ghost"
@@ -345,7 +347,7 @@ function DriveBackupSection() {
               {t("common.cancel")}
             </Button>
             <Button
-              variant="primary"
+              variant="danger"
               size="lg"
               onClick={async () => {
                 await handleDisconnect();
@@ -353,7 +355,7 @@ function DriveBackupSection() {
               }}
               loading={busy}
               disabled={busy}
-              className="flex-1 bg-red-600 hover:bg-red-700"
+              className="flex-1"
             >
               {t("settings.driveBackup.disconnectSubmit")}
             </Button>
@@ -375,7 +377,7 @@ function CurrencyPickerSection() {
   };
 
   if (isLoading) {
-    return <p className="text-sm text-gray-500">{t("settings.currency.loading")}</p>;
+    return <p className="text-body-sm text-fg-muted">{t("settings.currency.loading")}</p>;
   }
 
   const sorted = [...currencies].sort((a, b) => a.id.localeCompare(b.id));
@@ -384,11 +386,11 @@ function CurrencyPickerSection() {
     <select
       value={selected}
       onChange={(e) => handleChange(e.target.value)}
-      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+      className="w-full min-h-field px-3 rounded border-1.5 border-input bg-surface text-fg text-body-sm hover:border-strong"
     >
       {sorted.map((c) => (
         <option key={c.id} value={c.id}>
-          {c.id} — {c.info.name}
+          {c.id} - {c.info.name}
         </option>
       ))}
     </select>
@@ -457,7 +459,7 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
         const ok = await checkMutation.mutateAsync(trimmed);
         if (!cancelled) setAvailable(ok);
       } catch {
-        // ignore — we'll surface a clear error on claim
+        // ignore: we'll surface a clear error on claim
       }
     }, 350);
     return () => {
@@ -502,20 +504,22 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
           spellCheck={false}
         />
         {trimmed && (
-          <p className="mt-2 text-sm font-mono text-gray-600 dark:text-gray-400">
+          <p className="mt-2 break-all font-mono text-body-sm text-fg-muted">
             {trimmed}@{LNURL_DOMAIN ?? t("settings.claimUsername.breezDefault")}
           </p>
         )}
         {showAvailability && checkMutation.isPending && (
-          <p className="mt-1 text-xs text-gray-500">{t("settings.claimUsername.checking")}</p>
+          <p className="mt-1 text-caption text-fg-muted">{t("settings.claimUsername.checking")}</p>
         )}
         {showAvailability && !checkMutation.isPending && available === true && (
-          <p className="mt-1 text-xs text-green-700 dark:text-green-400">
+          <p className="mt-1 flex items-center gap-2 text-caption text-success">
+            <Check aria-hidden="true" className="h-5 w-5 flex-none" />
             {t("settings.claimUsername.available")}
           </p>
         )}
         {showAvailability && !checkMutation.isPending && available === false && (
-          <p className="mt-1 text-xs text-red-700 dark:text-red-400">
+          <p className="mt-1 flex items-center gap-2 text-caption text-alert">
+            <WarningTriangle aria-hidden="true" className="h-5 w-5 flex-none" />
             {t("settings.claimUsername.taken")}
           </p>
         )}
@@ -528,9 +532,7 @@ function ClaimUsername({ onClaimed }: { onClaimed: () => void }) {
         maxLength={100}
       />
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-        </div>
+        <StatusNote status="error">{error}</StatusNote>
       )}
       <Button
         variant="primary"
@@ -564,16 +566,16 @@ function RegisteredAddress({
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <p className="font-mono text-lg break-all">{info.lightningAddress}</p>
+        <p className="font-mono text-body break-all">{info.lightningAddress}</p>
         {info.description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+          <p className="mt-1 text-body-sm text-fg-muted italic">
             &ldquo;{info.description}&rdquo;
           </p>
         )}
       </div>
 
       <div className="flex justify-center">
-        <div className="p-3 bg-white rounded-lg">
+        <div className="rounded bg-paper p-4">
           <QRCodeSVG
             value={info.lightningAddress}
             size={180}
@@ -588,17 +590,15 @@ function RegisteredAddress({
         <Button
           variant="primary"
           onClick={() => copy(info.lightningAddress)}
-          className="inline-flex items-center justify-center gap-2"
         >
-          {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+          {copied ? <Check aria-hidden="true" className="h-5 w-5" /> : <CopyIcon aria-hidden="true" className="h-5 w-5" />}
           <span>{copied ? t("common.copied") : failed ? t("common.copyFailed") : t("common.copy")}</span>
         </Button>
         <Button
           variant="outline"
           onClick={() => setEditOpen(true)}
-          className="inline-flex items-center justify-center gap-2"
         >
-          <Pencil className="w-4 h-4" />
+          <EditPencil aria-hidden="true" className="h-5 w-5" />
           <span>{t("settings.registeredAddress.editUsername")}</span>
         </Button>
       </div>
@@ -634,13 +634,13 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
 
   return (
     <>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+      <p className="mb-4 text-body-sm text-fg-muted">
         {t("settings.dangerZone.subtitle")}
       </p>
       <Button
-        variant="outline"
+        variant="secondary"
         onClick={() => setOpen(true)}
-        className="border-red-300 text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+        className="w-full"
       >
         {t("settings.dangerZone.button")}
       </Button>
@@ -679,14 +679,14 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
               {t("common.cancel")}
             </Button>
             <Button
-              variant="primary"
+              variant="danger"
               size="lg"
               onClick={handle}
               loading={forgetting}
               disabled={
                 forgetting || confirmText.trim().toLowerCase() !== t("forgetWallet.confirmWord")
               }
-              className="flex-1 bg-red-600 hover:bg-red-700"
+              className="flex-1"
             >
               {t("forgetWallet.submit")}
             </Button>
@@ -694,5 +694,14 @@ function ForgetWalletSection({ onForget }: { onForget: () => Promise<void> }) {
         </div>
       </Modal>
     </>
+  );
+}
+
+function InlineError({ message }: { message: string }) {
+  return (
+    <p className="flex items-start gap-2 text-body-sm text-alert">
+      <WarningTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none" />
+      {message}
+    </p>
   );
 }

@@ -5,7 +5,7 @@ interface CardProps {
   className?: string;
 }
 
-const baseStyles = 'rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm';
+const baseStyles = 'rounded border border-hairline bg-surface text-fg';
 
 export function Card({ children, className = '' }: CardProps) {
   return <div className={`${baseStyles} ${className}`}>{children}</div>;
@@ -18,4 +18,3 @@ export function CardHeader({ children, className = '' }: { children: React.React
 export function CardContent({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return <div className={`p-6 pt-0 ${className}`}>{children}</div>;
 }
-

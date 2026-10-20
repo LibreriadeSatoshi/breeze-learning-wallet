@@ -2,22 +2,126 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ISMOS tokens. Light is the default; Hacker mode follows the device's dark setting. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --mauveine: #4d01e0;
+  --mauveine-200: #bfc3ff;
+  --mauveine-300: #9293ff;
+  --indigo: #2a2550;
+  --paper: #ffffff;
+  --ink: #000000;
+  --madder: #ff7700;
+  --madder-800: #8b3d00;
+  --weld: #ffd23f;
+  --logwood: #251d3a;
+  --logwood-50: #f8f6fe;
+  --logwood-100: #efecfd;
+  --logwood-200: #dfd8fb;
+  --logwood-300: #cabdf7;
+  --logwood-400: #af9bec;
+  --logwood-500: #9f87e1;
+  --logwood-600: #8369c4;
+  --logwood-700: #6b55a2;
+  --logwood-800: #544281;
+  --logwood-900: #453867;
+
+  --surface: var(--paper);
+  --surface-raised: var(--logwood-50);
+  --text: var(--ink);
+  --text-heading: var(--ink);
+  --text-muted: var(--logwood-800);
+  --hairline: var(--logwood-200);
+  --rule-strong: var(--ink);
+  --link: var(--mauveine);
+  --link-hover: var(--logwood-800);
+  --alert: var(--madder-800);
+  --bar: var(--mauveine);
+  --track: var(--logwood-200);
+  --action: var(--ink);
+  --on-action: var(--paper);
+  --highlight: var(--weld);
+  --on-highlight: var(--ink);
+  --focus: var(--mauveine);
+  --status-info: var(--logwood-800);
+  --status-info-bg: var(--logwood-50);
+  --status-success: var(--indigo);
+  --status-warning: var(--ink);
+  --status-warning-bg: var(--weld);
+  --status-error: var(--madder-800);
+  --border-input: var(--logwood-700);
+  --border-strong: var(--ink);
+  --overlay: var(--paper);
+  --overlay-edge: transparent;
+  --scrim: rgba(0, 0, 0, 0.48);
+  --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --surface: var(--ink);
+    --surface-raised: var(--logwood);
+    --text: var(--paper);
+    --text-heading: var(--paper);
+    --text-muted: var(--logwood-200);
+    --hairline: var(--logwood-700);
+    --rule-strong: var(--paper);
+    --link: var(--mauveine-200);
+    --link-hover: var(--paper);
+    --alert: var(--madder);
+    --bar: var(--mauveine-300);
+    --track: var(--logwood-700);
+    --action: var(--mauveine);
+    --focus: var(--weld);
+    --status-info: var(--logwood-200);
+    --status-info-bg: var(--logwood);
+    --status-success: var(--mauveine-200);
+    --status-error: var(--madder);
+    --border-input: var(--logwood-400);
+    --border-strong: var(--paper);
+    --overlay: var(--logwood);
+    --overlay-edge: var(--logwood-400);
+
+    color-scheme: dark;
   }
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 28px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--highlight);
+  color: var(--on-highlight);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+}
+
+@layer components {
+  .ism-label {
+    @apply font-mono text-label uppercase tracking-label text-fg-muted;
+  }
+  .ism-link {
+    @apply text-link underline underline-offset-2 hover:text-link-hover;
+  }
 }
 
 @layer utilities {
