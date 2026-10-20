@@ -49,7 +49,7 @@ export default function RecoveryPage() {
 
         {rejected.length === 0 ? (
           <Card>
-            <CardContent className="pt-6 text-center">
+            <CardContent className="pt-6">
               <p className="text-body text-fg-muted">
                 {t("recovery.nothing")}
               </p>
