@@ -6,7 +6,7 @@ import { Balances } from '@/lib/lightning/types';
 import { convertSatsToFiat } from '@/lib/wallet/format-fiat';
 import { DEFAULT_FIAT_CURRENCY } from '@/lib/wallet/prefs';
 import { useWalletStore } from '@/store/wallet-store';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeClosed } from 'iconoir-react';
 import React from 'react';
 
 interface SensitiveAmountProps {
@@ -24,7 +24,7 @@ export function SensitiveAmount({
 
   return (
     <span className={className}>
-      {showBalance ? children : <span className="tracking-wider">{MASK}</span>}
+      {showBalance ? children : MASK}
     </span>
   );
 }
@@ -76,28 +76,28 @@ export function BalanceDisplay({
   let secondaryText = getSecondaryText(balanceSat, isStableBalance, changeText, fiatCurrency, fiatRate, usdRate, token);
 
   return (
-    <div className="text-center py-8">
-      <div className="mb-2 flex flex-row justify-center items-end">
-        <button 
+    <div className="py-8">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+          <SensitiveAmount className="font-mono text-h1 font-medium tabular-nums text-heading sm:text-display">
+            {primaryAmount}
+          </SensitiveAmount>
+          <span className="ism-label select-none">
+            {primaryTicker}
+          </span>
+        </div>
+        <button
           type="button"
-          onClick={onToggleVisibility} 
-          className="mb-3 mr-3 focus:outline-none"
-          aria-label={showBalance ? "hide balance" : "show balance"}
+          onClick={onToggleVisibility}
+          className="inline-flex min-h-control min-w-[44px] flex-none items-center justify-center rounded text-fg-muted transition-colors duration-fast hover:bg-raised hover:text-fg"
+          aria-label={showBalance ? t("home.balance.hide") : t("home.balance.show")}
         >
-          {showBalance ? <Eye className="min-w-6 h-6" /> : <EyeOff className="min-w-6 h-6" />}
+          {showBalance ? <Eye aria-hidden="true" className="h-6 w-6" /> : <EyeClosed aria-hidden="true" className="h-6 w-6" />}
         </button>
-
-        <SensitiveAmount className="text-5xl font-bold">
-          {primaryAmount}
-        </SensitiveAmount>
-        
-        <span className="text-2xl text-gray-600 dark:text-gray-400 ml-2 select-none">
-          {primaryTicker}
-        </span>
       </div>
 
       {secondaryText && (
-        <SensitiveAmount className="text-base text-gray-500 dark:text-gray-400 font-medium block mt-1">
+        <SensitiveAmount className="mt-2 block font-mono text-body-sm tabular-nums text-fg-muted">
           {secondaryText}
         </SensitiveAmount>
       )}

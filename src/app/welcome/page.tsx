@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Earth, Fingerprint } from "lucide-react";
+import { Fingerprint, Translate, WarningTriangle } from "iconoir-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
-import { APP_NAME } from "@/lib/config";
+import { Lockup } from "@/components/brand/logo";
 import { useWalletStore } from "@/store/wallet-store";
 import { useT } from "@/lib/i18n/hook";
 import {
@@ -141,43 +141,52 @@ export default function WelcomePage() {
   if (!isBootstrapped) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <p className="text-body-sm text-fg-muted">{t("common.loading")}</p>
       </div>
     );
   }
 
   const showPasskeyUnlock = hasVault && authMode === "passkey";
   const showPasswordUnlock = hasVault && authMode !== "passkey";
-  
+
+  const errorText = (message: string) => (
+    <p role="alert" className="flex items-start gap-2 text-body-sm text-alert">
+      <WarningTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none" />
+      {message}
+    </p>
+  );
+
+  const quietAction =
+    "w-full min-h-control rounded text-body-sm text-fg-muted transition-colors duration-fast hover:text-fg hover:underline underline-offset-2 disabled:text-logwood-600 disabled:no-underline";
+  const forgetAction =
+    "w-full min-h-control rounded text-caption text-fg-muted transition-colors duration-fast hover:text-fg hover:underline underline-offset-2";
+  const footerLink =
+    "inline-flex min-h-control items-center text-caption text-fg-muted underline underline-offset-2 hover:text-fg";
+
   return (
-    <div className="min-h-screen min-w-fit flex flex-col justify-between px-6 py-6 sm:py-10">
-      <div className="flex flex-col items-center pb-6 pt-10 sm:flex-1 sm:justify-end sm:pb-20 sm:pt-0">
-        <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl mb-4 sm:mb-8">
-          <span className="text-3xl sm:text-5xl font-bold text-white">₿</span>
-        </div>
-        <h1 className="text-3xl sm:text-5xl font-bold mb-2 sm:mb-3 text-center bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-          {APP_NAME}
-        </h1>
-        <p className="text-center text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-sm px-4">
+    <div className="min-h-screen min-w-fit flex flex-col justify-between px-4 py-6 sm:px-6 sm:py-12">
+      <div className="flex flex-col items-center pb-8 pt-12 sm:flex-1 sm:justify-end sm:pb-12 sm:pt-0">
+        <Lockup />
+        <p className="mt-6 max-w-sm text-center text-body text-fg-muted">
           {t("welcome.tagline")}
         </p>
       </div>
 
-      <div className="fixed top-6 right-6 h-10 w-10 flex items-center justify-center rounded-lg hover:bg-neutral-800/50 transition-colors text-gray-300 hover:text-white">
-        <Earth className="w-6 h-6 pointer-events-none" />
+      <div className="fixed right-4 top-4 z-sticky flex h-11 w-11 items-center justify-center rounded text-fg transition-colors duration-fast hover:bg-raised has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus sm:right-6 sm:top-6">
+        <Translate aria-hidden="true" className="pointer-events-none h-6 w-6" />
 
-        <div className="absolute inset-0 opacity-0 cursor-pointer [&>select]:w-full [&>select]:h-full [&>select]:cursor-pointer">
+        <div className="absolute inset-0 cursor-pointer opacity-0 [&>select]:h-full [&>select]:w-full [&>select]:cursor-pointer">
           <LanguagePickerSection />
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center space-y-4 max-w-md mx-auto w-full px-6">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center space-y-4">
         {showPasswordUnlock && (
-          <Card className="shadow-lg">
+          <Card>
             <CardContent className="pt-6 space-y-4">
               <div>
-                <h2 className="text-xl font-semibold mb-1">{t("welcome.unlock.title")}</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h2 className="font-serif text-h3 text-heading">{t("welcome.unlock.title")}</h2>
+                <p className="mt-1 text-body-sm text-fg-muted">
                   {t("welcome.unlock.subtitle")}
                 </p>
               </div>
@@ -192,11 +201,7 @@ export default function WelcomePage() {
                 }}
                 autoFocus
               />
-              {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-                </div>
-              )}
+              {error && errorText(error)}
               <Button
                 variant="primary"
                 size="lg"
@@ -207,60 +212,59 @@ export default function WelcomePage() {
               >
                 {unlocking ? t("welcome.unlock.submitting") : t("welcome.unlock.submit")}
               </Button>
-              <button type="button"
-                onClick={() => router.push("/wallet/restore")}
-                className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              >
-                {t("welcome.unlock.forgotPassword")}
-              </button>
-              <button type="button"
-                onClick={() => setShowForget(true)}
-                className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
-              >
-                {t("welcome.unlock.forget")}
-              </button>
+              <div>
+                <button type="button"
+                  onClick={() => router.push("/wallet/restore")}
+                  className={quietAction}
+                >
+                  {t("welcome.unlock.forgotPassword")}
+                </button>
+                <button type="button"
+                  onClick={() => setShowForget(true)}
+                  className={forgetAction}
+                >
+                  {t("welcome.unlock.forget")}
+                </button>
+              </div>
             </CardContent>
           </Card>
         )}
 
         {showPasskeyUnlock && (
-          <Card className="shadow-lg min-w-[250px]">
+          <Card className="min-w-[250px]">
             <CardContent className="pt-6 space-y-4">
-              <div className="text-center">
-                <Fingerprint className="w-12 h-12 mx-auto text-blue-500 mb-3" />
-                <h2 className="text-xl font-semibold mb-1">{t("welcome.passkey.unlockTitle")}</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+              <div>
+                <h2 className="font-serif text-h3 text-heading">{t("welcome.passkey.unlockTitle")}</h2>
+                <p className="mt-1 text-body-sm text-fg-muted">
                   {t("welcome.passkey.unlockSubtitle")}
                 </p>
               </div>
-              {passkeyError && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">{passkeyError}</p>
-                </div>
-              )}
+              {passkeyError && errorText(passkeyError)}
               <Button
                 variant="primary"
                 size="lg"
                 onClick={handlePasskeySignIn}
                 loading={passkeyBusy === "signIn"}
                 disabled={passkeyBusy !== null}
-                className="w-full inline-flex items-center justify-center gap-2"
+                className="w-full"
               >
-                <Fingerprint className="w-5 h-5 min-w-5" />
+                <Fingerprint aria-hidden="true" className="h-5 w-5 flex-none" />
                 <span>{t("welcome.passkey.signIn")}</span>
               </Button>
-              <button type="button"
-                onClick={() => router.push("/wallet/restore")}
-                className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              >
-                {t("welcome.passkey.useRecoveryPhrase")}
-              </button>
-              <button type="button"
-                onClick={() => setShowForget(true)}
-                className="w-full text-xs text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
-              >
-                {t("welcome.unlock.forget")}
-              </button>
+              <div>
+                <button type="button"
+                  onClick={() => router.push("/wallet/restore")}
+                  className={quietAction}
+                >
+                  {t("welcome.passkey.useRecoveryPhrase")}
+                </button>
+                <button type="button"
+                  onClick={() => setShowForget(true)}
+                  className={forgetAction}
+                >
+                  {t("welcome.unlock.forget")}
+                </button>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -272,26 +276,23 @@ export default function WelcomePage() {
               size="lg"
               onClick={handleCreateWallet}
               loading={creatingWallet}
-              className="w-full shadow-lg hover:shadow-xl transition-shadow"
+              className="w-full"
             >
               {creatingWallet ? t("welcome.noVault.creating") : t("welcome.noVault.create")}
             </Button>
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-white dark:bg-gray-900 text-gray-400">
-                  {t("welcome.noVault.haveWallet")}
-                </span>
-              </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 border-t border-hairline" />
+              <span className="text-caption text-fg-muted">
+                {t("welcome.noVault.haveWallet")}
+              </span>
+              <div className="flex-1 border-t border-hairline" />
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="lg"
               onClick={() => router.push("/wallet/restore")}
               disabled={creatingWallet}
-              className="w-full hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="w-full"
             >
               {t("welcome.noVault.restore")}
             </Button>
@@ -303,7 +304,7 @@ export default function WelcomePage() {
                   setPasskeyMode(true);
                 }}
                 disabled={creatingWallet}
-                className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                className={quietAction}
               >
                 {t("welcome.noVault.usePasskey")}
               </button>
@@ -319,9 +320,9 @@ export default function WelcomePage() {
               onClick={handlePasskeyCreate}
               loading={passkeyBusy === "create"}
               disabled={passkeyBusy !== null}
-              className="w-full shadow-lg hover:shadow-xl transition-shadow inline-flex items-center justify-center gap-2"
+              className="w-full"
             >
-              <Fingerprint className="w-5 h-5" />
+              <Fingerprint aria-hidden="true" className="h-5 w-5 flex-none" />
               <span>{t("welcome.passkey.create")}</span>
             </Button>
             <Button
@@ -330,15 +331,11 @@ export default function WelcomePage() {
               onClick={handlePasskeySignIn}
               loading={passkeyBusy === "signIn"}
               disabled={passkeyBusy !== null}
-              className="w-full inline-flex items-center justify-center gap-2"
+              className="w-full"
             >
               {t("welcome.passkey.useExisting")}
             </Button>
-            {passkeyError && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                <p className="text-sm text-red-700 dark:text-red-300">{passkeyError}</p>
-              </div>
-            )}
+            {passkeyError && errorText(passkeyError)}
             <button
               type="button"
               onClick={() => {
@@ -346,7 +343,7 @@ export default function WelcomePage() {
                 setPasskeyMode(false);
               }}
               disabled={passkeyBusy !== null}
-              className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              className={quietAction}
             >
               {t("welcome.passkey.useRecoveryPhrase")}
             </button>
@@ -354,17 +351,11 @@ export default function WelcomePage() {
         )}
       </div>
 
-      <div className="text-center pb-6 space-y-2">
-        <Link
-          href="/legal"
-          className="block text-xs text-gray-500 dark:text-gray-400 px-8 hover:underline underline-offset-2"
-        >
+      <div className="flex flex-wrap items-center justify-center gap-x-6 pt-8">
+        <Link href="/legal" className={footerLink}>
           {t("welcome.footer")}
         </Link>
-        <Link
-          href="/faq"
-          className="block text-xs text-gray-500 dark:text-gray-400 px-8 hover:underline underline-offset-2"
-        >
+        <Link href="/faq" className={footerLink}>
           {t("faq.title")}
         </Link>
       </div>
@@ -403,14 +394,14 @@ export default function WelcomePage() {
               {t("common.cancel")}
             </Button>
             <Button
-              variant="primary"
+              variant="danger"
               size="lg"
               onClick={handleForget}
               loading={forgetting}
               disabled={
                 forgetting || forgetConfirm.trim().toLowerCase() !== t("forgetWallet.confirmWord")
               }
-              className="flex-1 bg-red-600 hover:bg-red-700"
+              className="flex-1"
             >
               {t("forgetWallet.submit")}
             </Button>
@@ -430,7 +421,7 @@ export default function WelcomePage() {
         {passkeyBackupWords && (
           <div className="space-y-4">
             <MnemonicDisplay words={passkeyBackupWords} revealed />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-caption text-fg-muted">
               {t("welcome.passkey.backupHint")}
             </p>
             <Button

@@ -93,7 +93,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-4 bg-scrim"
       onClick={dismissable ? onClose : undefined}
     >
       <div
@@ -104,17 +104,17 @@ export function Modal({
         aria-describedby={descId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl outline-none max-h-[90vh] flex flex-col"
+        className="w-full max-w-md bg-overlay text-fg rounded-modal border-2 border-overlay-edge shadow-modal outline-none max-h-[90vh] flex flex-col"
       >
         <div className="px-6 pt-6 pb-4">
-          <div className="flex justify-between items-center">
-          <h2 id={titleId} className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {title}
-          </h2>
-          {headerRight}
+          <div className="flex justify-between items-center gap-4">
+            <h2 id={titleId} className="font-serif text-h3 text-heading text-balance">
+              {title}
+            </h2>
+            {headerRight}
           </div>
           {description && (
-            <p id={descId} className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <p id={descId} className="mt-2 text-body-sm text-fg-muted">
               {description}
             </p>
           )}

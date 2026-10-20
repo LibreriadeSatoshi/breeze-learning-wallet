@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Clock, Copy as CopyIcon, Eye, EyeOff, Share2 } from "lucide-react";
+import { Check, Clock, Copy as CopyIcon, Eye, EyeClosed, ShareIos, WarningTriangle } from "iconoir-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,10 +147,10 @@ export function InvoiceCreator({
 
   if (!open) {
     return (
-      <div className="text-center">
+      <div>
         <button type="button"
           onClick={() => setOpen(true)}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          className="ism-link min-h-control text-left text-body-sm"
         >
           {openLabel}
         </button>
@@ -161,50 +161,56 @@ export function InvoiceCreator({
   if (invoice) {
     return (
       <Card className="mt-6">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">{title}</h3>
+        <CardHeader className="pb-4">
+          <div className="flex flex-wrap justify-between items-center gap-x-4 gap-y-2">
+            <h3 className="font-serif text-h3 text-heading">{title}</h3>
             {timeRemaining > 0 && (
-              <div className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/20 px-3 py-1 rounded-full text-xs">
-                <Clock className="w-3 h-3 text-amber-700 dark:text-amber-300" />
-                <span className="font-medium text-amber-700 dark:text-amber-300">
-                  {t("receive.invoice.timeLeft", { time: formatTime(timeRemaining) })}
-                </span>
-              </div>
+              <p className="inline-flex items-center gap-2 font-mono text-body-sm tabular-nums text-fg-muted">
+                <Clock aria-hidden="true" className="h-5 w-5 flex-none" />
+                {t("receive.invoice.timeLeft", { time: formatTime(timeRemaining) })}
+              </p>
             )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center">
-            <span className="text-3xl font-bold text-orange-500">
+          <p className="flex items-baseline gap-2">
+            <span className="font-mono text-h1 font-medium tabular-nums text-fg">
               {invoice.amountSat.toLocaleString()}
             </span>
-            <span className="text-sm text-gray-600 dark:text-gray-400 ml-1">{t("send.sats")}</span>
+            <span className="font-mono text-body text-fg-muted">{t("send.sats")}</span>
           </p>
           <QrCode aria-label={t("receive.invoice.qrCodeAriaLabel")} value={invoice.paymentRequest} />
-          <div className="flex items-center justify-center flex-row bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
-            {showInvoice ? invoice.paymentRequest : truncateStr(invoice.paymentRequest, 12, 12)}
-            {showInvoice ? <EyeOff className="pl-2 min-w-6" onClick={() => setShowInvoice(false)}/> : <Eye className="pl-2 min-w-6" onClick={() => setShowInvoice(true)}/> }
-          </div>
+          <button
+            type="button"
+            aria-expanded={showInvoice}
+            onClick={() => setShowInvoice((v) => !v)}
+            className="flex w-full min-h-control items-center justify-between gap-3 rounded border border-hairline bg-raised p-3 text-left font-mono text-caption text-fg break-all hover:border-strong transition-colors duration-fast"
+          >
+            <span>{showInvoice ? invoice.paymentRequest : truncateStr(invoice.paymentRequest, 12, 12)}</span>
+            {showInvoice
+              ? <EyeClosed aria-hidden="true" className="h-5 w-5 flex-none" />
+              : <Eye aria-hidden="true" className="h-5 w-5 flex-none" />}
+          </button>
           {error && (
-            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+            <p className="flex items-start gap-2 text-body-sm text-alert">
+              <WarningTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none" />
+              {error}
+            </p>
           )}
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="primary"
               onClick={() => copy(invoice.paymentRequest)}
-              className="inline-flex items-center justify-center gap-2"
             >
-              {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+              {copied ? <Check aria-hidden="true" className="h-5 w-5 flex-none" /> : <CopyIcon aria-hidden="true" className="h-5 w-5 flex-none" />}
               <span>{copied ? t("common.copied") : failed ? t("common.copyFailed") : t("common.copy")}</span>
             </Button>
             {typeof navigator !== "undefined" && typeof navigator.share !== "undefined" ? (
               <Button
                 variant="outline"
                 onClick={share}
-                className="inline-flex items-center justify-center gap-2"
               >
-                <Share2 className="w-4 h-4" />
+                <ShareIos aria-hidden="true" className="h-5 w-5 flex-none" />
                 <span>{t("common.share")}</span>
               </Button>
             ) : (
@@ -220,12 +226,12 @@ export function InvoiceCreator({
 
   return (
     <Card className="mt-6">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <h3 className="font-semibold">{title}</h3>
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-center gap-4">
+          <h3 className="font-serif text-h3 text-heading">{title}</h3>
           <button type="button"
             onClick={() => setOpen(false)}
-            className="text-sm text-gray-500 hover:text-gray-700"
+            className="-mr-3 min-h-control rounded px-3 text-body-sm text-fg-muted hover:bg-raised hover:text-fg transition-colors duration-fast"
           >
             {t("common.hide")}
           </button>
@@ -241,7 +247,7 @@ export function InvoiceCreator({
             inputMode="numeric"
           />
           {fiatPreview && (
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-2 font-mono text-body-sm tabular-nums text-fg-muted">
               ≈ {fiatPreview}
             </p>
           )}
@@ -254,7 +260,10 @@ export function InvoiceCreator({
           maxLength={100}
         />
         {error && (
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <p className="flex items-start gap-2 text-body-sm text-alert">
+            <WarningTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none" />
+            {error}
+          </p>
         )}
         <Button
           variant="primary"

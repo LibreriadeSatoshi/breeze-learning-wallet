@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "iconoir-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { StatusNote } from "@/components/ui/status-note";
 import { useT } from "@/lib/i18n/hook";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
@@ -34,54 +35,52 @@ export function SendConfirmStep({
   const destLabel = describeDestination(prepareResult, t);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6">
-        <div className="flex items-center gap-4 mb-6">
+    <div>
+      <div className="max-w-reading mx-auto px-4 py-6 sm:px-6">
+        <div className="flex items-center gap-2 mb-6">
           <button type="button"
             onClick={onBack}
             aria-label={t("common.back")}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            className="-ml-3 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg hover:bg-raised transition-colors duration-fast"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft aria-hidden="true" className="h-6 w-6" />
           </button>
-          <h1 className="text-2xl font-bold">{t("send.confirmTitle")}</h1>
+          <h1 className="font-serif text-h2 text-heading">{t("send.confirmTitle")}</h1>
         </div>
 
         <Card className="mb-6">
-          <CardContent className="pt-8 pb-8">
-            <div className="text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                {t("send.youreSending")}
-              </p>
-              <p className="text-5xl font-bold text-orange-500 mb-2">
+          <CardContent className="pt-6">
+            <p className="ism-label mb-2">{t("send.youreSending")}</p>
+            <p className="flex items-baseline gap-2">
+              <span className="font-mono text-display font-medium tabular-nums text-fg">
                 {amountSat.toLocaleString()}
+              </span>
+              <span className="font-mono text-body text-fg-muted">{t("send.sats")}</span>
+            </p>
+            {usdRate !== undefined && (
+              <p className="mt-2 font-mono text-body-sm tabular-nums text-fg-muted">
+                ≈ {convertSatsToFiat({sats: amountSat, ratePerBtc: usdRate, currency: DEFAULT_FIAT_CURRENCY})}
               </p>
-              <p className="text-lg text-gray-600 dark:text-gray-400">{t("send.sats")}</p>
-              {usdRate !== undefined && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  ≈ {convertSatsToFiat({sats: amountSat, ratePerBtc: usdRate, currency: DEFAULT_FIAT_CURRENCY})}
-                </p>
-              )}
-            </div>
+            )}
           </CardContent>
         </Card>
 
         <Card className="mb-6">
-          <CardHeader>
-            <h2 className="text-lg font-semibold">{t("send.details")}</h2>
+          <CardHeader className="pb-4">
+            <h2 className="font-serif text-h3 text-heading">{t("send.details")}</h2>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t("send.type")}</span>
-              <span className="font-medium">{destLabel}</span>
+          <CardContent className="space-y-3 text-body-sm">
+            <div className="flex justify-between gap-4">
+              <span className="text-fg-muted">{t("send.type")}</span>
+              <span className="text-right text-fg">{destLabel}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t("send.networkFee")}</span>
-              <span className="font-medium">{feesSat.toLocaleString()} {t("send.sats")}</span>
+            <div className="flex justify-between gap-4">
+              <span className="text-fg-muted">{t("send.networkFee")}</span>
+              <span className="font-mono tabular-nums text-fg">{feesSat.toLocaleString()} {t("send.sats")}</span>
             </div>
-            <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-              <span className="font-semibold">{t("send.total")}</span>
-              <span className="font-bold text-orange-500">
+            <div className="flex justify-between gap-4 pt-3 border-t border-hairline">
+              <span className="font-semibold text-fg">{t("send.total")}</span>
+              <span className="font-mono font-semibold tabular-nums text-fg">
                 {(amountSat + feesSat).toLocaleString()} {t("send.sats")}
               </span>
             </div>
@@ -89,9 +88,9 @@ export function SendConfirmStep({
         </Card>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900">
-            <p className="text-sm text-red-900 dark:text-red-200">{error}</p>
-          </div>
+          <StatusNote status="error" className="mb-6">
+            {error}
+          </StatusNote>
         )}
 
         <Button

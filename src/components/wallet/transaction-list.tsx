@@ -1,18 +1,11 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock, WarningTriangle } from "iconoir-react";
 import { Payment } from "@/lib/lightning/types";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
-
-const statusColors = {
-  pending: "text-yellow-600 dark:text-yellow-400",
-  complete: "text-green-600 dark:text-green-400",
-  failed: "text-red-600 dark:text-red-400",
-};
 
 interface TransactionListProps {
   readonly payments: Payment[];
@@ -24,31 +17,18 @@ export function TransactionList({
   onPaymentClick,
 }: TransactionListProps) {
   const t = useT();
-  if (payments.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <h3 className="font-semibold">{t("home.recent.title")}</h3>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <p>{t("transactions.empty")}</p>
-            <p className="text-sm mt-1">
-              {t("transactions.emptyHint")}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <h3 className="font-semibold">{t("home.recent.title")}</h3>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-gray-200 dark:divide-gray-800">
+    <section>
+      <h3 className="border-b-2 border-strong pb-3 font-serif text-h3 text-heading">
+        {t("home.recent.title")}
+      </h3>
+      {payments.length === 0 ? (
+        <div className="border-b border-hairline py-8 text-fg-muted">
+          <p className="text-body">{t("transactions.empty")}</p>
+          <p className="mt-1 text-body-sm">{t("transactions.emptyHint")}</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-hairline border-b border-hairline">
           {payments.slice(0, 10).map((payment) => (
             <TransactionItem
               key={payment.id}
@@ -57,8 +37,8 @@ export function TransactionList({
             />
           ))}
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </section>
   );
 }
 
@@ -88,63 +68,53 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
   const defaultMessage = payment.description || (isReceived ? t("transactions.receivedDefault") : t("transactions.sentDefault"))
   const conversionMessage = ticker == "BTC" ? t("transactions.conversion.bitcoin") : t("transactions.conversion.token", {token: ticker})
 
+  const StatusIcon = payment.status === "failed" ? WarningTriangle : Clock;
+  const DirectionIcon = isReceived ? ArrowDownLeft : ArrowUpRight;
+
   return (
     <button
       type="button"
-      className="w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+      className="flex w-full items-center gap-3 py-3 text-left transition-colors duration-fast hover:bg-raised"
       onClick={onClick}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-              isReceived
-                ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
-                : "bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
-            }`}
-          >
-            {isReceived ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="font-medium truncate min-w-0">
-                {isConversion ? conversionMessage : defaultMessage}
-              </div>
-              {statusLabels[payment.status] && (
-                <span className={`text-xs font-medium shrink-0 ${statusColors[payment.status]}`}>
-                  {statusLabels[payment.status]}
-                </span>
-              )}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {date.toLocaleDateString()}{" "}
-              {date.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </div>
-          </div>
+      <DirectionIcon aria-hidden="true" className="h-6 w-6 flex-none text-fg" />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-body text-fg">
+          {isConversion ? conversionMessage : defaultMessage}
         </div>
-        <div className="text-right shrink-0">
-          <div
-            className={`font-semibold ${
-              isReceived
-                ? "text-green-600 dark:text-green-400"
-                : "text-gray-900 dark:text-gray-100"
-            }`}
-          >
-          {isReceived ? "+" : "-"}
-          <SensitiveAmount>
-              {isToken ? formatTokenToUSD({amount: sats}) : sats.toLocaleString()}
-          </SensitiveAmount>
-          </div>
-          <div className="text-xs text-gray-500">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>
-          {fiat && (
-              <SensitiveAmount className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                ≈ {isToken ? <>{estimateSats(sats, usdRate)} {t("send.sats")}</> : fiat}
-              </SensitiveAmount>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 text-caption text-fg-muted">
+          <span className="truncate tabular-nums">
+            {date.toLocaleDateString()}{" "}
+            {date.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+          {statusLabels[payment.status] && (
+            <span
+              className={`inline-flex flex-none items-center gap-1 ${
+                payment.status === "failed" ? "text-alert" : "text-fg"
+              }`}
+            >
+              <StatusIcon aria-hidden="true" className="h-5 w-5" />
+              {statusLabels[payment.status]}
+            </span>
           )}
         </div>
+      </div>
+      <div className="flex-none text-right">
+        <div className="font-mono text-body font-medium tabular-nums text-fg">
+          {isReceived ? "+" : "-"}
+          <SensitiveAmount>
+            {isToken ? formatTokenToUSD({amount: sats}) : sats.toLocaleString()}
+          </SensitiveAmount>
+        </div>
+        <div className="ism-label">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>
+        {fiat && (
+          <SensitiveAmount className="block font-mono text-caption tabular-nums text-fg-muted">
+            ≈ {isToken ? <>{estimateSats(sats, usdRate)} {t("send.sats")}</> : fiat}
+          </SensitiveAmount>
+        )}
       </div>
     </button>
   );

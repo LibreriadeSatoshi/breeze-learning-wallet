@@ -1,6 +1,6 @@
-export const APP_NAME = 'Satoshi Scholar';
+export const APP_NAME = 'ISMOS Wallet';
 
-export const COURSES_URL = 'https://moodle.libreriadesatoshi.com/';
+export const COURSES_URL = 'https://campus.ismos.xyz/';
 
 export type SparkNetwork = 'mainnet' | 'regtest';
 

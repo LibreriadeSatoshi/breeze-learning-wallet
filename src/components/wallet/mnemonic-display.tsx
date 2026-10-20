@@ -11,21 +11,20 @@ export function MnemonicDisplay({ words, revealed = true }: MnemonicDisplayProps
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <ol className="grid grid-cols-2 gap-2">
       {words.map((word, index) => (
-        <div
+        <li
           key={index}
-          className="select-none flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+          className="select-none flex min-h-field items-center gap-3 rounded border border-hairline bg-raised px-3 font-mono"
         >
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400 w-6">
+          <span className="w-6 flex-none text-right text-caption tabular-nums text-fg-muted">
             {index + 1}.
           </span>
-          <span className={`font-mono font-medium ${revealed ? 'text-gray-900 dark:text-gray-100' : 'blur-sm select-none'}`}>
+          <span className={`min-w-0 truncate text-body font-medium ${revealed ? 'text-fg' : 'blur-sm select-none'}`}>
             {word}
           </span>
-        </div>
+        </li>
       ))}
-    </div>
+    </ol>
   );
 }
-

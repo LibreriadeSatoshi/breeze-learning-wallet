@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, Copy as CopyIcon, ExternalLink } from "lucide-react";
+import { ArrowLeft, Check, Copy as CopyIcon, NavArrowRight, OpenNewWindow } from "iconoir-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { StatusNote } from "@/components/ui/status-note";
 import { buyBitcoin, onSdkEvent } from "@/lib/lightning/breez-service";
 import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
@@ -14,6 +15,9 @@ import { useCopy } from "@/hooks/use-copy";
 
 type Provider = "moonpay" | "cashApp";
 type Step = "select" | "amount" | "qr";
+
+const providerRowClass =
+  "flex w-full items-center gap-4 rounded border border-hairline p-4 text-left text-fg transition-colors duration-fast hover:border-strong disabled:text-logwood-600";
 
 const CASH_APP_QUICK_AMOUNTS = [10_000, 50_000, 100_000];
 const MIN_CASH_APP_SATS = 1;
@@ -125,33 +129,32 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
           <button type="button"
             onClick={handleMoonPay}
             disabled={redirecting !== null}
-            className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all text-left disabled:opacity-50"
+            className={providerRowClass}
           >
-            <ProviderBadge provider="moonpay" />
-            <div className="flex-1">
-              <div className="font-semibold text-gray-900 dark:text-gray-100">
+            <div className="min-w-0 flex-1">
+              <div className="text-body font-semibold">
                 {redirecting === "moonpay" ? t("buyBitcoin.moonpayRedirecting") : "MoonPay"}
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="text-body-sm text-fg-muted">
                 {t("buyBitcoin.moonpaySubtitle")}
               </div>
             </div>
-            <ExternalLink className="w-4 h-4 text-gray-400" />
+            <OpenNewWindow aria-hidden="true" className="h-5 w-5 flex-none text-fg-muted" />
           </button>
           <button type="button"
             onClick={() => setStep("amount")}
             disabled={redirecting !== null}
-            className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50/50 dark:hover:bg-green-950/20 transition-all text-left disabled:opacity-50"
+            className={providerRowClass}
           >
-            <ProviderBadge provider="cashApp" />
-            <div className="flex-1">
-              <div className="font-semibold text-gray-900 dark:text-gray-100">
+            <div className="min-w-0 flex-1">
+              <div className="text-body font-semibold">
                 Cash App
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="text-body-sm text-fg-muted">
                 {t("buyBitcoin.cashAppSubtitle")}
               </div>
             </div>
+            <NavArrowRight aria-hidden="true" className="h-5 w-5 flex-none text-fg-muted" />
           </button>
         </div>
       )}
@@ -175,7 +178,7 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
               min={1}
             />
             {amountFiat && (
-              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <div className="mt-2 font-mono text-caption tabular-nums text-fg-muted">
                 ≈ {amountFiat}
               </div>
             )}
@@ -190,23 +193,22 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
                   setError(null);
                 }}
                 disabled={generating}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                aria-pressed={amountInput === String(sats)}
+                className={`min-h-control flex-1 rounded border-2 font-mono text-body-sm tabular-nums transition-colors duration-fast disabled:border-hairline disabled:text-logwood-600 ${
                   amountInput === String(sats)
-                    ? "bg-blue-600 text-white"
-                    : "border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                    ? "border-strong font-semibold text-fg"
+                    : "border-hairline text-fg-muted hover:border-strong hover:text-fg"
                 }`}
               >
                 {sats.toLocaleString()}
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-body-sm text-fg-muted">
             {t("buyBitcoin.cashAppInfo")}
           </p>
           {error && (
-            <div className="p-3 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 text-sm text-red-700 dark:text-red-300">
-              {error}
-            </div>
+            <StatusNote status="error">{error}</StatusNote>
           )}
           <Button
             variant="primary"
@@ -224,26 +226,27 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
       {step === "qr" && cashAppUrl && (
         <div className="space-y-4">
           <BackButton onClick={() => setStep("amount")} />
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-center text-body-sm text-fg-muted">
             {t("buyBitcoin.qrInstructions")}
           </p>
           <div className="flex justify-center">
-            <div className="bg-white p-4 rounded-xl">
+            <div className="rounded border border-hairline bg-paper p-4">
               <QRCodeSVG aria-label={t("buyBitcoin.cashAppQrAriaLabel")} value={cashAppUrl} size={220} level="M" />
             </div>
           </div>
-          <button type="button"
+          <Button
+            variant="secondary"
             onClick={() => cashAppUrl && copy(cashAppUrl)}
-            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="w-full"
           >
             {copied ? (
-              <Check className="w-4 h-4 text-green-600" />
+              <Check aria-hidden="true" className="h-5 w-5" />
             ) : (
-              <CopyIcon className="w-4 h-4" />
+              <CopyIcon aria-hidden="true" className="h-5 w-5" />
             )}
             <span>{copied ? t("common.copied") : failed ? t("common.copyFailed") : t("buyBitcoin.copyLink")}</span>
-          </button>
-          <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+          </Button>
+          <p className="text-center text-caption text-fg-muted">
             {t("buyBitcoin.autoRefresh")}
           </p>
         </div>
@@ -259,30 +262,16 @@ function BackButton({
   onClick: () => void;
   disabled?: boolean;
 }) {
+  const t = useT();
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50"
+      className="-ml-2 inline-flex min-h-control items-center gap-2 rounded px-2 text-body-sm text-fg-muted transition-colors duration-fast hover:text-fg disabled:text-logwood-600"
     >
-      <ArrowLeft className="w-4 h-4" />
-      Back
+      <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+      {t("common.back")}
     </button>
-  );
-}
-
-function ProviderBadge({ provider }: { provider: Provider }) {
-  if (provider === "moonpay") {
-    return (
-      <div className="w-10 h-10 rounded-lg bg-[#7B36D9] text-white flex items-center justify-center font-bold text-sm shrink-0">
-        M
-      </div>
-    );
-  }
-  return (
-    <div className="w-10 h-10 rounded-lg bg-[#00D64F] text-white flex items-center justify-center font-bold text-sm shrink-0">
-      $
-    </div>
   );
 }

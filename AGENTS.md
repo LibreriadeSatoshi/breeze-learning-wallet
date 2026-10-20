@@ -22,8 +22,12 @@ Production: https://wallet.libreriadesatoshi.com/
 - WebCrypto for AES-256-GCM
 - `hash-wasm` for Argon2id key derivation, run in a Web Worker
 - Zustand for UI state, TanStack Query for SDK-backed data
-- Lucide for icons, qrcode.react for QR rendering
+- Iconoir (`iconoir-react`) for icons, qrcode.react for QR rendering
 - No backend database in this repo. If you find yourself adding one, stop and ask why.
+
+## Design system
+
+The UI follows the ISMOS design system (https://claude.ai/artifact/FCQ2UFbKVRJubGZyhFwnuJ). Its tokens live in `src/app/globals.css` (light, plus Hacker mode via `prefers-color-scheme: dark`) and `tailwind.config.ts`, which replaces Tailwind's default colors, type scale, radii and shadows so only ISMOS values exist. Use semantic classes (`bg-surface`, `text-fg`, `text-fg-muted`, `border-hairline`), never `dark:` variants. Status always pairs colour, icon and word (`StatusNote`). Iconoir only, regular style, 20 px minimum. Brand artwork in `public/brand/` is placed, never redrawn.
 
 ## Product requirements
 

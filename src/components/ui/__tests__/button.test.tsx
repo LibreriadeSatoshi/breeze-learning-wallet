@@ -20,7 +20,7 @@ describe("Button", () => {
 
         render(<Button loading={true} onClick={handleClick}>test</Button>)
 
-        const button = screen.getByRole("button", { name: /loading.../i })
+        const button = screen.getByRole("button", { name: /loading…/i })
 
         expect(button).toBeDisabled()
         expect(screen.queryByText("test")).not.toBeInTheDocument()

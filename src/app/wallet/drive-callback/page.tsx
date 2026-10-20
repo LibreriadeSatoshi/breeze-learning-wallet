@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { StatusNote } from "@/components/ui/status-note";
 import {
   handleDriveCallback,
   uploadVault,
@@ -59,25 +59,21 @@ export default function DriveCallbackPage() {
   }, [router, refreshHasVault, t]);
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900 flex items-center">
+    <div className="min-h-screen flex items-center px-4 py-6 sm:px-6">
       <div className="max-w-md mx-auto w-full">
-        <Card className="shadow-lg">
-          <CardContent className="pt-8 pb-6 text-center space-y-4">
+        <Card>
+          <CardContent className="pt-6">
             {status.kind === "working" ? (
-              <>
-                <div className="w-12 h-12 mx-auto rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {status.label}
-                </p>
-              </>
+              <div className="flex items-center gap-4">
+                <div
+                  aria-hidden="true"
+                  className="h-6 w-6 flex-none rounded-full border-2 border-track border-t-strong animate-spin"
+                />
+                <p className="text-body text-fg">{status.label}</p>
+              </div>
             ) : (
-              <>
-                <div className="flex justify-center text-amber-600 dark:text-amber-400">
-                  <TriangleAlert className="w-10 h-10" />
-                </div>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {status.message}
-                </p>
+              <div className="space-y-6">
+                <StatusNote status="error">{status.message}</StatusNote>
                 <Button
                   variant="primary"
                   size="lg"
@@ -86,7 +82,7 @@ export default function DriveCallbackPage() {
                 >
                   {t("common.goBack")}
                 </Button>
-              </>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { WarningTriangle } from 'iconoir-react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -32,50 +33,40 @@ export function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          className="block text-body-sm font-semibold text-fg mb-2"
         >
           {label}
         </label>
       )}
       
       {inputType === "element" && 
-      <div className={`
-          w-full px-4 py-3 rounded-lg border
-          bg-white dark:bg-gray-800
-          text-gray-900 dark:text-gray-100
-          placeholder-gray-400 dark:placeholder-gray-500
-          focus:outline-none focus:ring-2 focus:ring-offset-0
-          disabled:opacity-50 disabled:cursor-not-allowed
-          transition-colors
-          flex flex-row justify-between
-          items-center
-        `}>{element}</div>}
+      <div className="w-full min-h-field px-3 rounded border-1.5 border-input bg-surface text-fg text-body flex flex-row justify-between items-center gap-2">{element}</div>}
     
       {inputType === "input" && <input
         id={inputId}
         aria-invalid={!!error}
         aria-describedby={ariaDescribedBy}
         className={`
-          w-full px-4 py-3 rounded-lg border
+          w-full min-h-field px-3 rounded bg-surface text-fg text-body
+          placeholder:text-logwood-600
+          transition-colors duration-fast
+          disabled:cursor-not-allowed disabled:border-hairline disabled:text-logwood-600
           ${error
-            ? 'border-red-500 focus:ring-red-500'
-            : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
+            ? 'border-2 border-alert'
+            : 'border-1.5 border-input hover:border-strong focus-visible:border-2 focus-visible:border-strong'
           }
-          bg-white dark:bg-gray-800
-          text-gray-900 dark:text-gray-100
-          placeholder-gray-400 dark:placeholder-gray-500
-          focus:outline-none focus:ring-2 focus:ring-offset-0
-          disabled:opacity-50 disabled:cursor-not-allowed
-          transition-colors
           ${className}
         `}
         {...props}
       />}
       {error && (
-        <p id={errorId} className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p id={errorId} className="mt-2 flex items-start gap-2 text-body-sm text-alert">
+          <WarningTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none" />
+          {error}
+        </p>
       )}
       {helperText && !error && (
-        <p  id={helperId} className="mt-2 text-sm text-gray-500 dark:text-gray-400">{helperText}</p>
+        <p id={helperId} className="mt-2 text-body-sm text-fg-muted">{helperText}</p>
       )}
     </div>
   );

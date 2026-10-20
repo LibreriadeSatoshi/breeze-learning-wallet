@@ -1,13 +1,15 @@
-import { useLocale } from "@/lib/i18n/hook";
+import { useLocale, useT } from "@/lib/i18n/hook";
 import { Locale, LOCALE_LABELS, LOCALES } from "@/lib/i18n/types";
 
 export function LanguagePickerSection() {
+  const t = useT();
   const { locale, setLocale } = useLocale();
   return (
     <select
       value={locale}
       onChange={(e) => setLocale(e.target.value as Locale)}
-      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+      aria-label={t("settings.language.title")}
+      className="w-full min-h-field px-3 rounded border-1.5 border-input bg-surface text-fg text-body-sm hover:border-strong"
     >
       {LOCALES.map((code) => (
         <option key={code} value={code}>
