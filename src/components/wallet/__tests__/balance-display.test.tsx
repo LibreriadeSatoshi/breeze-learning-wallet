@@ -19,14 +19,14 @@ describe("BalanceDisplay", () => {
     it("should render balance in sats and estimated fiat", () => {
         renderWithProviders(<BalanceDisplay balanceSat={1000} fiatRate={78000} usdRate={78000} fiatCurrency="USD" isStableBalance={false} token={undefined} />);
 
-        expect(screen.getByText(/1,000/i)).toBeVisible();
+        expect(screen.getByText(/1\s000/i)).toBeVisible();
         expect(screen.queryByText(/sats/i)).toBeVisible()
         expect(screen.getByText(/≈ \$0\.78/i)).toBeVisible();
     })
     it("should render balance without estimated fiat", () => {
         renderWithProviders(<BalanceDisplay balanceSat={1000} fiatRate={undefined} usdRate={undefined} fiatCurrency="" isStableBalance={false} token={undefined} />);
 
-        expect(screen.getByText(/1,000/i)).toBeVisible();
+        expect(screen.getByText(/1\s000/i)).toBeVisible();
         expect(screen.queryByText(/sats/i)).toBeVisible()
         expect(screen.queryByText(/≈ \$0\.78/i)).not.toBeInTheDocument();
     })
@@ -36,7 +36,7 @@ describe("BalanceDisplay", () => {
         const button = screen.getByRole("button");
         await userEvent.click(button);
 
-        expect(screen.queryByText(/1,000/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/1\s000/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/sats/i)).toBeVisible()
         expect(screen.queryByText(/\$0\.78/i)).not.toBeInTheDocument();
     })

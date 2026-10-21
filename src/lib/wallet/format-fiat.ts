@@ -1,4 +1,5 @@
 import { DEFAULT_FIAT_CURRENCY } from "./prefs";
+import { formatWithFigureGrouping } from "./format-number";
 
 export const SATS_PER_BTC = 100_000_000;
 
@@ -14,12 +15,13 @@ export function convertSatsToFiat({
   const fiat = (sats / SATS_PER_BTC) * ratePerBtc;
   const fractions = fiat === 0 ? 2 : fractionDigits;
   try {
-    return new Intl.NumberFormat(undefined, {
+    const formatter = new Intl.NumberFormat(undefined, {
       style: "currency",
       currency,
       minimumFractionDigits: fractions,
       maximumFractionDigits: fractions,
-    }).format(fiat);
+    });
+    return formatWithFigureGrouping(formatter, fiat);
   } catch {
     return `${fiat.toFixed(fractionDigits)} ${currency}`;
   }

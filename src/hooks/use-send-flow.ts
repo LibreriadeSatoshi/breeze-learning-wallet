@@ -25,6 +25,7 @@ import {
   readFeeSat,
   sendErrorMessage,
 } from "@/lib/wallet/send-helpers";
+import { formatSats } from "@/lib/wallet/format-number";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
@@ -85,7 +86,7 @@ export function useSendFlow() {
       const minSat = Math.ceil(payRequest.minSendable / 1000);
       const maxSat = Math.floor(payRequest.maxSendable / 1000);
       if (amt < minSat || amt > maxSat) {
-        setError(t("send.lnurlRange", { min: minSat.toLocaleString(), max: maxSat.toLocaleString() }));
+        setError(t("send.lnurlRange", { min: formatSats(minSat), max: formatSats(maxSat) }));
         return null;
       }
       const lnurlPrep = await prepareLnurlMutation.mutateAsync({
@@ -135,7 +136,7 @@ export function useSendFlow() {
 
       const net = totalBalanceSats - readFeeSat(prep);
       if (net <= 0) {
-        setError(t("send.insufficientBalance", { balance: (0).toLocaleString() }));
+        setError(t("send.insufficientBalance", { balance: formatSats(0) }));
         return;
       }
       amount.setFromSats(net);
@@ -159,7 +160,7 @@ export function useSendFlow() {
         const net = totalBalanceSats - readFeeSat(prep);
         setError(
           t("send.insufficientBalance", {
-            balance: Math.max(0, net).toLocaleString(),
+            balance: formatSats(Math.max(0, net)),
           }),
         );
         return;

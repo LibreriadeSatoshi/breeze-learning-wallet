@@ -3,7 +3,7 @@ import { BuyBitcoinModal } from "../buy-bitcoin-modal";
 import userEvent from '@testing-library/user-event'
 import { buyBitcoin, onSdkEvent } from "@/lib/lightning/breez-service";
 
-const CASH_APP_QUICK_AMOUNTS = ["10,000", "50,000", "100,000"];
+const CASH_APP_QUICK_AMOUNTS = ["10\u202F000", "50\u202F000", "100\u202F000"];
 
 describe("BuyBitcoinModal", () => {
     it("should render the BuyBitcoinModal selection step", () => {
@@ -74,7 +74,7 @@ describe("BuyBitcoinModal", () => {
 
         const selectTenThousand = screen.getByRole("button", { name: amount.toString() });
         await user.click(selectTenThousand);
-        const normalizedAmount = amount.replace(",", "");
+        const normalizedAmount = amount.replace("\u202F", "");
 
         expect(amountInput).toHaveValue(Number(normalizedAmount));
     });

@@ -33,6 +33,7 @@ import { useCopy } from "@/hooks/use-copy";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { ReceivedPaymentDetails } from "@/lib/lightning/types";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
+import { formatSats } from "@/lib/wallet/format-number";
 
 type PaymentMethod = "lightning" | "bitcoin" | "spark";
 
@@ -439,7 +440,7 @@ function SuccessView({
       <StatusNote status="success" className="mb-6">
         <h2 className="font-serif text-h2 text-heading">{t("receive.success.title")}</h2>
         <p className="mt-2 font-mono text-h2 font-medium tabular-nums text-fg">
-          {details.amountSat.toLocaleString()} {t("send.sats")}
+          {formatSats(details.amountSat)} {t("send.sats")}
         </p>
       </StatusNote>
       <dl className="mb-6 divide-y divide-hairline border-y border-hairline text-body-sm">
@@ -449,7 +450,7 @@ function SuccessView({
         </div>
         <div className="flex justify-between gap-4 py-3">
           <dt className="text-fg-muted">{t("receive.success.fees")}</dt>
-          <dd className="font-mono tabular-nums text-fg">{details.feesSat.toLocaleString()} {t("send.sats")}</dd>
+          <dd className="font-mono tabular-nums text-fg">{formatSats(details.feesSat)} {t("send.sats")}</dd>
         </div>
         <div className="flex justify-between gap-4 py-3">
           <dt className="text-fg-muted">{t("receive.success.time")}</dt>

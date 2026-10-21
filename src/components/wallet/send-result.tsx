@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { StatusNote } from "@/components/ui/status-note";
 import { useT } from "@/lib/i18n/hook";
+import { formatSats } from "@/lib/wallet/format-number";
 
 function ResultScreen({
   children,
@@ -44,7 +45,7 @@ export function SendSuccess({
       <StatusNote status="success" className="mb-6">
         <h2 className="font-serif text-h2 text-heading">{t("send.sent")}</h2>
         <p className="mt-2 font-mono text-h3 tabular-nums text-fg">
-          {amountSat.toLocaleString()} {t("send.sats")}
+          {formatSats(amountSat)} {t("send.sats")}
         </p>
       </StatusNote>
       <Button variant="primary" size="lg" onClick={onDone} className="w-full">

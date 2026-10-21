@@ -5,6 +5,7 @@ import { usdbTicker } from '@/lib/lightning/breez-service';
 import { Balances } from '@/lib/lightning/types';
 import { convertSatsToFiat } from '@/lib/wallet/format-fiat';
 import { DEFAULT_FIAT_CURRENCY } from '@/lib/wallet/prefs';
+import { formatSats, formatWithFigureGrouping } from '@/lib/wallet/format-number';
 import { useWalletStore } from '@/store/wallet-store';
 import { Eye, EyeClosed } from 'iconoir-react';
 import React from 'react';
@@ -42,12 +43,13 @@ export function formatTokenToUSD({amount, decimals = 6, fraction = 2}: {amount: 
   if (amount === undefined || !amount || amount === 0) return "$0.00";
   const numericBalance = Number(amount) / Math.pow(10, decimals);
   
-  return new Intl.NumberFormat(undefined, {
+  const formatter = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: DEFAULT_FIAT_CURRENCY,
     minimumFractionDigits: fraction,
     maximumFractionDigits: fraction
-  }).format(numericBalance);
+  });
+  return formatWithFigureGrouping(formatter, numericBalance);
 }
 
 export function estimateSats(amount: number, usdRate?: number, decimals = 6) {
@@ -111,7 +113,7 @@ function getPrimaryAmount(balanceSat: number, token: Balances["tokenUSDB"], isSt
   if (isStableBalance) {
     primaryAmount = formatTokenToUSD({ amount: token?.balance }).replace("$", "");
   } else {
-    primaryAmount = balanceSat.toLocaleString();
+    primaryAmount = formatSats(balanceSat);
   }
   return primaryAmount;
 }

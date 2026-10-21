@@ -6,6 +6,7 @@ import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
+import { formatSats } from "@/lib/wallet/format-number";
 
 interface TransactionListProps {
   readonly payments: Payment[];
@@ -106,7 +107,7 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
         <div className="font-mono text-body font-medium tabular-nums text-fg">
           {isReceived ? "+" : "-"}
           <SensitiveAmount>
-            {isToken ? formatTokenToUSD({amount: sats}) : sats.toLocaleString()}
+            {isToken ? formatTokenToUSD({amount: sats}) : formatSats(sats)}
           </SensitiveAmount>
         </div>
         <div className="ism-label">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>

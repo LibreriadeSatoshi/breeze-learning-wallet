@@ -12,6 +12,7 @@ import { useSendFlow } from "@/hooks/use-send-flow";
 import { ContactsModal, ContactElement } from "@/components/wallet/contacts-modal";
 import { SendConfirmStep } from "@/components/wallet/send-confirm-step";
 import { SendError, SendProcessing, SendSuccess } from "@/components/wallet/send-result";
+import { formatSats } from "@/lib/wallet/format-number";
 
 const AMOUNT_CONTROL_CLASS =
   "shrink-0 self-stretch inline-flex min-h-field min-w-[48px] items-center justify-center px-3 rounded border-1.5 border-input bg-surface text-body-sm font-medium text-fg hover:border-strong transition-colors duration-fast disabled:pointer-events-none disabled:border-hairline disabled:text-logwood-600";
@@ -79,7 +80,7 @@ export default function SendPage() {
                 <p className="font-mono text-h2 font-medium tabular-nums text-fg">
                   {isStableBalance
                   ? convertSatsToFiat({ sats: totalBalanceSats, ratePerBtc: usdRate || 0 })
-                  : <>{totalBalanceSats.toLocaleString()} {t("send.sats")}</>}
+                  : <>{formatSats(totalBalanceSats)} {t("send.sats")}</>}
                 </p>
               </div>
             </CardContent>

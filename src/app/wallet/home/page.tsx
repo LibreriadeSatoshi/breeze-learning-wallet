@@ -42,6 +42,7 @@ import type { Balances, ConversionLimits, Payment, UserSettings } from "@/lib/li
 import { useWalletData } from "@/hooks/use-wallet-data";
 import { useWalletStore } from "@/store/wallet-store";
 import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
+import { formatWithFigureGrouping } from "@/lib/wallet/format-number";
 
 const CONN_ICON = {
   offline: WifiOff,
@@ -260,12 +261,12 @@ export default function WalletHomePage() {
   const formatConversionFee = (amount: number | null | undefined) => {
     if (!amount || amount === null || amount === undefined) return "";
 
-    const formattedAmount = amount.toLocaleString(undefined, {
+    const formatter = new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: DEFAULT_FIAT_CURRENCY,
       minimumFractionDigits: amount == 0 ? 2 : 6,
     });
-    return formattedAmount;
+    return formatWithFigureGrouping(formatter, amount);
     
   }
   const isLoading = balanceLoading || paymentsLoading ||isSwapPending || userSettingsLoading || convertionLimitLoading;

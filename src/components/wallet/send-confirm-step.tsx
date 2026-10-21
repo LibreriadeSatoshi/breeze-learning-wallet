@@ -13,6 +13,7 @@ import {
   readAmountSat,
   readFeeSat,
 } from "@/lib/wallet/send-helpers";
+import { formatSats } from "@/lib/wallet/format-number";
 
 export function SendConfirmStep({
   prepareResult,
@@ -53,7 +54,7 @@ export function SendConfirmStep({
             <p className="ism-label mb-2">{t("send.youreSending")}</p>
             <p className="flex items-baseline gap-2">
               <span className="font-mono text-display font-medium tabular-nums text-fg">
-                {amountSat.toLocaleString()}
+                {formatSats(amountSat)}
               </span>
               <span className="font-mono text-body text-fg-muted">{t("send.sats")}</span>
             </p>
@@ -76,12 +77,12 @@ export function SendConfirmStep({
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-fg-muted">{t("send.networkFee")}</span>
-              <span className="font-mono tabular-nums text-fg">{feesSat.toLocaleString()} {t("send.sats")}</span>
+              <span className="font-mono tabular-nums text-fg">{formatSats(feesSat)} {t("send.sats")}</span>
             </div>
             <div className="flex justify-between gap-4 pt-3 border-t border-hairline">
               <span className="font-semibold text-fg">{t("send.total")}</span>
               <span className="font-mono font-semibold tabular-nums text-fg">
-                {(amountSat + feesSat).toLocaleString()} {t("send.sats")}
+                {formatSats(amountSat + feesSat)} {t("send.sats")}
               </span>
             </div>
           </CardContent>

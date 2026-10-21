@@ -12,6 +12,7 @@ import { useFiat } from "@/hooks/use-fiat";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { useT } from "@/lib/i18n/hook";
 import { useCopy } from "@/hooks/use-copy";
+import { formatSats } from "@/lib/wallet/format-number";
 
 type Provider = "moonpay" | "cashApp";
 type Step = "select" | "amount" | "qr";
@@ -200,7 +201,7 @@ export function BuyBitcoinModal({ onClose }: BuyBitcoinModalProps) {
                     : "border-hairline text-fg-muted hover:border-strong hover:text-fg"
                 }`}
               >
-                {sats.toLocaleString()}
+                {formatSats(sats)}
               </button>
             ))}
           </div>

@@ -14,6 +14,7 @@ import {
 } from "@/hooks/use-breez";
 import { useT } from "@/lib/i18n/hook";
 import type { DepositInfo, RecommendedFees } from "@breeztech/breez-sdk-spark";
+import { formatSats } from "@/lib/wallet/format-number";
 
 type FeeChoice = "fast" | "medium" | "slow" | "custom";
 
@@ -145,7 +146,7 @@ function RefundItem({
         <div className="flex items-baseline justify-between gap-4">
           <span className="text-fg-muted">{t("recovery.amount")}</span>
           <span className="font-mono font-medium tabular-nums">
-            {deposit.amountSats.toLocaleString()} {t("send.sats")}
+            {formatSats(deposit.amountSats)} {t("send.sats")}
           </span>
         </div>
 

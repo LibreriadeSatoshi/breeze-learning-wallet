@@ -15,6 +15,7 @@ import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { Payment as SdkPayment } from "@breeztech/breez-sdk-spark";
 import type { ReceivedPaymentDetails } from "@/lib/lightning/types";
 import { truncateStr } from "@/lib/wallet/truncate-str";
+import { formatSats } from "@/lib/wallet/format-number";
 
 interface InvoiceState {
   paymentRequest: string;
@@ -175,7 +176,7 @@ export function InvoiceCreator({
         <CardContent className="space-y-4">
           <p className="flex items-baseline gap-2">
             <span className="font-mono text-h1 font-medium tabular-nums text-fg">
-              {invoice.amountSat.toLocaleString()}
+              {formatSats(invoice.amountSat)}
             </span>
             <span className="font-mono text-body text-fg-muted">{t("send.sats")}</span>
           </p>

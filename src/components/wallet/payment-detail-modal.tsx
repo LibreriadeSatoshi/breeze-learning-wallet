@@ -11,6 +11,7 @@ import { useT } from "@/lib/i18n/hook";
 import { useCopy } from "@/hooks/use-copy";
 import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
 import { truncateStr } from "@/lib/wallet/truncate-str";
+import { formatSats } from "@/lib/wallet/format-number";
 
 const statusIcons = {
   pending: Clock,
@@ -100,7 +101,7 @@ function PaymentDetailContent({
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-3">
             <div className="font-mono text-h2 font-medium tabular-nums text-heading">
               {isReceived ? "+" : "-"}
-              <SensitiveAmount>{isToken ? `${formatTokenToUSD({amount: amount}).replace("$", "")}` : amount.toLocaleString()}</SensitiveAmount>
+              <SensitiveAmount>{isToken ? `${formatTokenToUSD({amount: amount}).replace("$", "")}` : formatSats(amount)}</SensitiveAmount>
             </div>
             <div className="ism-label">{isToken ? payment.conversionDetails?.to.ticker : t("send.sats")}</div>
           </div>
