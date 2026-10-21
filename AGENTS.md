@@ -27,7 +27,7 @@ Production: https://wallet.libreriadesatoshi.com/
 
 ## Design system
 
-The UI follows the ISMOS design system (https://claude.ai/artifact/FCQ2UFbKVRJubGZyhFwnuJ). Its tokens live in `src/app/globals.css` (light, plus Hacker mode via `prefers-color-scheme: dark`) and `tailwind.config.ts`, which replaces Tailwind's default colors, type scale, radii and shadows so only ISMOS values exist. Use semantic classes (`bg-surface`, `text-fg`, `text-fg-muted`, `border-hairline`), never `dark:` variants. Status always pairs colour, icon and word (`StatusNote`). Iconoir only, regular style, 20 px minimum. Brand artwork in `public/brand/` is placed, never redrawn.
+The UI follows the ISMOS design system (https://claude.ai/artifact/FCQ2UFbKVRJubGZyhFwnuJ). Its tokens live in `src/app/globals.css` (light, plus Hacker mode under `data-theme="hacker"`, chosen in Settings or following the device via `src/lib/theme.ts`) and `tailwind.config.ts`, which replaces Tailwind's default colors, type scale, radii and shadows so only ISMOS values exist. Use semantic classes (`bg-surface`, `text-fg`, `text-fg-muted`, `border-hairline`), never `dark:` variants. Status always pairs colour, icon and word (`StatusNote`). Iconoir only, regular style, 20 px minimum. Brand artwork in `public/brand/` is placed, never redrawn.
 
 ## Product requirements
 

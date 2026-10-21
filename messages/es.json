@@ -443,6 +443,13 @@
       "title": "Idioma",
       "subtitle": "Usado para la interfaz de la billetera."
     },
+    "theme": {
+      "title": "Apariencia",
+      "subtitle": "El modo hacker es el tema oscuro.",
+      "light": "Claro",
+      "hacker": "Modo hacker",
+      "system": "Igual que este dispositivo"
+    },
     "claimLeeway": {
       "title": "Auto-reclamo de depósitos",
       "subtitle": "Los depósitos on-chain se reclaman automáticamente cuando la tarifa de red es como máximo recomendada + margen sat/vB. Más margen significa que más reclamos tienen éxito pero puedes pagar de más en períodos calmos.",

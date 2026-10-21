@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ISMOS tokens. Light is the default; Hacker mode follows the device's dark setting. */
+/* ISMOS tokens. Light is the default; Hacker mode applies when <html data-theme="hacker">. */
 :root {
   --mauveine: #4d01e0;
   --mauveine-200: #bfc3ff;
@@ -59,33 +59,31 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface: var(--ink);
-    --surface-raised: var(--logwood);
-    --text: var(--paper);
-    --text-heading: var(--paper);
-    --text-muted: var(--logwood-200);
-    --hairline: var(--logwood-700);
-    --rule-strong: var(--paper);
-    --link: var(--mauveine-200);
-    --link-hover: var(--paper);
-    --alert: var(--madder);
-    --bar: var(--mauveine-300);
-    --track: var(--logwood-700);
-    --action: var(--mauveine);
-    --focus: var(--weld);
-    --status-info: var(--logwood-200);
-    --status-info-bg: var(--logwood);
-    --status-success: var(--mauveine-200);
-    --status-error: var(--madder);
-    --border-input: var(--logwood-400);
-    --border-strong: var(--paper);
-    --overlay: var(--logwood);
-    --overlay-edge: var(--logwood-400);
+:root[data-theme="hacker"] {
+  --surface: var(--ink);
+  --surface-raised: var(--logwood);
+  --text: var(--paper);
+  --text-heading: var(--paper);
+  --text-muted: var(--logwood-200);
+  --hairline: var(--logwood-700);
+  --rule-strong: var(--paper);
+  --link: var(--mauveine-200);
+  --link-hover: var(--paper);
+  --alert: var(--madder);
+  --bar: var(--mauveine-300);
+  --track: var(--logwood-700);
+  --action: var(--mauveine);
+  --focus: var(--weld);
+  --status-info: var(--logwood-200);
+  --status-info-bg: var(--logwood);
+  --status-success: var(--mauveine-200);
+  --status-error: var(--madder);
+  --border-input: var(--logwood-400);
+  --border-strong: var(--paper);
+  --overlay: var(--logwood);
+  --overlay-edge: var(--logwood-400);
 
-    color-scheme: dark;
-  }
+  color-scheme: dark;
 }
 
 body {
@@ -99,6 +97,17 @@ body {
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 ::selection {

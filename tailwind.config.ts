@@ -5,6 +5,7 @@ const v = (name: string) => `var(--${name})`;
 // Colors, type, radii and shadows replace Tailwind's defaults so only ISMOS
 // tokens are available. Semantic colors switch with the theme in globals.css.
 const config: Config = {
+  darkMode: ["selector", '[data-theme="hacker"]'],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
