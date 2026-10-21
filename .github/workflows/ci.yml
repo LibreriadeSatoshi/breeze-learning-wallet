@@ -22,4 +22,5 @@ jobs:
           YARN_ENABLE_SCRIPTS: false
       - run: yarn typecheck
       - run: yarn lint
+      - run: yarn vitest run
       - run: yarn build
