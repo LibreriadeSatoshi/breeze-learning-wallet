@@ -1,7 +1,9 @@
+import { storageKey } from "@/lib/storage/storage-keys";
+
 export type ThemePreference = "light" | "hacker" | "system";
 export type ResolvedTheme = "light" | "hacker";
 
-export const THEME_KEY = "scholar-wallet:theme";
+export const THEME_KEY = storageKey("theme");
 export const THEME_PREFERENCES: ThemePreference[] = ["light", "hacker", "system"];
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";

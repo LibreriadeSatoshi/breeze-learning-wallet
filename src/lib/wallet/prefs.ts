@@ -1,5 +1,7 @@
-const KEY_CLAIM_LEEWAY = "scholar-wallet:claim-leeway";
-const KEY_FIAT_CURRENCY = "scholar-wallet:fiat-currency";
+import { storageKey } from "@/lib/storage/storage-keys";
+
+const KEY_CLAIM_LEEWAY = storageKey("claim-leeway");
+const KEY_FIAT_CURRENCY = storageKey("fiat-currency");
 
 export const DEFAULT_CLAIM_LEEWAY = 2;
 export const DEFAULT_FIAT_CURRENCY = "USD";

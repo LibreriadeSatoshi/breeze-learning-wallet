@@ -3,20 +3,18 @@ import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 import { clearLocalDriveState } from "@/lib/backup/drive-client";
 import { disconnectBreez } from "@/lib/lightning/breez-service";
+import { migrateLegacyStorageKeys, storageKey } from "@/lib/storage/storage-keys";
 
 let mnemonicInMemory: string | null = null;
 
-const STORAGE_KEY_AUTH_MODE = "scholar-wallet:auth-mode";
-const STORAGE_KEY_SHOW_BALANCE = "scholar-wallet:show-balance";
+const STORAGE_KEY_AUTH_MODE = storageKey("auth-mode");
+const STORAGE_KEY_SHOW_BALANCE = storageKey("show-balance");
 
 const LEGACY_STORAGE_KEYS = [
   "etta-wallet-storage",
   "etta-auth-storage",
   "scholar-wallet-prefs",
 ];
-
-// Older builds kept the plaintext mnemonic in sessionStorage across reloads.
-const LEGACY_SESSION_KEYS = ["scholar-wallet:session-mnemonic"];
 
 export type AuthMode = "password" | "passkey";
 
@@ -74,12 +72,10 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
 
   bootstrap: async () => {
     if (get().isBootstrapped) return;
+    migrateLegacyStorageKeys();
     if (typeof window !== "undefined") {
       for (const key of LEGACY_STORAGE_KEYS) {
         window.localStorage.removeItem(key);
-      }
-      for (const key of LEGACY_SESSION_KEYS) {
-        window.sessionStorage.removeItem(key);
       }
     }
     const blob = await loadVault();
