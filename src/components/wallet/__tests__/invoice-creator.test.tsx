@@ -64,7 +64,7 @@ describe("InvoiceCreator", () => {
         await user.type(screen.getByRole("textbox", { name: /description/i }), "test")
         await user.click(generateButton)  
             
-        waitFor(() => {
+        await waitFor(() => {
             expect(receiveLightning).toHaveBeenCalledWith(100000, "test")
             
             const qrCode = screen.getByRole("img", { name: /qr code/i })
@@ -72,7 +72,7 @@ describe("InvoiceCreator", () => {
 
             expect(qrCode).toBeVisible()
             expect(truncatedInvoice).toBeVisible()
-            expect(screen.getByText(/100,000/i)).toBeVisible()
+            expect(screen.getByText(/100\s000/i)).toBeVisible()
         })
     })
     it("should copy the invoice", async () => {
