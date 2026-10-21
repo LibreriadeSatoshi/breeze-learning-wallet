@@ -47,6 +47,12 @@ import { useFormatRelativeTime } from "@/lib/wallet/relative-time";
 import type { SdkEvent } from "@/lib/lightning/sdk-events";
 import type { LightningAddressInfo } from "@breeztech/breez-sdk-spark";
 import { LanguagePickerSection } from "@/components/ui/language-picker";
+import {
+  THEME_PREFERENCES,
+  getThemePreference,
+  setThemePreference,
+  type ThemePreference,
+} from "@/lib/theme";
 
 const USERNAME_RE = /^[a-z0-9._-]{1,32}$/;
 
@@ -162,6 +168,16 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <LanguagePickerSection />
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <h2 className={SECTION_TITLE}>{t("settings.theme.title")}</h2>
+            <p className={SECTION_SUBTITLE}>{t("settings.theme.subtitle")}</p>
+          </CardHeader>
+          <CardContent>
+            <ThemePickerSection />
           </CardContent>
         </Card>
 
@@ -362,6 +378,41 @@ function DriveBackupSection() {
           </div>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+function ThemePickerSection() {
+  const t = useT();
+  const [preference, setPreference] = useState<ThemePreference>("system");
+
+  useEffect(() => {
+    setPreference(getThemePreference());
+  }, []);
+
+  return (
+    <div role="group" aria-label={t("settings.theme.title")} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {THEME_PREFERENCES.map((option) => {
+        const selected = option === preference;
+        return (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => {
+              setThemePreference(option);
+              setPreference(option);
+            }}
+            className={`min-h-control rounded border-2 px-3 py-2 text-body-sm transition-colors duration-fast ${
+              selected
+                ? "border-strong font-semibold text-fg"
+                : "border-hairline text-fg-muted hover:border-strong"
+            }`}
+          >
+            {t(`settings.theme.${option}`)}
+          </button>
+        );
+      })}
     </div>
   );
 }

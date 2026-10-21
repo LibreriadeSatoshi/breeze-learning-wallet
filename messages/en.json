@@ -443,6 +443,13 @@
       "title": "Language",
       "subtitle": "Used for the wallet interface."
     },
+    "theme": {
+      "title": "Appearance",
+      "subtitle": "Hacker mode is the dark theme.",
+      "light": "Light",
+      "hacker": "Hacker mode",
+      "system": "Same as this device"
+    },
     "claimLeeway": {
       "title": "Auto-claim deposits",
       "subtitle": "On-chain deposits are claimed automatically when the network fee rate is at most recommended + leeway sat/vB. Higher leeway means more claims succeed but you may overpay during quiet periods.",
