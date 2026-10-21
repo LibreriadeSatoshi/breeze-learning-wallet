@@ -1,4 +1,4 @@
-# Scholar Wallet
+# ISMOS Wallet
 
 A non-custodial Bitcoin/Lightning wallet, served as a Next.js web app at `wallet.libreriadesatoshi.com`.
 
