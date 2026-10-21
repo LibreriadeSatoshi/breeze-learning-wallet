@@ -6,7 +6,6 @@ import { disconnectBreez } from "@/lib/lightning/breez-service";
 
 let mnemonicInMemory: string | null = null;
 
-const SESSION_KEY_MNEMONIC = "scholar-wallet:session-mnemonic";
 const STORAGE_KEY_AUTH_MODE = "scholar-wallet:auth-mode";
 const STORAGE_KEY_SHOW_BALANCE = "scholar-wallet:show-balance";
 
@@ -16,25 +15,17 @@ const LEGACY_STORAGE_KEYS = [
   "scholar-wallet-prefs",
 ];
 
+// Older builds kept the plaintext mnemonic in sessionStorage across reloads.
+const LEGACY_SESSION_KEYS = ["scholar-wallet:session-mnemonic"];
+
 export type AuthMode = "password" | "passkey";
 
 function persistMnemonic(mnemonic: string) {
   mnemonicInMemory = mnemonic;
-  if (typeof window !== "undefined") {
-    window.sessionStorage.setItem(SESSION_KEY_MNEMONIC, mnemonic);
-  }
 }
 
 function clearMnemonic() {
   mnemonicInMemory = null;
-  if (typeof window !== "undefined") {
-    window.sessionStorage.removeItem(SESSION_KEY_MNEMONIC);
-  }
-}
-
-function readSessionMnemonic(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.sessionStorage.getItem(SESSION_KEY_MNEMONIC);
 }
 
 function readAuthMode(): AuthMode | null {
@@ -87,20 +78,19 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
       for (const key of LEGACY_STORAGE_KEYS) {
         window.localStorage.removeItem(key);
       }
+      for (const key of LEGACY_SESSION_KEYS) {
+        window.sessionStorage.removeItem(key);
+      }
     }
     const blob = await loadVault();
-    const session = readSessionMnemonic();
     const mode = readAuthMode();
     const hasVault = blob !== null || mode === "passkey";
     const showBalance = readShowBalance();
 
-    if (session && hasVault) {
-      mnemonicInMemory = session;
-    }
     set({
       hasVault,
       authMode: mode,
-      isUnlocked: session !== null && hasVault,
+      isUnlocked: hasVault && mnemonicInMemory !== null,
       isBootstrapped: true,
       showBalance,
     });
