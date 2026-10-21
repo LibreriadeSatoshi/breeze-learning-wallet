@@ -103,13 +103,15 @@ function TransactionItem({ payment, onClick }: TransactionItemProps) {
         </div>
       </div>
       <div className="flex-none text-right">
-        <div className="font-mono text-body font-medium tabular-nums text-fg">
-          {isReceived ? "+" : "-"}
-          <SensitiveAmount>
-            {isToken ? formatTokenToUSD({amount: sats}) : sats.toLocaleString()}
-          </SensitiveAmount>
+        <div className="flex items-baseline justify-end gap-2">
+          <span className="font-mono text-body font-medium tabular-nums text-fg">
+            {isReceived ? "+" : "-"}
+            <SensitiveAmount>
+              {isToken ? formatTokenToUSD({amount: sats}) : sats.toLocaleString()}
+            </SensitiveAmount>
+          </span>
+          <span className="ism-label select-none">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</span>
         </div>
-        <div className="ism-label">{isToken ? payment.conversionDetails?.to.ticker : "sats"}</div>
         {fiat && (
           <SensitiveAmount className="block font-mono text-caption tabular-nums text-fg-muted">
             ≈ {isToken ? <>{estimateSats(sats, usdRate)} {t("send.sats")}</> : fiat}
