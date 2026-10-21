@@ -189,7 +189,7 @@ export default function CreateWalletPage() {
   const isReveal = step === 'reveal';
 
   const securityNote = (
-    <StatusNote status="warning" className="h-full">
+    <StatusNote status="warning" quiet className="h-full">
       <p className="font-semibold">{t('create.security.title')}</p>
       <ul className="mt-2 list-disc space-y-1 pl-6">
         <li>{t('create.security.neverShare')}</li>
