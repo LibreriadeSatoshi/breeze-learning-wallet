@@ -31,7 +31,7 @@ describe("LanguagePickerSection", () => {
 
         expect(languagePicker).toBeVisible();
         expect(languagePicker).toHaveValue("es");
-        expect(setItemSpy).toHaveBeenCalledWith("scholar-wallet:locale", "es");
+        expect(setItemSpy).toHaveBeenCalledWith("ismos-wallet:locale", "es");
         expect(document.documentElement.lang).toBe("es");
     })
     it("should initialize with the persisted locale from storage", async () => {

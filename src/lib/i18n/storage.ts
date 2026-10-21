@@ -1,6 +1,7 @@
 import { type Locale, DEFAULT_LOCALE, LOCALES } from "./types";
+import { storageKey } from "@/lib/storage/storage-keys";
 
-const STORAGE_KEY = "scholar-wallet:locale";
+const STORAGE_KEY = storageKey("locale");
 
 function getStoredLocale(): Locale | null {
   if (typeof window === "undefined") return null;
