@@ -64,7 +64,7 @@ describe("InvoiceCreator", () => {
         await user.type(screen.getByRole("textbox", { name: /description/i }), "test")
         await user.click(generateButton)  
             
-        waitFor(() => {
+        await waitFor(() => {
             expect(receiveLightning).toHaveBeenCalledWith(100000, "test")
             
             const qrCode = screen.getByRole("img", { name: /qr code/i })
