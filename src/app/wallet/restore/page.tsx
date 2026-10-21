@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Cloud, KeyRound, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Check, Cloud, Key, WarningTriangle } from 'iconoir-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
+import { StatusNote } from '@/components/ui/status-note';
+import { Mark } from '@/components/brand/logo';
 import { validateMnemonic } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
 import {
@@ -90,42 +92,42 @@ export default function RestoreWalletPage() {
     }
   };
 
+  const errorNote = error && (
+    <p role="alert" className="flex items-start gap-2 text-body-sm text-alert">
+      <WarningTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none" />
+      {error}
+    </p>
+  );
+
+  const methodClass =
+    'group flex w-full items-start gap-4 rounded border-1.5 border-input bg-surface p-4 text-left transition-colors duration-fast hover:border-strong disabled:cursor-not-allowed disabled:border-hairline disabled:text-logwood-600';
+
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
+    <div className="min-h-screen px-4 py-6 sm:px-6 sm:py-12">
       <div className="max-w-2xl mx-auto">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="-ml-3 mb-6">
+          <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+          <span>{t('common.back')}</span>
+        </Button>
         <div className="mb-8">
-          <button type="button"
-            onClick={() => router.back()}
-            className="mb-4 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors inline-flex items-center gap-2 text-gray-600 dark:text-gray-400"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t('common.back')}</span>
-          </button>
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl mb-4 shadow-lg">
-              <span className="text-3xl font-bold text-white">₿</span>
-            </div>
-            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              {t('restore.title')}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {step === 'method' && t('restore.subtitle.method')}
-              {step === 'phrase' && t('restore.subtitle.phrase')}
-              {(step === 'password' || step === 'restoring') && t('restore.subtitle.password')}
-            </p>
-          </div>
+          <Mark size={40} decorative className="mb-6" />
+          <h1 className="font-serif text-h2 text-heading sm:text-h1">
+            {t('restore.title')}
+          </h1>
+          <p className="mt-2 text-lead text-fg-muted">
+            {step === 'method' && t('restore.subtitle.method')}
+            {step === 'phrase' && t('restore.subtitle.phrase')}
+            {(step === 'password' || step === 'restoring') && t('restore.subtitle.password')}
+          </p>
         </div>
 
         {step === 'method' && (
-          <div className="grid grid-cols-1 gap-3 mb-6">
-            <button type="button"
-              onClick={() => setStep('phrase')}
-              className="p-5 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 bg-white dark:bg-gray-900 text-left transition-colors flex items-start gap-4"
-            >
-              <KeyRound className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1" />
+          <div className="mb-6 space-y-3">
+            <button type="button" onClick={() => setStep('phrase')} className={methodClass}>
+              <Key aria-hidden="true" className="mt-0.5 h-6 w-6 flex-none" />
               <div>
-                <div className="font-semibold">{t('restore.methods.phrase.title')}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-body font-semibold">{t('restore.methods.phrase.title')}</div>
+                <div className="text-body-sm text-fg-muted">
                   {t('restore.methods.phrase.subtitle')}
                 </div>
               </div>
@@ -133,41 +135,40 @@ export default function RestoreWalletPage() {
             <button type="button"
               onClick={handleDriveRestore}
               disabled={!driveAvailable}
-              className="p-5 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-900 text-left transition-colors flex items-start gap-4"
+              className={methodClass}
             >
-              <Cloud className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1" />
+              <Cloud aria-hidden="true" className="mt-0.5 h-6 w-6 flex-none" />
               <div>
-                <div className="font-semibold">{t('restore.methods.drive.title')}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-body font-semibold">{t('restore.methods.drive.title')}</div>
+                <div className={`text-body-sm ${driveAvailable ? 'text-fg-muted' : ''}`}>
                   {driveAvailable
                     ? t('restore.methods.drive.subtitle')
                     : t('restore.methods.drive.notConfigured')}
                 </div>
               </div>
             </button>
+            {errorNote}
           </div>
         )}
 
         {step === 'phrase' && (
           <>
             {hasVault && overwriteAcknowledged && (
-              <div className="mb-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span>
-                  {t('restore.phrase.overwriteWarning')}
-                </span>
-              </div>
+              <StatusNote status="warning" className="mb-6">
+                {t('restore.phrase.overwriteWarning')}
+              </StatusNote>
             )}
 
-            <Card className="mb-6 shadow-lg">
+            <Card className="mb-6">
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('restore.phrase.title')}</h2>
-                  <span className={`text-sm px-3 py-1.5 rounded-full font-medium transition-colors ${
-                    wordCount === 12
-                      ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                  }`}>
+                <div className="flex items-baseline justify-between gap-4">
+                  <h2 className="font-serif text-h3 text-heading">{t('restore.phrase.title')}</h2>
+                  <span
+                    className={`inline-flex items-center gap-1 font-mono text-caption tabular-nums ${
+                      wordCount === 12 ? 'text-fg' : 'text-fg-muted'
+                    }`}
+                  >
+                    {wordCount === 12 && <Check aria-hidden="true" className="h-5 w-5" />}
                     {t('restore.phrase.wordCount', { count: wordCount })}
                   </span>
                 </div>
@@ -180,22 +181,18 @@ export default function RestoreWalletPage() {
                     setError('');
                   }}
                   placeholder={t('restore.phrase.placeholder')}
-                  className="w-full min-h-[140px] px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm transition-colors"
+                  className="w-full min-h-[144px] resize-none rounded border-1.5 border-input bg-surface px-3 py-3 font-mono text-body text-fg placeholder:text-logwood-600 transition-colors duration-fast hover:border-strong focus-visible:border-2 focus-visible:border-strong"
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
                 />
-                {error && (
-                  <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-                  </div>
-                )}
+                {errorNote}
                 <Button
                   variant="primary"
                   size="lg"
                   onClick={handlePhraseSubmit}
                   disabled={wordCount !== 12}
-                  className="w-full shadow-lg hover:shadow-xl transition-shadow"
+                  className="w-full"
                 >
                   {t('common.continue')}
                 </Button>
@@ -203,9 +200,9 @@ export default function RestoreWalletPage() {
                   variant="ghost"
                   size="lg"
                   onClick={() => setStep('method')}
-                  className="w-full inline-flex items-center justify-center gap-2"
+                  className="w-full"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft aria-hidden="true" className="h-5 w-5" />
                   <span>{t('restore.phrase.chooseDifferent')}</span>
                 </Button>
               </CardContent>
@@ -214,7 +211,7 @@ export default function RestoreWalletPage() {
         )}
 
         {(step === 'password' || step === 'restoring') && (
-          <Card className="mb-6 shadow-lg">
+          <Card className="mb-6">
             <CardContent className="pt-6 space-y-4">
               <Input
                 label={t('create.password.label')}
@@ -233,27 +230,23 @@ export default function RestoreWalletPage() {
                 placeholder={t('create.password.confirmPlaceholder')}
                 disabled={step === 'restoring'}
               />
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex min-h-control cursor-pointer items-center gap-3">
                 <input
                   type="checkbox"
                   checked={showPassword}
                   onChange={(e) => setShowPassword(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300"
+                  className="h-5 w-5 flex-none accent-action"
                 />
-                <span className="text-sm">{t('create.password.show')}</span>
+                <span className="text-body-sm">{t('create.password.show')}</span>
               </label>
-              {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-                </div>
-              )}
+              {errorNote}
               <Button
                 variant="primary"
                 size="lg"
                 onClick={handleRestore}
                 loading={step === 'restoring'}
                 disabled={step === 'restoring'}
-                className="w-full shadow-lg hover:shadow-xl transition-shadow"
+                className="w-full"
               >
                 {step === 'restoring' ? t('restore.password.submitting') : t('restore.password.submit')}
               </Button>
@@ -262,9 +255,9 @@ export default function RestoreWalletPage() {
                 size="lg"
                 onClick={() => setStep('phrase')}
                 disabled={step === 'restoring'}
-                className="w-full inline-flex items-center justify-center gap-2"
+                className="w-full"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft aria-hidden="true" className="h-5 w-5" />
                 <span>{t('common.back')}</span>
               </Button>
             </CardContent>
@@ -295,13 +288,13 @@ export default function RestoreWalletPage() {
             {t('common.cancel')}
           </Button>
           <Button
-            variant="primary"
+            variant="danger"
             size="lg"
             onClick={() => {
               setOverwriteAcknowledged(true);
               setShowOverwriteModal(false);
             }}
-            className="flex-1 bg-amber-600 hover:bg-amber-700"
+            className="flex-1"
           >
             {t('restore.overwrite.confirm')}
           </Button>

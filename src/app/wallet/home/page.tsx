@@ -3,21 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowDownToLine,
-  ArrowDownUp,
-  ArrowUpFromLine,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Check,
+  CloudSync,
   CreditCard,
-  ExternalLink,
-  GraduationCap,
+  DataTransferBoth,
   Key,
   Lock,
+  OpenNewWindow,
   Settings as SettingsIcon,
-  TriangleAlert,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+  WarningTriangle,
+  WifiOff,
+} from "iconoir-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { StatusNote } from "@/components/ui/status-note";
+import { Mark } from "@/components/brand/logo";
 import { BalanceDisplay } from "@/components/wallet/balance-display";
 import { MnemonicDisplay } from "@/components/wallet/mnemonic-display";
 import { TransactionList } from "@/components/wallet/transaction-list";
@@ -40,12 +43,15 @@ import { useWalletData } from "@/hooks/use-wallet-data";
 import { useWalletStore } from "@/store/wallet-store";
 import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
 
-const CONN_DOT: Record<"offline" | "syncing" | "synced" | "failed", string> = {
-  offline: "bg-gray-400",
-  syncing: "bg-yellow-400 animate-pulse",
-  synced: "bg-green-500",
-  failed: "bg-red-500",
-};
+const CONN_ICON = {
+  offline: WifiOff,
+  syncing: CloudSync,
+  synced: Check,
+  failed: WarningTriangle,
+} as const;
+
+const HEADER_BUTTON =
+  "inline-flex min-h-control min-w-[44px] items-center justify-center gap-2 rounded px-2 text-body-sm text-fg transition-colors duration-fast hover:bg-raised disabled:cursor-not-allowed disabled:text-logwood-600 disabled:hover:bg-transparent";
 
 export default function WalletHomePage() {
   const t = useT();
@@ -264,130 +270,120 @@ export default function WalletHomePage() {
   }
   const isLoading = balanceLoading || paymentsLoading ||isSwapPending || userSettingsLoading || convertionLimitLoading;
 
+  const ConnIcon = CONN_ICON[conn];
+
   return (
-    <div className="min-h-screen min-w-80 bg-gray-50 dark:bg-gray-900">
-      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 text-white px-6 pt-6 pb-20">
-        <div className="max-w-4xl mx-auto min-w-[280px]">
-          <div className="flex justify-between items-center gap-2 mb-8">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0">
-                <span className="text-xl font-bold">₿</span>
-              </div>
-              <div className="flex sm:hidden items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-full text-sm shrink-0">
-                <div className={`w-2 h-2 rounded-full ${CONN_DOT[conn]}`} />
-              </div>
-              <div className="min-w-0 hidden sm:block">
-                <h1 className="text-2xl font-bold truncate">{t("home.title")}</h1>
-                <p className="text-sm text-blue-100 truncate">{t("home.tagline")}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="hidden sm:flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-full text-sm">
-                <div className={`w-2 h-2 rounded-full ${CONN_DOT[conn]}`} />
-                <span>{t(`home.connection.${conn}`)}</span>
-              </div>
-              {SELECTED_BITCOIN_NETWORK === "mainnet" && (
-                <button type="button"
-                  onClick={() => setShowBuyModal(true)}
-                  disabled={!isReady}
-                  className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label={t("home.buyAria")}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("home.buy")}</span>
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowSwapModal(true)}
-                disabled={isLoading}
-                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
-              >
-                <ArrowDownUp className="w-4 h-4" />
-                <span className="hidden sm:inline">{isStableBalance ? ticker : "BTC"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowSeedModal(true)}
-                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
-                aria-label={t("home.phraseAria")}
-              >
-                <Key className="w-4 h-4" />
-                <span className="hidden sm:inline">{t("home.phrase")}</span>
-              </button>
-              <button type="button"
-                onClick={() => router.push("/wallet/settings")}
-                aria-label={t("home.settingsAria")}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <SettingsIcon className="w-4 h-4" />
-              </button>
-              <button type="button"
-                onClick={handleLock}
-                aria-label={t("home.lock")}
-                className="inline-flex items-center gap-1.5 text-sm bg-white/10 hover:bg-white/20 p-2 sm:px-3 sm:py-1.5 rounded-full transition-colors"
-              >
-                <Lock className="w-4 h-4" />
-                <span className="hidden sm:inline">{t("home.lock")}</span>
-              </button>
+    <div className="min-h-screen min-w-80">
+      <header className="border-b border-hairline">
+        <div className="mx-auto flex max-w-reading items-center justify-between gap-2 px-4 py-3 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <Mark size={32} />
+            <div className="hidden min-w-0 sm:block">
+              <h1 className="truncate font-serif text-h3 text-heading">{t("home.title")}</h1>
+              <p className="truncate text-caption text-fg-muted">{t("home.tagline")}</p>
             </div>
           </div>
-          <BalanceDisplay
-            balanceSat={balances?.totalSats || 0}
-            fiatRate={fiatRate}
-            fiatCurrency={selectedCurrency}
-            token={token}
-            isStableBalance={isStableBalance}
-            usdRate={usdRate}
-          />
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 -mt-12">
-        {needsAttention > 0 && (
-          <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 mb-1">
-                <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                <h3 className="font-semibold text-amber-900 dark:text-amber-200">
-                  {t(needsAttention === 1 ? "home.refund.title_one" : "home.refund.title_other", { count: needsAttention })}
-                </h3>
-              </div>
-              <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
-                {t("home.refund.subtitle")}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push("/wallet/recovery")}
-                className="border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/20"
+          <div className="-mr-2 flex shrink-0 items-center gap-1">
+            {SELECTED_BITCOIN_NETWORK === "mainnet" && (
+              <button type="button"
+                onClick={() => setShowBuyModal(true)}
+                disabled={!isReady}
+                className={HEADER_BUTTON}
+                aria-label={t("home.buyAria")}
               >
-                {t("home.refund.action")}
-              </Button>
-            </CardContent>
-          </Card>
+                <CreditCard aria-hidden="true" className="h-5 w-5" />
+                <span className="hidden sm:inline">{t("home.buy")}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowSwapModal(true)}
+              disabled={isLoading}
+              className={HEADER_BUTTON}
+            >
+              <DataTransferBoth aria-hidden="true" className="h-5 w-5" />
+              <span className="hidden font-mono sm:inline">{isStableBalance ? ticker : "BTC"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSeedModal(true)}
+              className={HEADER_BUTTON}
+              aria-label={t("home.phraseAria")}
+            >
+              <Key aria-hidden="true" className="h-5 w-5" />
+              <span className="hidden sm:inline">{t("home.phrase")}</span>
+            </button>
+            <button type="button"
+              onClick={() => router.push("/wallet/settings")}
+              aria-label={t("home.settingsAria")}
+              className={HEADER_BUTTON}
+            >
+              <SettingsIcon aria-hidden="true" className="h-5 w-5" />
+            </button>
+            <button type="button"
+              onClick={handleLock}
+              aria-label={t("home.lock")}
+              className={HEADER_BUTTON}
+            >
+              <Lock aria-hidden="true" className="h-5 w-5" />
+              <span className="hidden sm:inline">{t("home.lock")}</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-reading px-4 pb-12 pt-8 sm:px-6">
+        <p
+          className={`flex items-center gap-2 text-caption ${conn === "failed" ? "text-alert" : "text-fg-muted"}`}
+        >
+          <ConnIcon aria-hidden="true" className="h-5 w-5 flex-none" />
+          {t(`home.connection.${conn}`)}
+        </p>
+
+        <BalanceDisplay
+          balanceSat={balances?.totalSats || 0}
+          fiatRate={fiatRate}
+          fiatCurrency={selectedCurrency}
+          token={token}
+          isStableBalance={isStableBalance}
+          usdRate={usdRate}
+        />
+
+        {needsAttention > 0 && (
+          <StatusNote status="warning" className="mb-6">
+            <h3 className="text-body font-semibold">
+              {t(needsAttention === 1 ? "home.refund.title_one" : "home.refund.title_other", { count: needsAttention })}
+            </h3>
+            <p className="mt-1">{t("home.refund.subtitle")}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/wallet/recovery")}
+              className="mt-3"
+            >
+              {t("home.refund.action")}
+            </Button>
+          </StatusNote>
         )}
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-3">
           <Button
             variant="primary"
             size="lg"
             onClick={() => router.push("/wallet/send")}
             disabled={!isReady}
-            className="h-20 min-w-[110px] flex flex-row items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-all"
           >
-            <ArrowUpFromLine className="w-5 h-5 min-w-6" />
-            <span className="font-semibold text-lg">{t("home.actions.send")}</span>
+            <ArrowUpRight aria-hidden="true" className="h-5 w-5 flex-none" />
+            <span>{t("home.actions.send")}</span>
           </Button>
           <Button
             variant="outline"
             size="lg"
             onClick={() => router.push("/wallet/receive")}
             disabled={!isReady}
-            className="h-20 min-w-[110px] flex flex-row items-center justify-center gap-3 bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all border-2"
           >
-            <ArrowDownToLine className="w-5 h-5 min-w-6" />
-            <span className="font-semibold text-lg">{t("home.actions.receive")}</span>
+            <ArrowDownLeft aria-hidden="true" className="h-5 w-5 flex-none" />
+            <span>{t("home.actions.receive")}</span>
           </Button>
         </div>
 
@@ -395,22 +391,22 @@ export default function WalletHomePage() {
           href={COURSES_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="mb-6 h-14 w-full inline-flex items-center justify-center gap-3 rounded-lg border-2 border-gray-300 bg-white dark:bg-gray-800 font-medium text-lg shadow-lg hover:shadow-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-300"
+          className="ism-link mt-4 inline-flex min-h-control items-center gap-2 text-body-sm"
         >
-          <GraduationCap className="w-5 h-5 min-w-5" />
           <span>{t("home.actions.courses")}</span>
-          <ExternalLink className="w-4 h-4 min-w-4 text-gray-500" />
+          <OpenNewWindow aria-hidden="true" className="h-5 w-5 flex-none" />
         </a>
 
-        <div className="mb-6">
+        <div className="mt-12">
           {isLoading ? (
-            <Card>
-              <CardContent>
-                <div className="text-center py-8 text-gray-500">
-                  {t("home.recent.loading")}
-                </div>
-              </CardContent>
-            </Card>
+            <section aria-busy="true">
+              <h3 className="border-b-2 border-strong pb-3 font-serif text-h3 text-heading">
+                {t("home.recent.title")}
+              </h3>
+              <p className="border-b border-hairline py-8 text-body text-fg-muted">
+                {t("home.recent.loading")}
+              </p>
+            </section>
           ) : (
             <TransactionList
               payments={payments}
@@ -418,9 +414,7 @@ export default function WalletHomePage() {
             />
           )}
         </div>
-
-        <div className="mt-8 pb-6"></div>
-      </div>
+      </main>
 
       <PaymentDetailModal
         payment={selectedPayment}
@@ -438,42 +432,33 @@ export default function WalletHomePage() {
           title={t("home.swap.title", { token: isStableBalance ? "sats" : ticker})}
           description={t("home.swap.description", { token: isStableBalance ? "sats" : ticker})}
         >
-          <div className="py-4 text-center">
-            {canConvert() ? (
-              <div className="space-y-1">
-                <p className="text-sm text-gray-400">
-                  {t("home.swap.conversionFee")}{" "}
-                  <span className="text-white font-medium">
-                    {isEstimating ? (
-                      <span className="animate-pulse">{t("home.swap.calculatingFee")}</span>
-                    ) : (
-                      formatConversionFee(conversionFeeUSD)
-                    )}
-                  </span>
-                </p>
-                {isSwapError && (
-                  <p className="text-sm text-amber-500 dark:text-amber-400">
-                    {t("home.swap.unknownError")}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-amber-500 dark:text-amber-400">
-                {t("home.swap.insufficientBalance")}
+          {canConvert() ? (
+            <div className="space-y-4">
+              <p className="flex flex-wrap items-baseline justify-between gap-x-4 border-y border-hairline py-3 text-body-sm">
+                <span className="text-fg-muted">{t("home.swap.conversionFee")}</span>
+                <span className="font-mono tabular-nums text-fg">
+                  {isEstimating ? t("home.swap.calculatingFee") : formatConversionFee(conversionFeeUSD)}
+                </span>
               </p>
-            )}
-          </div>
+              {isSwapError && (
+                <StatusNote status="error">{t("home.swap.unknownError")}</StatusNote>
+              )}
+            </div>
+          ) : (
+            <StatusNote status="warning">{t("home.swap.insufficientBalance")}</StatusNote>
+          )}
 
-          <div className="flex items-center justify-center gap-4 w-full mt-2">
+          <div className="mt-6 flex gap-3">
             <Button
-              className="flex-1 py-2.5 px-4 font-medium rounded-xl transition-colors"
+              variant="secondary"
+              className="flex-1"
               onClick={() => setShowSwapModal(false)}
               disabled={isEstimating}
             >
               {t("common.cancel")}
             </Button>
             <Button
-              className="flex-1 py-2.5 px-4 font-medium rounded-xl transition-colors"
+              className="flex-1"
               onClick={handleSwap}
               disabled={isEstimating}
             >
@@ -497,10 +482,7 @@ export default function WalletHomePage() {
         {revealedSeed ? (
           <div className="space-y-4">
             <MnemonicDisplay words={revealedSeed} revealed />
-            <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
-              <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>{t("home.seed.warning")}</span>
-            </div>
+            <StatusNote status="warning">{t("home.seed.warning")}</StatusNote>
             <Button variant="primary" size="lg" onClick={closeSeedModal} className="w-full">
               {t("common.done")}
             </Button>
@@ -524,9 +506,7 @@ export default function WalletHomePage() {
               />
             )}
             {seedError && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                <p className="text-sm text-red-700 dark:text-red-300">{seedError}</p>
-              </div>
+              <StatusNote status="error">{seedError}</StatusNote>
             )}
             <div className="flex gap-3">
               <Button

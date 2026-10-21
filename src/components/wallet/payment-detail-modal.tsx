@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactElement } from "react";
-import { ArrowDownLeft, ArrowUpRight, Copy as CopyIcon, Check, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Check, Clock, Copy as CopyIcon, WarningTriangle, Xmark } from "iconoir-react";
 import type { Payment } from "@/lib/lightning/types";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,16 @@ import { useCopy } from "@/hooks/use-copy";
 import { estimateSats, formatTokenToUSD, SensitiveAmount } from "./balance-display";
 import { truncateStr } from "@/lib/wallet/truncate-str";
 
+const statusIcons = {
+  pending: Clock,
+  complete: Check,
+  failed: WarningTriangle,
+} as const;
+
 const statusStyles = {
-  pending: "text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-900/30",
-  complete: "text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/30",
-  failed: "text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30",
+  pending: "text-fg",
+  complete: "text-fg",
+  failed: "text-alert",
 } as const;
 
 interface PaymentDetailModalProps {
@@ -83,53 +89,45 @@ function PaymentDetailContent({
     feeUSD = convertSatsToFiat({ sats: feeSats, ratePerBtc: usdRate || 0, fractionDigits: 6 });
   }
   
+  const DirectionIcon = isReceived ? ArrowDownLeft : ArrowUpRight;
+  const StatusIcon = statusIcons[payment.status];
+
   return (
-    <div className="space-y-5">
-      <div className="text-center">
-        <div
-          className={`inline-flex w-12 h-12 rounded-full items-center justify-center mb-3 ${
-            isReceived
-              ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
-              : "bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
-          }`}
-        >
-          {isReceived ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
+    <div className="space-y-6">
+      <div>
+        <div className="flex items-center gap-2">
+          <DirectionIcon aria-hidden="true" className="h-6 w-6 flex-none text-fg" />
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3">
+            <div className="font-mono text-h2 font-medium tabular-nums text-heading">
+              {isReceived ? "+" : "-"}
+              <SensitiveAmount>{isToken ? `${formatTokenToUSD({amount: amount}).replace("$", "")}` : amount.toLocaleString()}</SensitiveAmount>
+            </div>
+            <div className="ism-label">{isToken ? payment.conversionDetails?.to.ticker : t("send.sats")}</div>
+          </div>
         </div>
-        <div
-          className={`text-3xl font-bold ${
-            isReceived
-              ? "text-green-600 dark:text-green-400"
-              : "text-gray-900 dark:text-gray-100"
-          }`}
-        >
-          {isReceived ? "+" : "-"}
-          <SensitiveAmount>{isToken ? `${formatTokenToUSD({amount: amount}).replace("$", "")}` : amount.toLocaleString()}</SensitiveAmount>
-        </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">{isToken ? payment.conversionDetails?.to.ticker : t("send.sats")}</div>
         {amountFiat && (
-            <SensitiveAmount className="text-sm text-gray-500 dark:text-gray-400 mt-1"> 
+            <SensitiveAmount className="mt-1 block pl-8 font-mono text-body-sm tabular-nums text-fg-muted">
               ≈ {isToken ? `${amountSats} sats` : amountFiat}
             </SensitiveAmount>
         )}
-        <span
-          className={`inline-block mt-3 px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusStyles[payment.status]}`}
-        >
+        <p className={`mt-3 inline-flex items-center gap-2 pl-8 text-body-sm ${statusStyles[payment.status]}`}>
+          <StatusIcon aria-hidden="true" className="h-5 w-5 flex-none" />
           {t(`paymentDetail.status${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}`)}
-        </span>
+        </p>
       </div>
 
-      <dl className="divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+      <dl className="divide-y divide-hairline border-y border-hairline text-body-sm">
         <DetailRow label={t("paymentDetail.direction")} value={isReceived ? t("paymentDetail.received") : t("paymentDetail.sent")} />
         <DetailRow
           label={t("paymentDetail.fee")}
           value={
               <>
-                <SensitiveAmount>
+                <SensitiveAmount className="font-mono tabular-nums">
                   {`${feeSats}  ${t("send.sats")}`}
                 </SensitiveAmount>
                 {" "}
                 {" · ≈ "}
-                <SensitiveAmount>
+                <SensitiveAmount className="font-mono tabular-nums">
                   {`${feeUSD}`}
                 </SensitiveAmount>
               </>
@@ -169,10 +167,10 @@ function DetailRow({
   wrap = false,
 }: DetailRowProps) {
   return (
-    <div className="py-3 flex items-start gap-4">
-      <dt className="text-gray-500 dark:text-gray-400 shrink-0">{label}</dt>
+    <div className="flex items-start gap-4 py-3">
+      <dt className="shrink-0 text-fg-muted">{label}</dt>
       <dd
-        className={`ml-auto text-right text-gray-900 dark:text-gray-100 ${
+        className={`ml-auto text-right tabular-nums text-fg ${
           wrap ? "" : "truncate"
         } max-w-[60%]`}
       >
@@ -193,17 +191,17 @@ function CopyRow({ label, value }: CopyRowProps) {
   const truncated = truncateStr(value, 8, 6);
 
   return (
-    <div className="py-3 flex items-center gap-4">
-      <dt className="text-gray-500 dark:text-gray-400 shrink-0">{label}</dt>
+    <div className="flex min-h-12 items-center gap-4">
+      <dt className="shrink-0 text-fg-muted">{label}</dt>
       <button type="button"
         onClick={() => copy(value)}
-        className="ml-auto inline-flex items-center gap-2 font-mono text-xs text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1.5 py-0.5"
+        className="-mr-2 ml-auto inline-flex min-h-control items-center gap-2 rounded px-2 font-mono text-caption text-fg transition-colors duration-fast hover:bg-raised"
         aria-label={t("paymentDetail.copyAria", { label: label.toLowerCase() })}
       >
         <span>{truncated}</span>
-        {copied && <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />}
-        {failed && <X className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />}
-        {!copied && !failed && <CopyIcon className="w-3.5 h-3.5 text-gray-400" />}
+        {copied && <Check aria-hidden="true" className="h-5 w-5" />}
+        {failed && <Xmark aria-hidden="true" className="h-5 w-5 text-alert" />}
+        {!copied && !failed && <CopyIcon aria-hidden="true" className="h-5 w-5 text-fg-muted" />}
       </button>
     </div>
   );

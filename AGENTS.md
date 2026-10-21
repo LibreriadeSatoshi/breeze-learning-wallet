@@ -22,8 +22,12 @@ Production: https://wallet.libreriadesatoshi.com/
 - WebCrypto for AES-256-GCM
 - `hash-wasm` for Argon2id key derivation, run in a Web Worker
 - Zustand for UI state, TanStack Query for SDK-backed data
-- Lucide for icons, qrcode.react for QR rendering
+- Iconoir (`iconoir-react`) for icons, qrcode.react for QR rendering
 - No backend database in this repo. If you find yourself adding one, stop and ask why.
+
+## Design system
+
+The UI follows the ISMOS design system (https://claude.ai/artifact/FCQ2UFbKVRJubGZyhFwnuJ). Its tokens live in `src/app/globals.css` (light, plus Hacker mode under `data-theme="hacker"`, chosen in Settings or following the device via `src/lib/theme.ts`) and `tailwind.config.ts`, which replaces Tailwind's default colors, type scale, radii and shadows so only ISMOS values exist. Use semantic classes (`bg-surface`, `text-fg`, `text-fg-muted`, `border-hairline`), never `dark:` variants. Status always pairs colour, icon and word (`StatusNote`). Iconoir only, regular style, 20 px minimum. Brand artwork in `public/brand/` is placed, never redrawn.
 
 ## Product requirements
 
@@ -40,7 +44,7 @@ Production: https://wallet.libreriadesatoshi.com/
 ### Receive
 - **Lightning must remain primary.** On the first visit to Receive, the wallet must claim a random Lightning address (`<adjective>-<noun>-<NNN>@<lnurl-domain>`). Users may edit the username; replacing it must release the previous address.
 - A one-time BOLT11 invoice must remain a secondary option for specific-amount requests.
-- Bitcoin address must remain a secondary tab, generated when activated and described as funds being added to the wallet after confirmation.
+- Bitcoin address must remain a secondary tab, which is generated each time the receive page mounts and described as funds being added to the wallet after confirmation.
 - The Lightning address domain must come from `NEXT_PUBLIC_LNURL_DOMAIN` (default `pay.libreriadesatoshi.com`) and be whitelisted by Breez using a CNAME to `breez.tips`.
 
 ### On-chain claim handling

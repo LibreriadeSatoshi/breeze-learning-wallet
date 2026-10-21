@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ArrowLeft } from "iconoir-react";
 import { useT } from "@/lib/i18n/hook";
 
 const TERMS_SECTIONS = ["s1", "s2", "s3", "s4", "s5", "s6"];
@@ -13,51 +12,45 @@ export default function LegalPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6">
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label={t("common.back")}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold">{t("legal.title")}</h1>
-        </div>
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-reading px-4 py-6 sm:px-6 sm:py-12">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          aria-label={t("common.back")}
+          className="-ml-3 mb-6 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg transition-colors duration-fast hover:bg-raised"
+        >
+          <ArrowLeft aria-hidden="true" className="h-6 w-6" />
+        </button>
+        <h1 className="font-serif text-h2 text-heading sm:text-h1">{t("legal.title")}</h1>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <h2 className="text-lg font-semibold">{t("legal.termsTitle")}</h2>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <section className="mt-12">
+          <h2 className="border-b-2 border-strong pb-3 font-serif text-h2 text-heading">
+            {t("legal.termsTitle")}
+          </h2>
+          <div className="mt-6 space-y-6">
             {TERMS_SECTIONS.map((s) => (
               <div key={s}>
-                <h3 className="font-medium mb-1">{t(`legal.terms.${s}t`)}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {t(`legal.terms.${s}b`)}
-                </p>
+                <h3 className="font-serif text-h3 text-heading">{t(`legal.terms.${s}t`)}</h3>
+                <p className="mt-2 text-body text-fg">{t(`legal.terms.${s}b`)}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <h2 className="text-lg font-semibold">{t("legal.privacyTitle")}</h2>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <section className="mt-12">
+          <h2 className="border-b-2 border-strong pb-3 font-serif text-h2 text-heading">
+            {t("legal.privacyTitle")}
+          </h2>
+          <div className="mt-6 space-y-6">
             {PRIVACY_SECTIONS.map((p) => (
               <div key={p}>
-                <h3 className="font-medium mb-1">{t(`legal.privacy.${p}t`)}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {t(`legal.privacy.${p}b`)}
-                </p>
+                <h3 className="font-serif text-h3 text-heading">{t(`legal.privacy.${p}t`)}</h3>
+                <p className="mt-2 text-body text-fg">{t(`legal.privacy.${p}b`)}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </div>
     </div>
   );

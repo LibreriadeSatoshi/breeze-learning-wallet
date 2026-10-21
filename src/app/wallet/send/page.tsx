@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowDownUp, ArrowLeft, Clipboard, Contact as ContactIcon } from "lucide-react";
+import { ArrowLeft, DataTransferBoth, Group, PasteClipboard } from "iconoir-react";
 import { useT } from "@/lib/i18n/hook";
 import { convertSatsToFiat } from "@/lib/wallet/format-fiat";
 import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
@@ -14,7 +14,7 @@ import { SendConfirmStep } from "@/components/wallet/send-confirm-step";
 import { SendError, SendProcessing, SendSuccess } from "@/components/wallet/send-result";
 
 const AMOUNT_CONTROL_CLASS =
-  "shrink-0 self-stretch inline-flex items-center px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:pointer-events-none";
+  "shrink-0 self-stretch inline-flex min-h-field min-w-[48px] items-center justify-center px-3 rounded border-1.5 border-input bg-surface text-body-sm font-medium text-fg hover:border-strong transition-colors duration-fast disabled:pointer-events-none disabled:border-hairline disabled:text-logwood-600";
 
 export default function SendPage() {
   const t = useT();
@@ -57,26 +57,26 @@ export default function SendPage() {
 
   if (step === "input") {
     return (
-      <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-2xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-4 mb-6">
+      <div>
+        <div className="max-w-reading mx-auto px-4 py-6 sm:px-6">
+          <div className="flex items-center gap-2 mb-6">
             <button type="button"
               onClick={handleBack}
               aria-label={t("common.back")}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              className="-ml-3 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg hover:bg-raised transition-colors duration-fast"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft aria-hidden="true" className="h-6 w-6" />
             </button>
-            <h1 className="text-2xl font-bold">{t("send.title")}</h1>
+            <h1 className="font-serif text-h2 text-heading">{t("send.title")}</h1>
           </div>
 
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              <div>
+                <p className="ism-label mb-2">
                   {t("send.available")}
                 </p>
-                <p className="text-3xl font-bold text-orange-500">
+                <p className="font-mono text-h2 font-medium tabular-nums text-fg">
                   {isStableBalance
                   ? convertSatsToFiat({ sats: totalBalanceSats, ratePerBtc: usdRate || 0 })
                   : <>{totalBalanceSats.toLocaleString()} {t("send.sats")}</>}
@@ -86,11 +86,18 @@ export default function SendPage() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row justify-between">
-              <h2 className="text-lg font-semibold">{t("send.destination.title")}</h2>
-              <button type="button" onClick={() => setShowContactsModal(true)}><ContactIcon className="min-w-6 min-h-6" /></button>
+            <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
+              <h2 className="font-serif text-h3 text-heading">{t("send.destination.title")}</h2>
+              <button
+                type="button"
+                onClick={() => setShowContactsModal(true)}
+                aria-label={t("send.contacts.title")}
+                className="-mr-3 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg hover:bg-raised transition-colors duration-fast"
+              >
+                <Group aria-hidden="true" className="h-6 w-6" />
+              </button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <Input
                 label={t("send.destination.label")}
                 placeholder={t("send.destination.placeholder")}
@@ -104,7 +111,7 @@ export default function SendPage() {
               <div>
                 <label
                   htmlFor="send-amount"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-body-sm font-semibold text-fg mb-2"
                 >
                   {isSats ? t("send.amount.label") : t("send.amount.fiat", { currency: DEFAULT_FIAT_CURRENCY.toLocaleLowerCase() })}
                 </label>
@@ -125,7 +132,7 @@ export default function SendPage() {
                     aria-label={t("send.amount.toggleUnit")}
                     className={AMOUNT_CONTROL_CLASS}
                   >
-                    <ArrowDownUp className="w-5 h-5" />
+                    <DataTransferBoth aria-hidden="true" className="h-5 w-5" />
                   </button>
                   <button
                     type="button"
@@ -138,38 +145,32 @@ export default function SendPage() {
                     {isMaxing ? t("send.checking") : t("send.amount.max")}
                   </button>
                 </div>
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-2 text-body-sm text-fg-muted">
                   {t("send.amount.helper")}
                 </p>
               </div>
-              <div className="grid grid-cols-1 gap-3">
+              <div className="space-y-3">
                 <Button
                   variant="outline"
+                  size="lg"
                   onClick={handlePaste}
-                  className="inline-flex items-center justify-center gap-2"
+                  className="w-full"
                 >
-                  <Clipboard className="w-4 h-4" />
+                  <PasteClipboard aria-hidden="true" className="h-5 w-5" />
                   <span>{t("send.paste")}</span>
                 </Button>
-              </div>
 
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handleContinue}
-                disabled={
-                  !destination ||
-                  isPreparing
-                }
-                loading={
-                  isPreparing
-                }
-                className="w-full"
-              >
-                {isPreparing
-                  ? t("send.checking")
-                  : t("common.continue")}
-              </Button>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={handleContinue}
+                  disabled={!destination || isPreparing}
+                  loading={isPreparing}
+                  className="w-full"
+                >
+                  {isPreparing ? t("send.checking") : t("common.continue")}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Cloud, Eye, Lightbulb, Shield, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Cloud, Eye, WarningTriangle } from 'iconoir-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { StatusNote } from '@/components/ui/status-note';
+import { Mark } from '@/components/brand/logo';
 import { MnemonicDisplay } from '@/components/wallet/mnemonic-display';
 import { generateMnemonic, mnemonicToWords } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
@@ -186,17 +188,33 @@ export default function CreateWalletPage() {
 
   const isReveal = step === 'reveal';
 
+  const securityNote = (
+    <StatusNote status="warning" className="h-full">
+      <p className="font-semibold">{t('create.security.title')}</p>
+      <ul className="mt-2 list-disc space-y-1 pl-6">
+        <li>{t('create.security.neverShare')}</li>
+        <li>{t('create.security.storeOffline')}</li>
+        <li>{t('create.security.anyoneCanAccess')}</li>
+      </ul>
+    </StatusNote>
+  );
+
+  const errorText = (message: string) => (
+    <p role="alert" className="flex items-start gap-2 text-body-sm text-alert">
+      <WarningTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none" />
+      {message}
+    </p>
+  );
+
   return (
-    <div className="min-h-screen p-4 md:p-6 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-900">
+    <div className="min-h-screen px-4 py-6 sm:px-6 sm:py-12">
       <div className={`mx-auto ${isReveal ? 'max-w-4xl' : 'max-w-2xl'}`}>
-        <div className={`text-center ${isReveal ? 'mb-4' : 'mb-8'}`}>
-          <div className={`inline-flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl shadow-lg ${isReveal ? 'w-12 h-12 mb-2' : 'w-16 h-16 mb-4'}`}>
-            <span className={`font-bold text-white ${isReveal ? 'text-2xl' : 'text-3xl'}`}>₿</span>
-          </div>
-          <h1 className={`font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent ${isReveal ? 'text-2xl md:text-3xl mb-1' : 'text-2xl sm:text-3xl md:text-4xl mb-2 md:mb-3'}`}>
+        <div className={isReveal ? 'mb-6' : 'mb-8'}>
+          <Mark size={40} decorative className="mb-6" />
+          <h1 className="font-serif text-h2 text-heading sm:text-h1">
             {heading}
           </h1>
-          <p className={`text-gray-600 dark:text-gray-400 max-w-lg mx-auto ${isReveal ? 'text-sm' : ''}`}>
+          <p className="mt-2 max-w-reading text-lead text-fg-muted">
             {subheading}
           </p>
         </div>
@@ -204,107 +222,61 @@ export default function CreateWalletPage() {
         {(step === 'reveal' || step === 'shown') && (
           <>
             {isReveal ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                <Card className="border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
-                  <CardHeader>
-                    <div className="flex items-center gap-2 mb-2">
-                      <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                      <h3 className="font-semibold text-amber-900 dark:text-amber-200">
-                        {t('create.security.title')}
-                      </h3>
-                    </div>
-                    <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1 list-disc pl-5">
-                      <li>{t('create.security.neverShare')}</li>
-                      <li>{t('create.security.storeOffline')}</li>
-                      <li>{t('create.security.anyoneCanAccess')}</li>
-                    </ul>
-                  </CardHeader>
-                </Card>
-
-                <Card className="border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20">
-                  <CardHeader>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      <h3 className="font-semibold text-blue-900 dark:text-blue-200">
-                        {t('create.whyMatters.title')}
-                      </h3>
-                    </div>
-                    <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1.5 pl-7">
-                      <p>
-                        <strong className="font-semibold">{t('create.whyMatters.selfCustody.title')}</strong>{' '}
-                        {t('create.whyMatters.selfCustody.body')}
-                      </p>
-                      <p>
-                        <strong className="font-semibold">{t('create.whyMatters.censorshipResistant.title')}</strong>{' '}
-                        {t('create.whyMatters.censorshipResistant.body')}
-                      </p>
-                    </div>
-                  </CardHeader>
-                </Card>
+              <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                {securityNote}
+                <StatusNote status="info" className="h-full">
+                  <p className="font-semibold">{t('create.whyMatters.title')}</p>
+                  <div className="mt-2 space-y-2">
+                    <p>
+                      <strong className="font-semibold">{t('create.whyMatters.selfCustody.title')}</strong>{' '}
+                      {t('create.whyMatters.selfCustody.body')}
+                    </p>
+                    <p>
+                      <strong className="font-semibold">{t('create.whyMatters.censorshipResistant.title')}</strong>{' '}
+                      {t('create.whyMatters.censorshipResistant.body')}
+                    </p>
+                  </div>
+                </StatusNote>
               </div>
             ) : (
-              <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
-                <CardHeader>
-                  <div className="flex items-center gap-2 mb-2">
-                    <TriangleAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    <h3 className="font-semibold text-amber-900 dark:text-amber-200">
-                      {t('create.security.title')}
-                    </h3>
-                  </div>
-                  <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1 list-disc pl-5">
-                    <li>{t('create.security.neverShare')}</li>
-                    <li>{t('create.security.storeOffline')}</li>
-                    <li>{t('create.security.anyoneCanAccess')}</li>
-                  </ul>
-                </CardHeader>
-              </Card>
+              <div className="mb-6">{securityNote}</div>
             )}
 
-            <Card className={isReveal ? '' : 'mb-6'}>
-              <CardContent className={isReveal ? 'pt-4 pb-4' : 'pt-6'}>
+            <Card className="mb-6">
+              <CardContent className="pt-6">
                 {isReveal ? (
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <div>
+                    <p className="text-body text-fg-muted">
                       {t('create.reveal.subtitle')}
                     </p>
-                    <label className="flex items-start sm:items-center justify-center gap-2 mb-3 cursor-pointer text-left sm:text-center max-w-md mx-auto">
+                    <label className="mt-4 flex min-h-control cursor-pointer items-start gap-3">
                       <input
                         type="checkbox"
                         checked={accepted}
                         onChange={(e) => setAccepted(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 mt-0.5 sm:mt-0 shrink-0"
+                        className="mt-1 h-5 w-5 flex-none accent-action"
                       />
-                      <span className="text-sm">{t('create.reveal.acceptTerms')}</span>
+                      <span className="text-body-sm">{t('create.reveal.acceptTerms')}</span>
                     </label>
                     <Button
                       onClick={handleReveal}
                       variant="primary"
                       size="lg"
                       disabled={!accepted}
-                      className="inline-flex items-center gap-2"
+                      className="mt-4 w-full sm:w-auto"
                     >
-                      <Eye className="w-5 h-5" />
+                      <Eye aria-hidden="true" className="h-5 w-5" />
                       <span>{t('create.reveal.accept')}</span>
                     </Button>
                   </div>
                 ) : (
-                  <div>
-                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
-                      <div className="flex items-start gap-2">
-                        <Lightbulb className="w-4 h-4 mt-0.5 text-blue-700 dark:text-blue-300 shrink-0" />
-                        <p className="text-sm text-blue-900 dark:text-blue-200">
-                          {t('create.tip')}
-                        </p>
-                      </div>
-                    </div>
+                  <div className="space-y-6">
+                    <StatusNote status="info">{t('create.tip')}</StatusNote>
                     <MnemonicDisplay words={words} revealed />
-                    <div className="mt-6 p-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 flex items-start gap-2">
-                      <TriangleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                      <p className="text-sm text-amber-900 dark:text-amber-200">
-                        <strong className="font-semibold">{t('create.orderMatters.title')}</strong>{' '}
-                        {t('create.orderMatters.body')}
-                      </p>
-                    </div>
+                    <StatusNote status="warning">
+                      <strong className="font-semibold">{t('create.orderMatters.title')}</strong>{' '}
+                      {t('create.orderMatters.body')}
+                    </StatusNote>
                   </div>
                 )}
               </CardContent>
@@ -316,12 +288,13 @@ export default function CreateWalletPage() {
                   variant="primary"
                   size="lg"
                   onClick={handleProceedToVerify}
-                  className="w-full shadow-lg hover:shadow-xl transition-shadow"
+                  className="w-full"
                 >
                   {t('create.writtenDown')}
                 </Button>
                 <Button variant="ghost" size="lg" onClick={() => router.back()} className="w-full">
-                  ← {t('common.back')}
+                  <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+                  <span>{t('common.back')}</span>
                 </Button>
               </div>
             )}
@@ -332,41 +305,40 @@ export default function CreateWalletPage() {
           <>
             <Card className="mb-6">
               <CardHeader>
-                <h3 className="font-semibold">
+                <h2 className="font-serif text-h3 text-heading">
                   {t('create.verify.selectInOrder', { slots: verifySlots.map((i) => `#${i + 1}`).join(', ') })}
-                </h3>
+                </h2>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                  {verifySlots.map((wordIndex, slotIndex) => (
-                    <div
-                      key={wordIndex}
-                      className="p-4 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 text-center min-w-0"
-                    >
-                      <div className="text-xs text-gray-500 mb-1">#{wordIndex + 1}</div>
-                      {picks[slotIndex] !== undefined ? (
-                        <div className="font-mono font-medium truncate">
-                          {shuffledChoices[picks[slotIndex]].word}
-                        </div>
-                      ) : (
-                        <div className="text-gray-400">?</div>
-                      )}
-                    </div>
-                  ))}
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {verifySlots.map((wordIndex, slotIndex) => {
+                    const filled = picks[slotIndex] !== undefined;
+                    return (
+                      <div
+                        key={wordIndex}
+                        className={`min-w-0 rounded px-3 py-2 font-mono ${
+                          filled ? 'border-1.5 border-strong bg-surface' : 'border border-hairline bg-raised'
+                        }`}
+                      >
+                        <div className="text-caption tabular-nums text-fg-muted">#{wordIndex + 1}</div>
+                        {filled ? (
+                          <div className="truncate text-body font-medium text-fg">
+                            {shuffledChoices[picks[slotIndex]].word}
+                          </div>
+                        ) : (
+                          <div className="text-body text-fg-muted">?</div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                {verifyError && (
-                  <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                    <p className="text-sm text-red-800 dark:text-red-200">
-                      {t('create.verify.incorrect')}
-                    </p>
-                  </div>
-                )}
+                {verifyError && errorText(t('create.verify.incorrect'))}
               </CardContent>
             </Card>
 
             <Card className="mb-6">
               <CardHeader>
-                <h3 className="font-semibold">{t('create.verify.tapInOrder')}</h3>
+                <h2 className="font-serif text-h3 text-heading">{t('create.verify.tapInOrder')}</h2>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
@@ -375,11 +347,7 @@ export default function CreateWalletPage() {
                       key={item.originalIndex}
                       onClick={() => handlePickChoice(index)}
                       disabled={picks.includes(index)}
-                      className={`p-4 rounded-lg border-2 font-mono font-medium transition-all ${
-                        picks.includes(index)
-                          ? 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 opacity-50'
-                          : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20'
-                      }`}
+                      className="min-h-field rounded border-1.5 border-input bg-surface px-3 font-mono text-body font-medium text-fg transition-colors duration-fast hover:border-strong disabled:cursor-not-allowed disabled:border-hairline disabled:bg-raised disabled:text-logwood-600"
                     >
                       {item.word}
                     </button>
@@ -388,14 +356,15 @@ export default function CreateWalletPage() {
               </CardContent>
             </Card>
 
-            <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Button
                 variant="ghost"
                 size="lg"
                 onClick={handleBackToPhrase}
                 className="w-full sm:flex-1"
               >
-                ← {t('create.verify.viewAgain')}
+                <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+                <span>{t('create.verify.viewAgain')}</span>
               </Button>
               <Button
                 variant="primary"
@@ -411,7 +380,7 @@ export default function CreateWalletPage() {
         )}
 
         {(step === 'password' || step === 'creating') && (
-          <Card className="mb-6 shadow-lg">
+          <Card className="mb-6">
             <CardContent className="pt-6 space-y-4">
               <Input
                 label={t('create.password.label')}
@@ -430,21 +399,17 @@ export default function CreateWalletPage() {
                 placeholder={t('create.password.confirmPlaceholder')}
                 disabled={step === 'creating'}
               />
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex min-h-control cursor-pointer items-center gap-3">
                 <input
                   type="checkbox"
                   checked={showPassword}
                   onChange={(e) => setShowPassword(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300"
+                  className="h-5 w-5 flex-none accent-action"
                 />
-                <span className="text-sm">{t('create.password.show')}</span>
+                <span className="text-body-sm">{t('create.password.show')}</span>
               </label>
-              {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-                </div>
-              )}
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              {error && errorText(error)}
+              <p className="text-caption text-fg-muted">
                 {t('create.password.noRecovery')}
               </p>
               <Button
@@ -453,7 +418,7 @@ export default function CreateWalletPage() {
                 onClick={handleCreate}
                 loading={step === 'creating'}
                 disabled={step === 'creating'}
-                className="w-full shadow-lg hover:shadow-xl transition-shadow"
+                className="w-full"
               >
                 {step === 'creating' ? t('create.password.creating') : t('create.password.submit')}
               </Button>
@@ -462,29 +427,22 @@ export default function CreateWalletPage() {
         )}
 
         {step === 'drive-offer' && (
-          <Card className="mb-6 shadow-lg">
+          <Card className="mb-6">
             <CardContent className="pt-6 space-y-4">
-              <div className="text-center text-blue-600 dark:text-blue-400">
-                <Cloud className="w-12 h-12 mx-auto" />
-              </div>
-              <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+              <div className="space-y-2 text-body text-fg">
                 <p>{t('create.drive.blurbCiphertext')}</p>
                 <p>{t('create.drive.blurbConvenience')}</p>
               </div>
-              {driveError && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">{driveError}</p>
-                </div>
-              )}
+              {driveError && errorText(driveError)}
               <Button
                 variant="primary"
                 size="lg"
                 onClick={handleDriveBackup}
                 loading={driveBusy}
                 disabled={driveBusy}
-                className="w-full inline-flex items-center justify-center gap-2"
+                className="w-full"
               >
-                <Cloud className="w-4 h-4" />
+                <Cloud aria-hidden="true" className="h-5 w-5" />
                 <span>{t('create.drive.backup')}</span>
               </Button>
               <Button

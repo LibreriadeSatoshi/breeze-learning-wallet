@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, WarningTriangle } from "iconoir-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,30 +34,30 @@ export default function RecoveryPage() {
   if (!isUnlocked) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6">
-        <div className="flex items-center gap-4 mb-6">
+    <div className="min-h-screen bg-surface">
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6">
+        <div className="flex items-center gap-2 mb-6">
           <button type="button"
             onClick={() => router.back()}
             aria-label={t("common.back")}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            className="-ml-3 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg transition-colors duration-fast hover:bg-raised"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft aria-hidden="true" className="h-6 w-6" />
           </button>
-          <h1 className="text-2xl font-bold">{t("recovery.title")}</h1>
+          <h1 className="font-serif text-h2 sm:text-h1 text-heading">{t("recovery.title")}</h1>
         </div>
 
         {rejected.length === 0 ? (
           <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-gray-600 dark:text-gray-400">
+            <CardContent className="pt-6">
+              <p className="text-body text-fg-muted">
                 {t("recovery.nothing")}
               </p>
             </CardContent>
           </Card>
         ) : (
           <>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            <p className="mb-4 text-body-sm text-fg-muted">
               {t("recovery.explainer")}
             </p>
             <div className="space-y-3">
@@ -137,14 +137,14 @@ function RefundItem({
   return (
     <Card>
       <CardHeader>
-        <p className="font-mono text-xs text-gray-500 dark:text-gray-400 break-all">
+        <p className="font-mono text-caption text-fg-muted break-all">
           {deposit.txid}:{deposit.vout}
         </p>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">{t("recovery.amount")}</span>
-          <span className="font-medium">
+      <CardContent className="space-y-4 text-body-sm">
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="text-fg-muted">{t("recovery.amount")}</span>
+          <span className="font-mono font-medium tabular-nums">
             {deposit.amountSats.toLocaleString()} {t("send.sats")}
           </span>
         </div>
@@ -161,7 +161,7 @@ function RefundItem({
         )}
 
         {open && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Input
               label={t("recovery.addressLabel")}
               placeholder={t("recovery.addressPlaceholder")}
@@ -170,7 +170,7 @@ function RefundItem({
               disabled={refundMutation.isPending}
             />
             <div>
-              <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+              <div className="mb-2 text-body-sm font-semibold text-fg">
                 {t("recovery.feeRate")}
               </div>
               <div className="grid grid-cols-3 gap-2 mb-2">
@@ -198,10 +198,9 @@ function RefundItem({
               </div>
               <button type="button"
                 onClick={() => setChoice("custom")}
-                className={`text-xs ${
-                  choice === "custom"
-                    ? "text-blue-600 dark:text-blue-400 font-medium"
-                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                aria-pressed={choice === "custom"}
+                className={`inline-flex min-h-control items-center text-body-sm disabled:text-logwood-600 ${
+                  choice === "custom" ? "font-semibold text-fg" : "ism-link"
                 }`}
                 disabled={refundMutation.isPending}
               >
@@ -209,7 +208,6 @@ function RefundItem({
               </button>
               {choice === "custom" && (
                 <Input
-                  className="mt-2"
                   placeholder={t("recovery.customPlaceholder")}
                   value={customRate}
                   onChange={(e) =>
@@ -220,7 +218,7 @@ function RefundItem({
                 />
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 variant="ghost"
                 size="sm"
@@ -245,7 +243,10 @@ function RefundItem({
         )}
 
         {error && (
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <p className="flex items-start gap-2 text-body-sm text-alert">
+            <WarningTriangle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none" />
+            {error}
+          </p>
         )}
       </CardContent>
     </Card>
@@ -269,15 +270,16 @@ function FeePreset({
     <button type="button"
       onClick={onClick}
       disabled={disabled || rate === 0}
-      className={`p-3 rounded-lg border-2 text-center transition-all disabled:opacity-50 ${
+      aria-pressed={selected}
+      className={`min-h-control rounded border-2 px-2 py-3 text-center transition-colors duration-fast disabled:border-hairline disabled:text-logwood-600 ${
         selected
-          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-          : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+          ? "border-strong font-semibold text-fg"
+          : "border-hairline text-fg-muted hover:border-strong"
       }`}
     >
-      <div className="text-xs text-gray-600 dark:text-gray-400">{label}</div>
-      <div className="text-sm font-semibold">
-        {rate > 0 ? `${rate} sat/vB` : "—"}
+      <div className="text-body-sm">{label}</div>
+      <div className="font-mono text-caption tabular-nums">
+        {rate > 0 ? `${rate} sat/vB` : "-"}
       </div>
     </button>
   );

@@ -19,7 +19,13 @@
     "never": "Nunca",
     "justNow": "hace un momento",
     "delete": "Eliminar",
-    "search": "Buscar..."
+    "search": "Buscar…",
+    "status": {
+      "note": "NOTA",
+      "done": "HECHO",
+      "check": "REVISA ESTO",
+      "error": "ERROR"
+    }
   },
   "welcome": {
     "tagline": "Una billetera Bitcoin y Lightning no custodial. Tus claves, tus monedas.",
@@ -36,7 +42,7 @@
     },
     "noVault": {
       "create": "Crear billetera nueva",
-      "creating": "Creando billetera...",
+      "creating": "Creando billetera…",
       "haveWallet": "¿Ya tienes una billetera?",
       "restore": "Restaurar billetera",
       "usePasskey": "Usar passkey en su lugar"
@@ -56,7 +62,7 @@
       "create": "Crear passkey",
       "useExisting": "Usar passkey existente"
     },
-    "footer": "Al continuar, aceptas nuestros Términos del Servicio y Política de Privacidad"
+    "footer": "Al continuar, aceptas nuestros términos del servicio y política de privacidad"
   },
   "forgetWallet": {
     "title": "¿Olvidar esta billetera?",
@@ -156,7 +162,7 @@
     "phrase": {
       "title": "Frase de recuperación",
       "wordCount": "{{count}}/12",
-      "placeholder": "palabra1 palabra2 palabra3 ... palabra12",
+      "placeholder": "palabra1 palabra2 palabra3 … palabra12",
       "invalid": "Frase de recuperación inválida. Revisa las palabras e intenta de nuevo.",
       "chooseDifferent": "Elegir otro método",
       "overwriteWarning": "Restaurar va a reemplazar la billetera existente en este dispositivo. Asegúrate de seguir teniendo su frase de recuperación antes de continuar."
@@ -183,7 +189,7 @@
   },
   "home": {
     "title": "Mi billetera",
-    "tagline": "Satoshi Scholar",
+    "tagline": "ISMOS Wallet",
     "connection": {
       "offline": "Desconectado",
       "syncing": "Sincronizando…",
@@ -205,11 +211,11 @@
     "actions": {
       "send": "Enviar",
       "receive": "Recibir",
-      "courses": "Cursos de la Librería"
+      "courses": "Cursos de ISMOS"
     },
     "recent": {
       "title": "Actividad reciente",
-      "loading": "Cargando transacciones...",
+      "loading": "Cargando transacciones…",
       "empty": "Sin actividad reciente"
     },
     "seed": {
@@ -229,12 +235,14 @@
       "title": "Convertir a {{token}}",
       "description": "Tu balance será convertido a {{token}}",
       "conversionFee": "Tarifa de conversión:",
-      "calculatingFee": "Calculando...",
-      "insufficientBalance": "Saldo insuficiente para convertirlo — se mantendrá como cambio",
+      "calculatingFee": "Calculando…",
+      "insufficientBalance": "Saldo insuficiente para convertirlo. Se mantendrá como cambio",
       "unknownError": "Ha ocurrido un error. Inténtalo más tarde"
     },
     "balance": {
-      "change": "Cambio"
+      "change": "Cambio",
+      "hide": "Ocultar saldo",
+      "show": "Mostrar saldo"
     }
   },
   "send": {
@@ -245,7 +253,7 @@
     "destination": {
       "title": "Destino",
       "label": "Invoice, dirección Lightning, dirección Bitcoin o Spark",
-      "placeholder": "lnbc... | alice@example.com | bc1... | sprt1...",
+      "placeholder": "lnbc… | alice@example.com | bc1… | sprt1…",
       "helper": "La billetera detecta el tipo de pago"
     },
     "amount": {
@@ -269,7 +277,7 @@
     "type": "Tipo",
     "networkFee": "Tarifa de red",
     "total": "Total",
-    "processing": "Procesando...",
+    "processing": "Procesando…",
     "confirmSend": "Confirmar y enviar pago",
     "sendingPayment": "Enviando pago…",
     "sent": "Pago enviado",
@@ -313,14 +321,15 @@
         "emptyName": "El nombre es requerido",
         "emptyPaymentIdentifier": "La dirección Lightning es requerida"
       },
-      "loading": "Cargando más contactos...",
+      "loading": "Cargando más contactos…",
       "noMoreContacts": "No hay más contactos para cargar",
       "aria": {
         "add": "Agregar nuevo contacto",
         "update": "Actualizar contacto {{name}}",
         "delete": "Eliminar contacto {{name}}",
         "selectContact": "Seleccionar contacto {{name}}"
-      }
+      },
+      "remove": "Quitar contacto {{name}}"
     }
   },
   "receive": {
@@ -385,7 +394,7 @@
     "amount": "Monto",
     "refundButton": "Reembolsar a Bitcoin",
     "addressLabel": "Dirección Bitcoin",
-    "addressPlaceholder": "bc1...",
+    "addressPlaceholder": "bc1…",
     "feeRate": "Tarifa",
     "feeSlow": "Lenta",
     "feeMedium": "Media",
@@ -433,6 +442,13 @@
     "language": {
       "title": "Idioma",
       "subtitle": "Usado para la interfaz de la billetera."
+    },
+    "theme": {
+      "title": "Apariencia",
+      "subtitle": "El modo hacker es el tema oscuro.",
+      "light": "Claro",
+      "hacker": "Modo hacker",
+      "system": "Igual que este dispositivo"
     },
     "claimLeeway": {
       "title": "Auto-reclamo de depósitos",
@@ -509,7 +525,7 @@
     "select": "Comprar Bitcoin",
     "amount": "Comprar con Cash App",
     "qr": "Pagar con Cash App",
-    "cashAppQrAriaLabel": "Codigo QR de Cash App",
+    "cashAppQrAriaLabel": "Código QR de Cash App",
     "moonpaySubtitle": "Tarjeta, Apple/Google Pay, transferencia",
     "moonpayRedirecting": "Redirigiendo…",
     "cashAppSubtitle": "Solo EEUU/Reino Unido · paga un invoice Lightning",
@@ -524,12 +540,12 @@
     "autoRefresh": "Este diálogo se actualizará automáticamente cuando llegue el pago."
   },
   "legal": {
-    "title": "Términos y Privacidad",
-    "termsTitle": "Términos del Servicio",
-    "privacyTitle": "Política de Privacidad",
+    "title": "Términos y privacidad",
+    "termsTitle": "Términos del servicio",
+    "privacyTitle": "Política de privacidad",
     "terms": {
       "s1t": "Sobre este servicio",
-      "s1b": "Satoshi Scholar es una billetera Bitcoin y Lightning no custodial que funciona completamente en tu navegador. Ofrecemos software, no un servicio financiero: nunca tenemos tus fondos, tus claves ni ninguna cuenta a tu nombre.",
+      "s1b": "ISMOS Wallet es una billetera Bitcoin y Lightning no custodial que funciona completamente en tu navegador. Ofrecemos software, no un servicio financiero: nunca tenemos tus fondos, tus claves ni ninguna cuenta a tu nombre.",
       "s2t": "Tú tienes el control, y la responsabilidad",
       "s2b": "Tu frase de recuperación (y tu passkey, si usas una) es la única forma de acceder a tus fondos. Si la pierdes, nadie, ni siquiera nosotros, puede recuperar tu billetera, y tus fondos se perderán para siempre. Las transacciones en Bitcoin y Lightning son irreversibles.",
       "s3t": "Cómo funcionan los pagos",

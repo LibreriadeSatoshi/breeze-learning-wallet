@@ -4,17 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Bitcoin,
+  BitcoinCircle,
   Check,
   Copy as CopyIcon,
-  Pencil,
-  Waypoints,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+  EditPencil,
+  Flash,
+  Network,
+} from "iconoir-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
+import { StatusNote } from "@/components/ui/status-note";
 import { useWalletStore } from "@/store/wallet-store";
 import {
   useReceiveLightning,
@@ -39,12 +38,11 @@ type PaymentMethod = "lightning" | "bitcoin" | "spark";
 
 const RECEIVE_METHODS: {
   id: PaymentMethod;
-  icon: LucideIcon;
-  iconClass: string;
+  icon: typeof Flash;
 }[] = [
-  { id: "lightning", icon: Zap, iconClass: "text-blue-600 dark:text-blue-400" },
-  { id: "bitcoin", icon: Bitcoin, iconClass: "text-orange-500" },
-  { id: "spark", icon: Waypoints, iconClass: "text-purple-600 dark:text-purple-400" },
+  { id: "lightning", icon: Flash },
+  { id: "bitcoin", icon: BitcoinCircle },
+  { id: "spark", icon: Network },
 ];
 
 
@@ -53,18 +51,30 @@ interface BitcoinReceive {
   fee: number;
 }
 
-
-
-
-
-
 export default function ReceivePage() {
   const t = useT();
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
+  const { mutateAsync: getBtcAddress } = useGetBitcoinAddress();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("lightning");
   const [received, setReceived] = useState<ReceivedPaymentDetails | null>(null);
+  const [result, setResult] = useState<BitcoinReceive | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getBtcAddress()
+      .then((r) => {
+        if (!cancelled) setResult({ address: r.address, fee: r.fee });
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [getBtcAddress]);
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");
@@ -77,45 +87,53 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="min-h-screen min-w-fit bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6">
-        <div className="flex items-center gap-4 mb-6">
+    <div>
+      <div className="max-w-reading mx-auto px-4 py-6 sm:px-6">
+        <div className="flex items-center gap-2 mb-6">
           <button type="button"
             onClick={() => router.back()}
             aria-label={t("common.back")}
-            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            className="-ml-3 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg hover:bg-raised transition-colors duration-fast"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft aria-hidden="true" className="h-6 w-6" />
           </button>
-          <h1 className="text-2xl font-bold">{t("receive.title")}</h1>
+          <h1 className="font-serif text-h2 text-heading">{t("receive.title")}</h1>
         </div>
 
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-3 gap-3">
-              {RECEIVE_METHODS.map(({ id, icon: Icon, iconClass }) => (
-                <button type="button"
-                  key={id}
-                  onClick={() => setPaymentMethod(id)}
-                  className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
-                    paymentMethod === id
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  <Icon className={`w-6 h-6 ${iconClass}`} />
-                  <div className="font-medium">{t(`receive.methods.${id}`)}</div>
-                  <div className="text-xs text-gray-500">
-                    {t(`receive.methods.${id}Subtitle`)}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mb-6 grid grid-cols-3 gap-4 border-b border-hairline">
+          {RECEIVE_METHODS.map(({ id, icon: Icon }) => {
+            const selected = paymentMethod === id;
+            return (
+              <button type="button"
+                key={id}
+                onClick={() => setPaymentMethod(id)}
+                aria-pressed={selected}
+                className={`-mb-px flex min-h-control flex-col items-start gap-1 border-b-2 pb-3 pt-2 text-left transition-colors duration-fast ${
+                  selected
+                    ? "border-strong text-fg"
+                    : "border-transparent text-fg-muted hover:text-fg"
+                }`}
+              >
+                <span className={`flex items-center gap-2 text-body ${selected ? "font-semibold" : "font-medium"}`}>
+                  <Icon aria-hidden="true" className="h-5 w-5 flex-none" />
+                  {t(`receive.methods.${id}`)}
+                </span>
+                <span className="text-caption text-fg-muted">
+                  {t(`receive.methods.${id}Subtitle`)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
         {paymentMethod === "lightning" && <LightningPanel onReceived={setReceived} />}
-        {paymentMethod === "bitcoin" && <BitcoinPanel onReceived={setReceived} />}
+        {paymentMethod === "bitcoin" && (
+          <BitcoinPanel
+            onReceived={setReceived}
+            error={error === null ? "" : error || t("receive.bitcoin.addressFailed")}
+            result={result}
+          />
+        )}
         {paymentMethod === "spark" && <SparkPanel onReceived={setReceived} />}
       </div>
     </div>
@@ -167,8 +185,8 @@ function LightningPanel({
     return (
       <Card className="mb-6">
         <CardContent className="pt-8 pb-8 text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div aria-hidden="true" className="h-12 w-12 mx-auto mb-4 rounded-full border-2 border-track border-t-strong animate-spin" />
+          <p className="text-body-sm text-fg-muted">
             {t("receive.lightning.settingUp")}
           </p>
         </CardContent>
@@ -178,16 +196,12 @@ function LightningPanel({
 
   if (autoClaimError) {
     return (
-      <Card className="mb-6">
-        <CardContent className="pt-6 text-center">
-          <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-            {autoClaimError}
-          </p>
-          <Button variant="primary" onClick={autoClaim}>
-            {t("common.retry")}
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="mb-6 space-y-4">
+        <StatusNote status="error">{autoClaimError}</StatusNote>
+        <Button variant="primary" onClick={autoClaim}>
+          {t("common.retry")}
+        </Button>
+      </div>
     );
   }
 
@@ -234,32 +248,30 @@ function AddressCard({
 
   return (
     <Card className="mb-6">
-      <CardHeader>
-        <h2 className="text-lg font-semibold">{t("receive.lightning.addressTitle")}</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+      <CardHeader className="pb-4">
+        <h2 className="font-serif text-h3 text-heading">{t("receive.lightning.addressTitle")}</h2>
+        <p className="mt-1 text-body-sm text-fg-muted">
           {t("receive.lightning.addressSubtitle")}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <QrCode value={info.lightningAddress} />
-        <p className="text-center font-mono text-base break-all">
+        <p className="text-center font-mono text-body break-all text-fg">
           {info.lightningAddress}
         </p>
         <div className="grid grid-cols-2 gap-3">
           <Button
             variant="primary"
             onClick={() => copy(info.lightningAddress)}
-            className="inline-flex items-center justify-center gap-2"
           >
-            {copied ? <Check className="w-4 h-4 min-w-4" /> : <CopyIcon className="w-4 h-4 min-w-4" />}
+            {copied ? <Check aria-hidden="true" className="h-5 w-5 flex-none" /> : <CopyIcon aria-hidden="true" className="h-5 w-5 flex-none" />}
             <span>{copied ? t("common.copied") : failed ? t("common.copyFailed") : t("common.copy")}</span>
           </Button>
           <Button
             variant="outline"
             onClick={onEdit}
-            className="inline-flex items-center justify-center gap-2"
           >
-            <Pencil className="w-4 h-4 min-w-4" />
+            <EditPencil aria-hidden="true" className="h-5 w-5 flex-none" />
             <span>{t("receive.lightning.editUsername")}</span>
           </Button>
         </div>
@@ -271,28 +283,14 @@ function AddressCard({
 
 function BitcoinPanel({
   onReceived,
+  result,
+  error,
 }: {
   onReceived: (d: ReceivedPaymentDetails) => void;
+  result: { address: string, fee: number } | null;
+  error: string;
 }) {
   const t = useT();
-  const getMutation = useGetBitcoinAddress();
-  const [result, setResult] = useState<BitcoinReceive | null>(null);
-  const [error, setError] = useState("");
-  const requestedRef = useRef(false);
-
-  useEffect(() => {
-    if (requestedRef.current) return;
-    requestedRef.current = true;
-    (async () => {
-      try {
-        const r = await getMutation.mutateAsync();
-        setResult({ address: r.address, fee: r.fee });
-      } catch (e) {
-        setError(e instanceof Error ? e.message : t("receive.bitcoin.addressFailed"));
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <AddressPanel
@@ -388,11 +386,7 @@ function AddressPanel({
 
   if (error) {
     return (
-      <Card className="mb-6">
-        <CardContent className="pt-6 text-center">
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-        </CardContent>
-      </Card>
+      <StatusNote status="error" className="mb-6">{error}</StatusNote>
     );
   }
 
@@ -400,8 +394,8 @@ function AddressPanel({
     return (
       <Card className="mb-6">
         <CardContent className="pt-8 pb-8 text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-blue-200 dark:border-blue-900 border-t-blue-600 dark:border-t-blue-400 animate-spin" />
-          <p className="text-sm text-gray-600 dark:text-gray-400">{generatingLabel}</p>
+          <div aria-hidden="true" className="h-12 w-12 mx-auto mb-4 rounded-full border-2 border-track border-t-strong animate-spin" />
+          <p className="text-body-sm text-fg-muted">{generatingLabel}</p>
         </CardContent>
       </Card>
     );
@@ -409,21 +403,21 @@ function AddressPanel({
 
   return (
     <Card className="mb-6">
-      <CardHeader>
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
+      <CardHeader className="pb-4">
+        <h2 className="font-serif text-h3 text-heading">{title}</h2>
+        <p className="mt-1 text-body-sm text-fg-muted">{subtitle}</p>
       </CardHeader>
       <CardContent className="space-y-4">
         <QrCode value={address} />
-        <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg break-all font-mono text-xs">
+        <p className="rounded border border-hairline bg-raised p-3 font-mono text-caption text-fg break-all">
           {address}
-        </div>
+        </p>
         <Button
           variant="primary"
           onClick={() => copy(address)}
-          className="w-full inline-flex items-center justify-center gap-2"
+          className="w-full"
         >
-          {copied ? <Check className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+          {copied ? <Check aria-hidden="true" className="h-5 w-5 flex-none" /> : <CopyIcon aria-hidden="true" className="h-5 w-5 flex-none" />}
           <span>{copied ? t("common.copied") : failed ? t("common.copyFailed") : copyLabel}</span>
         </Button>
       </CardContent>
@@ -441,37 +435,30 @@ function SuccessView({
   const t = useT();
   const formattedDate = new Date(details.timestamp * 1000).toLocaleString();
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-2xl mx-auto px-6 py-6 min-w-fit">
-        <Card>
-          <CardContent className="pt-8 pb-6 text-center">
-            <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <Check className="w-9 h-9 text-green-600 dark:text-green-400" strokeWidth={3} />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">{t("receive.success.title")}</h2>
-            <p className="text-4xl font-bold text-orange-500 mt-4 mb-1">
-              {details.amountSat.toLocaleString()} {t("send.sats")}
-            </p>
-            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mt-6 mb-6 space-y-2 text-sm text-left">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">{t("receive.success.method")}</span>
-                <span className="font-medium capitalize">{details.method}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">{t("receive.success.fees")}</span>
-                <span className="font-medium">{details.feesSat.toLocaleString()} {t("send.sats")}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">{t("receive.success.time")}</span>
-                <span className="font-medium text-xs">{formattedDate}</span>
-              </div>
-            </div>
-            <Button variant="primary" size="lg" onClick={onDone} className="w-full">
-              {t("common.done")}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="max-w-reading mx-auto px-4 py-6 sm:px-6">
+      <StatusNote status="success" className="mb-6">
+        <h2 className="font-serif text-h2 text-heading">{t("receive.success.title")}</h2>
+        <p className="mt-2 font-mono text-h2 font-medium tabular-nums text-fg">
+          {details.amountSat.toLocaleString()} {t("send.sats")}
+        </p>
+      </StatusNote>
+      <dl className="mb-6 divide-y divide-hairline border-y border-hairline text-body-sm">
+        <div className="flex justify-between gap-4 py-3">
+          <dt className="text-fg-muted">{t("receive.success.method")}</dt>
+          <dd className="capitalize text-fg">{details.method}</dd>
+        </div>
+        <div className="flex justify-between gap-4 py-3">
+          <dt className="text-fg-muted">{t("receive.success.fees")}</dt>
+          <dd className="font-mono tabular-nums text-fg">{details.feesSat.toLocaleString()} {t("send.sats")}</dd>
+        </div>
+        <div className="flex justify-between gap-4 py-3">
+          <dt className="text-fg-muted">{t("receive.success.time")}</dt>
+          <dd className="text-right font-mono tabular-nums text-fg">{formattedDate}</dd>
+        </div>
+      </dl>
+      <Button variant="primary" size="lg" onClick={onDone} className="w-full">
+        {t("common.done")}
+      </Button>
     </div>
   );
 }

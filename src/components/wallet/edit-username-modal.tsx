@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Check, WarningTriangle } from "iconoir-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { StatusNote } from "@/components/ui/status-note";
 import {
   useCheckLightningAddressAvailable,
   useRegisterLightningAddress,
@@ -88,18 +90,22 @@ export function EditUsernameModal({
           autoFocus
         />
         {showAvailability && checkMutation.isPending && (
-          <p className="text-xs text-gray-500">{t("editUsername.checking")}</p>
+          <p className="text-body-sm text-fg-muted">{t("editUsername.checking")}</p>
         )}
         {showAvailability && !checkMutation.isPending && available === true && (
-          <p className="text-xs text-green-700 dark:text-green-400">{t("editUsername.available")}</p>
+          <p className="flex items-center gap-2 text-body-sm text-success">
+            <Check aria-hidden="true" className="h-5 w-5 flex-none" />
+            {t("editUsername.available")}
+          </p>
         )}
         {showAvailability && !checkMutation.isPending && available === false && (
-          <p className="text-xs text-red-700 dark:text-red-400">{t("editUsername.taken")}</p>
+          <p className="flex items-center gap-2 text-body-sm text-alert">
+            <WarningTriangle aria-hidden="true" className="h-5 w-5 flex-none" />
+            {t("editUsername.taken")}
+          </p>
         )}
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-          </div>
+          <StatusNote status="error">{error}</StatusNote>
         )}
         <div className="flex flex-col sm:flex-row gap-3">
           <Button

@@ -167,4 +167,26 @@ describe("ContactsModal", () => {
       expect(screen.queryByText(contact.paymentIdentifier)).not.toBeInTheDocument();
     });
   })
+
+  it("should show a missing name error on the name field", async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(<ContactsModalWrapper />, {
+      initialContacts: contactsStore
+    });
+
+    await user.click(screen.getByRole("button", { name: /add new contact/i }));
+    await user.type(screen.getByRole("textbox", { name: /lightning address/i }), "test@breez.tips");
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    const inputName = screen.getByRole("textbox", { name: /name/i });
+    const inputPaymentIdentifier = screen.getByRole("textbox", { name: /lightning address/i });
+
+    await waitFor(() => {
+      expect(inputName).toBeInvalid();
+    });
+    expect(inputName).toHaveAccessibleDescription(/name is required/i);
+    expect(inputPaymentIdentifier).toBeValid();
+    expect(addContact).not.toHaveBeenCalledWith("", "test@breez.tips");
+  });
 });
