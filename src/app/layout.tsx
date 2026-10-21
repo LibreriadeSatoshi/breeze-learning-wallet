@@ -5,6 +5,7 @@ import { LocaleProvider } from "@/lib/i18n/provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemeSync } from "@/components/theme-sync";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { STORAGE_MIGRATION_SCRIPT } from "@/lib/storage/storage-keys";
 import { APP_NAME } from "@/lib/config";
 import "./globals.css";
 
@@ -75,7 +76,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: STORAGE_MIGRATION_SCRIPT + THEME_INIT_SCRIPT }} />
       </head>
       <body
         className={`${literata.variable} ${plexSans.variable} ${plexMono.variable} ${bricolage.variable} antialiased`}

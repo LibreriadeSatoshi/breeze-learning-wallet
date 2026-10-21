@@ -84,6 +84,7 @@ describe("wallet store", () => {
     await store.getState().bootstrap();
 
     expect(window.sessionStorage.getItem("scholar-wallet:session-mnemonic")).toBeNull();
+    expect(window.sessionStorage.getItem("ismos-wallet:session-mnemonic")).toBeNull();
     expect(store.getState().isUnlocked).toBe(false);
     expect(store.getState().getMnemonic()).toBeNull();
   });

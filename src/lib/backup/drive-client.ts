@@ -1,4 +1,5 @@
 import { GOOGLE_OAUTH_CLIENT_ID } from "@/lib/config";
+import { storageKey } from "@/lib/storage/storage-keys";
 
 const SCOPE = [
   "https://www.googleapis.com/auth/drive.appdata",
@@ -6,10 +7,10 @@ const SCOPE = [
 ].join(" ");
 const VAULT_FILE_NAME = "vault.bin";
 
-const STORAGE_KEY_CONNECTED = "scholar-wallet:drive-connected";
-const STORAGE_KEY_LAST_SYNC = "scholar-wallet:drive-last-sync";
-const STORAGE_KEY_EMAIL = "scholar-wallet:drive-email";
-const SESSION_KEY_PENDING = "scholar-wallet:drive-pending";
+const STORAGE_KEY_CONNECTED = storageKey("drive-connected");
+const STORAGE_KEY_LAST_SYNC = storageKey("drive-last-sync");
+const STORAGE_KEY_EMAIL = storageKey("drive-email");
+const SESSION_KEY_PENDING = storageKey("drive-pending");
 
 const AUTH_BASE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
@@ -232,7 +233,7 @@ async function findVaultFileId(token: string): Promise<string | null> {
 
 async function uploadNew(token: string, blob: Uint8Array): Promise<string> {
   const metadata = { name: VAULT_FILE_NAME, parents: ["appDataFolder"] };
-  const boundary = "scholar-wallet-" + randomState();
+  const boundary = "ismos-wallet-" + randomState();
   const payload = toPlainBytes(blob);
   const body = new Blob([
     `--${boundary}\r\n`,
