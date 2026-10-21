@@ -126,7 +126,7 @@ export default function WalletHomePage() {
     initializingRef.current = true;
     setConn("syncing");
 
-    (async () => {
+    void (async () => {
       try {
         const result = await initializeBreezWallet();
         if (result.success) {
@@ -499,7 +499,7 @@ export default function WalletHomePage() {
                   setSeedError("");
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleVerifyPassword();
+                  if (e.key === "Enter") void handleVerifyPassword();
                 }}
                 disabled={verifying}
                 autoFocus
