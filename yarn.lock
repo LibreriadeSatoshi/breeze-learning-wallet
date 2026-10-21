@@ -57,9 +57,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@breeztech/breez-sdk-spark@npm:^0.21.0":
-  version: 0.21.1
-  resolution: "@breeztech/breez-sdk-spark@npm:0.21.1"
+"@breeztech/breez-sdk-spark@npm:^0.26.1":
+  version: 0.26.1
+  resolution: "@breeztech/breez-sdk-spark@npm:0.26.1"
   dependencies:
     better-sqlite3: "npm:^12.2.0"
     pg: "npm:^8.18.0"
@@ -68,7 +68,7 @@ __metadata:
       optional: true
     pg:
       optional: true
-  checksum: 10c0/1df1f250f7e64701a7bc5726f0c32c02f9f2c4ca9be95e480a8d880c88090762edff68357993f8d4d581b300901252e6127f26c60d128881933228d18951b6a6
+  checksum: 10c0/e4dedbf46002526a8e62ce1560796c5a48289747de69cf9da32b71a8c2df391e8193d5d8bfcbdace4309be86715adbd093b55715a29acd3be82fc4ce75c1b723
   languageName: node
   linkType: hard
 
@@ -2665,7 +2665,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "etta-wallet-web@workspace:."
   dependencies:
-    "@breeztech/breez-sdk-spark": "npm:^0.21.0"
+    "@breeztech/breez-sdk-spark": "npm:^0.26.1"
     "@tanstack/react-query": "npm:^5.90.10"
     "@testing-library/dom": "npm:^10.4.1"
     "@testing-library/jest-dom": "npm:^7.0.1"
