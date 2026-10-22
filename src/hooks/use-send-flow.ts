@@ -19,7 +19,9 @@ import {
   type PrepareResult,
   describeUnsupported,
   destinationKindForParsed,
+  isOtherNetwork,
   overspends,
+  pickBip21Method,
   pickLnurlPayDetails,
   readAmountSat,
   readFeeSat,
@@ -27,6 +29,15 @@ import {
 } from "@/lib/wallet/send-helpers";
 
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
+
+const SUCCESS_REDIRECT_MS = 2000;
+
+interface ResolvedDestination {
+  dest: string;
+  parsed: InputType;
+  amountSat?: number;
+  memo?: string;
+}
 
 export function useSendFlow() {
   const t = useT();
@@ -51,6 +62,13 @@ export function useSendFlow() {
     if (!isUnlocked) router.push("/welcome");
   }, [isUnlocked, router]);
 
+  // Tied to the success screen, so leaving it first cancels the redirect.
+  useEffect(() => {
+    if (step !== "success") return;
+    const timer = setTimeout(() => router.push("/wallet/home"), SUCCESS_REDIRECT_MS);
+    return () => clearTimeout(timer);
+  }, [step, router]);
+
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -69,8 +87,7 @@ export function useSendFlow() {
   };
 
   const preparePayment = async (
-    parsed: InputType,
-    dest: string,
+    { parsed, dest, memo }: ResolvedDestination,
     amt: number | undefined,
   ): Promise<PrepareResult | null> => {
     if (parsed.type === "lnurlPay" || parsed.type === "lightningAddress") {
@@ -102,22 +119,41 @@ export function useSendFlow() {
       kind: "send",
       data: sendPrep,
       destinationKind: destinationKindForParsed(parsed),
+      memo,
     };
   };
 
-  const resolveDestination = async (): Promise<{ dest: string; parsed: InputType } | null> => {
-    const dest = destination.trim();
-    if (!dest) {
+  const resolveDestination = async (): Promise<ResolvedDestination | null> => {
+    const raw = destination.trim();
+    if (!raw) {
       setError(t("send.destinationRequired"));
       return null;
     }
-    const parsed = await parseMutation.mutateAsync(dest);
-    const unsupported = describeUnsupported(parsed, t);
+    let resolved: ResolvedDestination = { dest: raw, parsed: await parseMutation.mutateAsync(raw) };
+    if (resolved.parsed.type === "bip21") {
+      const bip21 = resolved.parsed;
+      const method = pickBip21Method(bip21);
+      if (!method) {
+        setError(t("send.unsupported.bip21"));
+        return null;
+      }
+      resolved = {
+        dest: method.input,
+        parsed: method.parsed,
+        amountSat: bip21.amountSat,
+        memo: bip21.message ?? bip21.label,
+      };
+    }
+    const unsupported = describeUnsupported(resolved.parsed, t);
     if (unsupported) {
       setError(unsupported);
       return null;
     }
-    return { dest, parsed };
+    if (isOtherNetwork(resolved.parsed)) {
+      setError(t("send.errors.wrongNetwork"));
+      return null;
+    }
+    return resolved;
   };
 
   const handleMax = async () => {
@@ -127,7 +163,7 @@ export function useSendFlow() {
       const resolved = await resolveDestination();
       if (!resolved) return;
 
-      const prep = await preparePayment(resolved.parsed, resolved.dest, totalBalanceSats);
+      const prep = await preparePayment(resolved, totalBalanceSats);
       if (!prep) return;
 
       const prepared = readAmountSat(prep);
@@ -140,7 +176,7 @@ export function useSendFlow() {
       }
       amount.setFromSats(net);
     } catch (err) {
-      setError(sendErrorMessage(err, t, "send.parseFailed"));
+      setError(sendErrorMessage(err, t, "send.genericError"));
     } finally {
       setIsMaxing(false);
     }
@@ -152,7 +188,12 @@ export function useSendFlow() {
       const resolved = await resolveDestination();
       if (!resolved) return;
 
-      const prep = await preparePayment(resolved.parsed, resolved.dest, amount.amountSat);
+      // A payment link's amount fills in for an empty field, and shows there.
+      const amountSat = amount.amountSat ?? resolved.amountSat;
+      if (amount.amountSat === undefined && resolved.amountSat !== undefined) {
+        amount.setFromSats(resolved.amountSat);
+      }
+      const prep = await preparePayment(resolved, amountSat);
       if (!prep) return;
 
       if (overspends(prep, totalBalanceSats)) {
@@ -167,7 +208,7 @@ export function useSendFlow() {
       setPrepareResult(prep);
       setStep("confirm");
     } catch (err) {
-      setError(sendErrorMessage(err, t, "send.parseFailed"));
+      setError(sendErrorMessage(err, t, "send.genericError"));
     }
   };
 
@@ -182,7 +223,6 @@ export function useSendFlow() {
         await executeLnurlMutation.mutateAsync(prepareResult.data);
       }
       setStep("success");
-      setTimeout(() => router.push("/wallet/home"), 2000);
     } catch (err) {
       setError(sendErrorMessage(err, t, "send.failed"));
       setStep("error");

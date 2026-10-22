@@ -270,11 +270,13 @@
     "lnurlAmountRequired": "Introduce un monto para enviar a esta dirección Lightning",
     "lnurlRange": "Esta dirección Lightning acepta {{min}}–{{max}} sats",
     "insufficientBalance": "Saldo insuficiente. Puedes enviar hasta {{balance}} sats",
-    "parseFailed": "No se pudo interpretar el destino",
+    "parseFailed": "Ese no es un destino de pago que esta billetera pueda pagar.",
     "checking": "Verificando…",
     "youreSending": "Estás enviando",
     "details": "Detalles del pago",
     "type": "Tipo",
+    "to": "Para",
+    "memo": "Nota",
     "networkFee": "Tarifa de red",
     "total": "Total",
     "processing": "Procesando…",
@@ -285,6 +287,17 @@
     "failed": "Pago fallido",
     "selfPayment": "No puedes pagarte a ti mismo. Usa otro destino.",
     "genericError": "Algo salió mal. Intenta de nuevo.",
+    "errors": {
+      "wrongNetwork": "Este destino es de una red Bitcoin distinta a la de esta billetera.",
+      "offline": "No se pudo conectar a la red. Revisa tu conexión e inténtalo de nuevo.",
+      "insufficientFunds": "No tienes saldo suficiente para cubrir el monto y las tarifas.",
+      "amountRequired": "Ingresa un monto para enviar a este destino.",
+      "expired": "Este invoice venció. Pídele uno nuevo al destinatario.",
+      "amountOutOfRange": "Este monto está fuera de lo que acepta el destino.",
+      "noRoute": "No se encontró una forma de llegar al destinatario. Inténtalo más tarde o usa otro destino.",
+      "timeout": "El pago está tardando más de lo esperado. Revisa tu actividad antes de intentarlo de nuevo.",
+      "lnurl": "El servicio de la dirección Lightning del destinatario devolvió un error. Inténtalo más tarde."
+    },
     "tryAgain": "Reintentar",
     "destinationKind": {
       "bolt11": "Invoice Lightning",
@@ -292,14 +305,14 @@
       "bitcoinAddress": "Dirección Bitcoin",
       "sparkAddress": "Dirección Spark",
       "sparkInvoice": "Invoice Spark",
-      "bip21": "Solicitud de pago BIP21",
       "lnurlPay": "Dirección Lightning ({{domain}})"
     },
     "unsupported": {
       "lnurlAuth": "LNURL-auth es para iniciar sesión, no para pagar. Úsalo en otro lado.",
       "lnurlWithdraw": "LNURL-withdraw es para recibir, no para enviar.",
       "url": "Eso parece un enlace web, no un destino de pago.",
-      "silentPayment": "Las direcciones silent payment aún no están soportadas."
+      "silentPayment": "Las direcciones silent payment aún no están soportadas.",
+      "bip21": "Este enlace de pago no tiene ningún método de pago que esta billetera admita."
     },
     "contacts": {
       "title": "Contactos",
