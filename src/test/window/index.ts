@@ -19,8 +19,8 @@ export const windowDefineProperty = () => {
     
     Object.defineProperty(window, "location", {
       value: {
-        origin: "https://wallet.libreriadesatoshi.com",
-        href: "https://wallet.libreriadesatoshi.com/wallet/home",
+        origin: "https://wallet.ismos.xyz",
+        href: "https://wallet.ismos.xyz/wallet/home",
         assign: vi.fn(),
         replace: vi.fn(),
       },
