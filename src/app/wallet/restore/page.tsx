@@ -39,11 +39,12 @@ export default function RestoreWalletPage() {
     void bootstrap();
   }, [bootstrap]);
 
+  // Restoring stores a vault itself, which must not read as one to overwrite.
   useEffect(() => {
-    if (hasVault === true && !overwriteAcknowledged) {
+    if (hasVault === true && !overwriteAcknowledged && step !== 'restoring') {
       setShowOverwriteModal(true);
     }
-  }, [hasVault, overwriteAcknowledged]);
+  }, [hasVault, overwriteAcknowledged, step]);
 
   const wordCount = mnemonic.trim().split(/\s+/).filter(Boolean).length;
 
