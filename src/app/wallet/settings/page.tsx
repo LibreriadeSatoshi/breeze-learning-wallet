@@ -30,6 +30,8 @@ import {
   getClaimLeeway,
   setClaimLeeway,
   DEFAULT_CLAIM_LEEWAY,
+  MAX_CLAIM_LEEWAY,
+  parseClaimLeeway,
   getSelectedCurrency,
   setSelectedCurrency,
 } from "@/lib/wallet/prefs";
@@ -450,19 +452,22 @@ function CurrencyPickerSection() {
 
 function ClaimLeewaySection() {
   const t = useT();
-  const [value, setValue] = useState(() => String(getClaimLeeway()));
+  const [savedValue, setSavedValue] = useState(() => getClaimLeeway());
+  const [value, setValue] = useState(() => String(savedValue));
   const [saved, setSaved] = useState(false);
 
+  const parsed = parseClaimLeeway(value);
+  const invalid = parsed === null;
+  const dirty = !invalid && parsed !== savedValue;
+
   const handleSave = () => {
-    const n = parseInt(value, 10);
-    if (isNaN(n) || n < 0) return;
-    setClaimLeeway(n);
+    if (parsed === null) return;
+    setClaimLeeway(parsed);
+    setSavedValue(parsed);
+    setValue(String(parsed));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
-
-  const dirty = value.trim() !== String(getClaimLeeway());
-  const invalid = value.trim() === "" || isNaN(parseInt(value, 10));
 
   return (
     <div className="space-y-3">
@@ -470,16 +475,17 @@ function ClaimLeewaySection() {
         label={t("settings.claimLeeway.label")}
         value={value}
         onChange={(e) => {
-          setValue(e.target.value.replace(/[^0-9]/g, ""));
+          setValue(e.target.value);
           setSaved(false);
         }}
         inputMode="numeric"
+        error={invalid ? t("settings.claimLeeway.invalid", { max: MAX_CLAIM_LEEWAY }) : undefined}
         helperText={t("settings.claimLeeway.helper", { default: DEFAULT_CLAIM_LEEWAY })}
       />
       <Button
         variant="primary"
         onClick={handleSave}
-        disabled={!dirty || invalid}
+        disabled={!dirty}
         className="w-full"
       >
         {saved ? t("settings.claimLeeway.saved") : t("common.save")}
