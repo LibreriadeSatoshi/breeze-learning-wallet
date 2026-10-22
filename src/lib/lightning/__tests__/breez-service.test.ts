@@ -1,13 +1,19 @@
 import type { PrepareSendPaymentResponse } from "@breeztech/breez-sdk-spark";
 
-const wasmInit = vi.fn(async () => {});
-const disconnect = vi.fn(async () => {});
-const sendPayment = vi.fn(async () => ({}));
-const connect = vi.fn(async () => ({
-  addEventListener: vi.fn(async () => "listener"),
-  disconnect,
-  sendPayment,
-}));
+const { wasmInit, connect, disconnect, sendPayment } = vi.hoisted(() => {
+  const disconnect = vi.fn(async () => {});
+  const sendPayment = vi.fn(async () => ({}));
+  return {
+    wasmInit: vi.fn(async () => {}),
+    disconnect,
+    sendPayment,
+    connect: vi.fn(async () => ({
+      addEventListener: vi.fn(async () => "listener"),
+      disconnect,
+      sendPayment,
+    })),
+  };
+});
 
 vi.unmock("@/lib/lightning/breez-service");
 

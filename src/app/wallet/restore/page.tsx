@@ -279,7 +279,7 @@ export default function RestoreWalletPage() {
         open={showOverwriteModal}
         onClose={() => {
           setShowOverwriteModal(false);
-          if (!overwriteAcknowledged) router.back();
+          if (!overwriteAcknowledged) router.replace('/welcome');
         }}
         title={t('restore.overwrite.title')}
         description={t('restore.overwrite.description')}
@@ -290,7 +290,7 @@ export default function RestoreWalletPage() {
             size="lg"
             onClick={() => {
               setShowOverwriteModal(false);
-              router.back();
+              router.replace('/welcome');
             }}
             className="flex-1"
           >

@@ -613,11 +613,16 @@ export function disconnectBreez(): Promise<void> {
     sdk = null;
     eventListenerId = null;
     // A hung disconnect must not block the next unlock, which waits in line.
-    const timeout = new Promise<void>((resolve) => setTimeout(resolve, DISCONNECT_TIMEOUT_MS));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, DISCONNECT_TIMEOUT_MS);
+    });
     try {
       await Promise.race([current.disconnect(), timeout]);
     } catch (error) {
       console.error("Failed to disconnect Breez SDK:", error);
+    } finally {
+      clearTimeout(timer);
     }
   });
 }

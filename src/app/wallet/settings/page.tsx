@@ -457,8 +457,8 @@ function ClaimLeewaySection() {
   const [saved, setSaved] = useState(false);
 
   const parsed = parseClaimLeeway(value);
-  const invalid = parsed === null;
-  const dirty = !invalid && parsed !== savedValue;
+  const invalid = parsed === null && value.trim() !== "";
+  const dirty = parsed !== null && parsed !== savedValue;
 
   const handleSave = () => {
     if (parsed === null) return;
