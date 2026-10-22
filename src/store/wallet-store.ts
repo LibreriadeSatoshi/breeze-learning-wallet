@@ -49,6 +49,8 @@ interface WalletStore {
   isUnlocked: boolean;
   isBootstrapped: boolean;
   showBalance: boolean;
+  // Changes whenever the wallet held in memory changes or is dropped.
+  session: number;
 
   bootstrap: () => Promise<void>;
   refreshHasVault: () => Promise<void>;
@@ -69,6 +71,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   isUnlocked: false,
   isBootstrapped: false,
   showBalance: true,
+  session: 0,
 
   bootstrap: async () => {
     if (get().isBootstrapped) return;
@@ -104,7 +107,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     await saveVault(blob);
     setAuthMode("password");
     persistMnemonic(mnemonic);
-    set({ hasVault: true, authMode: "password", isUnlocked: true });
+    set({ hasVault: true, authMode: "password", isUnlocked: true, session: get().session + 1 });
   },
 
   unlock: async (password) => {
@@ -112,20 +115,20 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     if (!blob) throw new Error("No vault found");
     const plaintext = await decryptMnemonic(blob, password);
     persistMnemonic(plaintext);
-    set({ isUnlocked: true });
+    set({ isUnlocked: true, session: get().session + 1 });
   },
 
   adoptPasskeyWallet: (mnemonic) => {
     void disconnectBreez();
     setAuthMode("passkey");
     persistMnemonic(mnemonic);
-    set({ hasVault: true, authMode: "passkey", isUnlocked: true });
+    set({ hasVault: true, authMode: "passkey", isUnlocked: true, session: get().session + 1 });
   },
 
   lock: () => {
     void disconnectBreez();
     clearMnemonic();
-    set({ isUnlocked: false });
+    set({ isUnlocked: false, session: get().session + 1 });
   },
 
   destroyVault: async () => {
@@ -134,7 +137,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     clearLocalDriveState();
     setAuthMode(null);
     clearMnemonic();
-    set({ hasVault: false, authMode: null, isUnlocked: false });
+    set({ hasVault: false, authMode: null, isUnlocked: false, session: get().session + 1 });
   },
 
   getMnemonic: () => mnemonicInMemory,

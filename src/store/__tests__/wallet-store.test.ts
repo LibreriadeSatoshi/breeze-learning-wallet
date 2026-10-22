@@ -28,7 +28,7 @@ vi.mock("@/lib/crypto/encryption", () => ({
   }),
 }));
 
-const disconnectBreez = vi.fn(async () => {});
+const { disconnectBreez } = vi.hoisted(() => ({ disconnectBreez: vi.fn(async () => {}) }));
 
 vi.mock("@/lib/lightning/breez-service", () => ({ disconnectBreez }));
 
@@ -65,6 +65,24 @@ describe("wallet store", () => {
 
     expect(disconnectBreez).toHaveBeenCalledTimes(1);
     expect(store.getState().getMnemonic()).toBeNull();
+  });
+
+  it("starts a new session whenever the wallet in memory changes", async () => {
+    const store = await loadStore();
+    await store.getState().bootstrap();
+    const sessions = [store.getState().session];
+    const record = () => sessions.push(store.getState().session);
+
+    await store.getState().createVault(MNEMONIC, PASSWORD);
+    record();
+    store.getState().lock();
+    record();
+    await store.getState().unlock(PASSWORD);
+    record();
+    await store.getState().destroyVault();
+    record();
+
+    expect(new Set(sessions).size).toBe(sessions.length);
   });
 
   it("disconnects the previous wallet before storing a restored one", async () => {
