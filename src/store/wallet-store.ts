@@ -100,6 +100,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
 
   createVault: async (mnemonic, password) => {
     const blob = await encryptMnemonic(mnemonic, password);
+    await disconnectBreez();
     await saveVault(blob);
     setAuthMode("password");
     persistMnemonic(mnemonic);
@@ -115,12 +116,14 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   },
 
   adoptPasskeyWallet: (mnemonic) => {
+    void disconnectBreez();
     setAuthMode("passkey");
     persistMnemonic(mnemonic);
     set({ hasVault: true, authMode: "passkey", isUnlocked: true });
   },
 
   lock: () => {
+    void disconnectBreez();
     clearMnemonic();
     set({ isUnlocked: false });
   },

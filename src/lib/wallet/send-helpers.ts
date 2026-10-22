@@ -1,7 +1,12 @@
-import type { InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
 import type {
-  PrepareSendResult,
-  PrepareLnurlPayResult,
+  InputType,
+  LnurlPayRequestDetails,
+  OnchainConfirmationSpeed,
+} from "@breeztech/breez-sdk-spark";
+import {
+  ONCHAIN_SPEED,
+  type PrepareSendResult,
+  type PrepareLnurlPayResult,
 } from "@/lib/lightning/breez-service";
 
 export type PrepareResult =
@@ -60,14 +65,22 @@ export function overspends(prep: PrepareResult, balanceSat: number): boolean {
   return spend > balanceSat;
 }
 
+const SPEED_QUOTE: Record<OnchainConfirmationSpeed, "speedFast" | "speedMedium" | "speedSlow"> = {
+  fast: "speedFast",
+  medium: "speedMedium",
+  slow: "speedSlow",
+};
+
 export function readFeeSat(prep: PrepareResult): number {
   if (prep.kind === "lnurlPay") return prep.data.feeSats;
   const m = prep.data.paymentMethod;
   switch (m.type) {
     case "bolt11Invoice":
       return m.lightningFeeSats + (m.sparkTransferFeeSats ?? 0);
-    case "bitcoinAddress":
-      return m.feeQuote.speedMedium.userFeeSat + m.feeQuote.speedMedium.l1BroadcastFeeSat;
+    case "bitcoinAddress": {
+      const quote = m.feeQuote[SPEED_QUOTE[ONCHAIN_SPEED]];
+      return quote.userFeeSat + quote.l1BroadcastFeeSat;
+    }
     case "sparkAddress":
     case "sparkInvoice":
       return m.tokenIdentifier ? 0 : Number(m.fee);
