@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -191,8 +191,11 @@ function LightningPanel({
     void autoClaim();
   }, [lnAddress, autoClaim]);
 
+  // The one-time invoice works without an address, so a failed address
+  // setup must not hide it.
+  let addressSection: ReactNode = null;
   if (isLoading || registerMutation.isPending) {
-    return (
+    addressSection = (
       <Card className="mb-6">
         <CardContent className="pt-8 pb-8 text-center">
           <div aria-hidden="true" className="h-12 w-12 mx-auto mb-4 rounded-full border-2 border-track border-t-strong animate-spin" />
@@ -202,35 +205,24 @@ function LightningPanel({
         </CardContent>
       </Card>
     );
-  }
-
-  if (isError) {
-    return (
+  } else if (isError || autoClaimError) {
+    addressSection = (
       <div className="mb-6 space-y-4">
-        <StatusNote status="error">{t("receive.lightning.loadFailed")}</StatusNote>
-        <Button variant="primary" onClick={() => void refetch()}>
+        <StatusNote status="error">
+          {isError ? t("receive.lightning.loadFailed") : autoClaimError}
+        </StatusNote>
+        <Button variant="primary" onClick={isError ? () => void refetch() : autoClaim}>
           {t("common.retry")}
         </Button>
       </div>
     );
+  } else if (lnAddress) {
+    addressSection = <AddressCard info={lnAddress} onEdit={() => setEditOpen(true)} />;
   }
-
-  if (autoClaimError) {
-    return (
-      <div className="mb-6 space-y-4">
-        <StatusNote status="error">{autoClaimError}</StatusNote>
-        <Button variant="primary" onClick={autoClaim}>
-          {t("common.retry")}
-        </Button>
-      </div>
-    );
-  }
-
-  if (!lnAddress) return null;
 
   return (
     <>
-      <AddressCard info={lnAddress} onEdit={() => setEditOpen(true)} />
+      {addressSection}
       <InvoiceCreator
         onReceived={onReceived}
         title={t("receive.invoice.title")}
@@ -243,7 +235,7 @@ function LightningPanel({
           })
         }
       />
-      {editOpen && (
+      {editOpen && lnAddress && (
         <EditUsernameModal
           currentAddress={lnAddress.lightningAddress}
           onClose={() => setEditOpen(false)}
