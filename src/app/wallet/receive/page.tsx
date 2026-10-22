@@ -159,6 +159,7 @@ function LightningPanel({
   const [autoClaimError, setAutoClaimError] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const tryingRef = useRef(false);
+  const autoClaimedRef = useRef(false);
 
   const autoClaim = useCallback(async () => {
     if (tryingRef.current) return;
@@ -182,11 +183,12 @@ function LightningPanel({
     tryingRef.current = false;
   }, [registerMutation, refetch, t]);
 
+  // Once per visit: a failure must wait for the user's retry, not loop.
   useEffect(() => {
-    if (!isLoading && !lnAddress && !registerMutation.isPending) {
-      autoClaim();
-    }
-  }, [isLoading, lnAddress, registerMutation.isPending, autoClaim]);
+    if (autoClaimedRef.current || isLoading || lnAddress) return;
+    autoClaimedRef.current = true;
+    void autoClaim();
+  }, [isLoading, lnAddress, autoClaim]);
 
   if (isLoading || registerMutation.isPending) {
     return (
