@@ -23,10 +23,14 @@ export default function RecoveryPage() {
   const router = useRouter();
   const isUnlocked = useWalletStore((s) => s.isUnlocked);
 
-  const { data: allDeposits = [], refetch } = useUnclaimedDeposits(isUnlocked);
+  const {
+    data: allDeposits = [],
+    dataUpdatedAt: depositsFetchedAt,
+    refetch,
+  } = useUnclaimedDeposits(isUnlocked);
   const { data: fees } = useRecommendedFees(isUnlocked);
 
-  const rejected = allDeposits.filter(isRejectedDeposit);
+  const rejected = allDeposits.filter((d) => isRejectedDeposit(d, depositsFetchedAt));
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");
