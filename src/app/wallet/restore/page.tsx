@@ -32,7 +32,12 @@ export default function RestoreWalletPage() {
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
 
   const hasVault = useWalletStore((s) => s.hasVault);
+  const bootstrap = useWalletStore((s) => s.bootstrap);
   const createVault = useWalletStore((s) => s.createVault);
+
+  useEffect(() => {
+    void bootstrap();
+  }, [bootstrap]);
 
   useEffect(() => {
     if (hasVault === true && !overwriteAcknowledged) {
@@ -44,12 +49,18 @@ export default function RestoreWalletPage() {
 
   const driveAvailable = isDriveBackupConfigured();
 
-  const handlePhraseSubmit = () => {
+  // Asks before overwriting even if the user acts before the vault check resolves.
+  const confirmOverwriteFirst = async () => {
+    if (overwriteAcknowledged) return false;
+    await bootstrap();
+    if (!useWalletStore.getState().hasVault) return false;
+    setShowOverwriteModal(true);
+    return true;
+  };
+
+  const handlePhraseSubmit = async () => {
     setError('');
-    if (hasVault && !overwriteAcknowledged) {
-      setShowOverwriteModal(true);
-      return;
-    }
+    if (await confirmOverwriteFirst()) return;
     const cleaned = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
     if (!validateMnemonic(cleaned)) {
       setError(t('restore.phrase.invalid'));
@@ -69,6 +80,7 @@ export default function RestoreWalletPage() {
       setError(t('create.password.mismatch'));
       return;
     }
+    if (await confirmOverwriteFirst()) return;
     setStep('restoring');
     try {
       await createVault(mnemonic, password);
@@ -79,12 +91,9 @@ export default function RestoreWalletPage() {
     }
   };
 
-  const handleDriveRestore = () => {
+  const handleDriveRestore = async () => {
     setError('');
-    if (hasVault && !overwriteAcknowledged) {
-      setShowOverwriteModal(true);
-      return;
-    }
+    if (await confirmOverwriteFirst()) return;
     try {
       startDriveAuthFlow({ type: 'restore', returnTo: '/welcome' });
     } catch (err) {
@@ -133,7 +142,7 @@ export default function RestoreWalletPage() {
               </div>
             </button>
             <button type="button"
-              onClick={handleDriveRestore}
+              onClick={() => void handleDriveRestore()}
               disabled={!driveAvailable}
               className={methodClass}
             >
@@ -190,7 +199,7 @@ export default function RestoreWalletPage() {
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={handlePhraseSubmit}
+                  onClick={() => void handlePhraseSubmit()}
                   disabled={wordCount !== 12}
                   className="w-full"
                 >
