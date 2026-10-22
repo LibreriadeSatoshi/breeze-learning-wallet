@@ -4,7 +4,7 @@
 
 ISMOS Wallet is a standalone, non-custodial Bitcoin and Lightning wallet built with Breez SDK Spark and served as a Next.js web application.
 
-Production: https://wallet.libreriadesatoshi.com/
+Production: https://wallet.ismos.xyz/
 
 ## Architectural principles
 

@@ -1,0 +1,6 @@
+# The wallet moved to wallet.ismos.xyz; send the old name there.
+[[redirects]]
+  from = "https://wallet.libreriadesatoshi.com/*"
+  to = "https://wallet.ismos.xyz/:splat"
+  status = 301
+  force = true
