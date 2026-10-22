@@ -345,6 +345,7 @@
     "lightning": {
       "settingUp": "Configurando tu dirección Lightning…",
       "setupFailed": "No se pudo configurar la dirección Lightning",
+      "loadFailed": "No se pudo cargar tu dirección Lightning",
       "addressTitle": "Tu dirección Lightning",
       "addressSubtitle": "Compártela con cualquiera que quiera pagarte por Lightning.",
       "editUsername": "Editar"
@@ -454,7 +455,8 @@
       "title": "Auto-reclamo de depósitos",
       "subtitle": "Los depósitos on-chain se reclaman automáticamente cuando la tarifa de red es como máximo recomendada + margen sat/vB. Más margen significa que más reclamos tienen éxito pero puedes pagar de más en períodos calmos.",
       "label": "Margen (sat/vB)",
-      "helper": "Por defecto {{default}}. Tiene efecto luego del próximo reinicio de la billetera.",
+      "helper": "Por defecto {{default}}. Se aplica la próxima vez que desbloquees la billetera.",
+      "invalid": "Ingresa un número entero de 0 a {{max}}.",
       "saved": "Guardado"
     },
     "dangerZone": {

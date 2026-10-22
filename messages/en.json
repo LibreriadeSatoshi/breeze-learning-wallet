@@ -345,6 +345,7 @@
     "lightning": {
       "settingUp": "Setting up your Lightning address…",
       "setupFailed": "Couldn't set up Lightning address",
+      "loadFailed": "Couldn't load your Lightning address",
       "addressTitle": "Your Lightning address",
       "addressSubtitle": "Share this with anyone who wants to pay you over Lightning.",
       "editUsername": "Edit username"
@@ -454,7 +455,8 @@
       "title": "Auto-claim deposits",
       "subtitle": "On-chain deposits are claimed automatically when the network fee rate is at most recommended + leeway sat/vB. Higher leeway means more claims succeed but you may overpay during quiet periods.",
       "label": "Leeway (sat/vB)",
-      "helper": "Default {{default}}. Takes effect after the next wallet restart.",
+      "helper": "Default {{default}}. Takes effect the next time you unlock the wallet.",
+      "invalid": "Enter a whole number from 0 to {{max}}.",
       "saved": "Saved"
     },
     "dangerZone": {

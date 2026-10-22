@@ -1,5 +1,6 @@
 import type { Seed, PasskeyClient } from "@breeztech/breez-sdk-spark";
 import { APP_NAME } from "@/lib/config";
+import { loadBreezModule } from "@/lib/lightning/breez-service";
 
 const RP_NAME = APP_NAME;
 const DEFAULT_LABEL = "Default";
@@ -8,11 +9,8 @@ function getRpId(): string {
   return window.location.hostname;
 }
 
-async function getClient(): Promise<PasskeyClient> {
-  const sdk = await import("@breeztech/breez-sdk-spark/web");
-  if (sdk.default && typeof sdk.default === "function") {
-    await sdk.default();
-  }
+async function withClient<T>(fn: (client: PasskeyClient) => Promise<T>): Promise<T> {
+  const sdk = await loadBreezModule();
   const { PasskeyProvider } = await import(
     "@breeztech/breez-sdk-spark/passkey-prf-provider"
   );
@@ -24,7 +22,12 @@ async function getClient(): Promise<PasskeyClient> {
       defaultTimeoutMs: 55_000,
     },
   );
-  return new sdk.PasskeyClient(provider);
+  const client = new sdk.PasskeyClient(provider);
+  try {
+    return await fn(client);
+  } finally {
+    client.free();
+  }
 }
 
 export async function isPasskeySupported(): Promise<boolean> {
@@ -33,8 +36,7 @@ export async function isPasskeySupported(): Promise<boolean> {
     return false;
   }
   try {
-    const client = await getClient();
-    const availability = await client.checkAvailability();
+    const availability = await withClient((client) => client.checkAvailability());
     // "skipped" means the provider couldn't verify domain association, not
     // that passkeys are unusable — the browser enforces rpId scope at
     // ceremony time, and our rpId always equals the current hostname.
@@ -66,14 +68,16 @@ async function withTransientRetry<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 export async function registerPasskey(): Promise<Seed> {
-  const client = await getClient();
-  const response = await withTransientRetry(() => client.register({ label: DEFAULT_LABEL }));
+  const response = await withClient((client) =>
+    withTransientRetry(() => client.register({ label: DEFAULT_LABEL })),
+  );
   return response.wallet.seed;
 }
 
 export async function signInWithPasskey(): Promise<Seed> {
-  const client = await getClient();
-  const response = await withTransientRetry(() => client.signIn({ label: DEFAULT_LABEL }));
+  const response = await withClient((client) =>
+    withTransientRetry(() => client.signIn({ label: DEFAULT_LABEL })),
+  );
   return response.wallet.seed;
 }
 

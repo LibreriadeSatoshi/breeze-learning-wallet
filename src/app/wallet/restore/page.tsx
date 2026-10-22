@@ -32,24 +32,36 @@ export default function RestoreWalletPage() {
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
 
   const hasVault = useWalletStore((s) => s.hasVault);
+  const bootstrap = useWalletStore((s) => s.bootstrap);
   const createVault = useWalletStore((s) => s.createVault);
 
   useEffect(() => {
-    if (hasVault === true && !overwriteAcknowledged) {
+    void bootstrap();
+  }, [bootstrap]);
+
+  // Restoring stores a vault itself, which must not read as one to overwrite.
+  useEffect(() => {
+    if (hasVault === true && !overwriteAcknowledged && step !== 'restoring') {
       setShowOverwriteModal(true);
     }
-  }, [hasVault, overwriteAcknowledged]);
+  }, [hasVault, overwriteAcknowledged, step]);
 
   const wordCount = mnemonic.trim().split(/\s+/).filter(Boolean).length;
 
   const driveAvailable = isDriveBackupConfigured();
 
-  const handlePhraseSubmit = () => {
+  // Asks before overwriting even if the user acts before the vault check resolves.
+  const confirmOverwriteFirst = async () => {
+    if (overwriteAcknowledged) return false;
+    await bootstrap();
+    if (!useWalletStore.getState().hasVault) return false;
+    setShowOverwriteModal(true);
+    return true;
+  };
+
+  const handlePhraseSubmit = async () => {
     setError('');
-    if (hasVault && !overwriteAcknowledged) {
-      setShowOverwriteModal(true);
-      return;
-    }
+    if (await confirmOverwriteFirst()) return;
     const cleaned = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
     if (!validateMnemonic(cleaned)) {
       setError(t('restore.phrase.invalid'));
@@ -69,6 +81,7 @@ export default function RestoreWalletPage() {
       setError(t('create.password.mismatch'));
       return;
     }
+    if (await confirmOverwriteFirst()) return;
     setStep('restoring');
     try {
       await createVault(mnemonic, password);
@@ -79,12 +92,9 @@ export default function RestoreWalletPage() {
     }
   };
 
-  const handleDriveRestore = () => {
+  const handleDriveRestore = async () => {
     setError('');
-    if (hasVault && !overwriteAcknowledged) {
-      setShowOverwriteModal(true);
-      return;
-    }
+    if (await confirmOverwriteFirst()) return;
     try {
       startDriveAuthFlow({ type: 'restore', returnTo: '/welcome' });
     } catch (err) {
@@ -133,7 +143,7 @@ export default function RestoreWalletPage() {
               </div>
             </button>
             <button type="button"
-              onClick={handleDriveRestore}
+              onClick={() => void handleDriveRestore()}
               disabled={!driveAvailable}
               className={methodClass}
             >
@@ -190,7 +200,7 @@ export default function RestoreWalletPage() {
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={handlePhraseSubmit}
+                  onClick={() => void handlePhraseSubmit()}
                   disabled={wordCount !== 12}
                   className="w-full"
                 >
@@ -270,7 +280,7 @@ export default function RestoreWalletPage() {
         open={showOverwriteModal}
         onClose={() => {
           setShowOverwriteModal(false);
-          if (!overwriteAcknowledged) router.back();
+          if (!overwriteAcknowledged) router.replace('/welcome');
         }}
         title={t('restore.overwrite.title')}
         description={t('restore.overwrite.description')}
@@ -281,7 +291,7 @@ export default function RestoreWalletPage() {
             size="lg"
             onClick={() => {
               setShowOverwriteModal(false);
-              router.back();
+              router.replace('/welcome');
             }}
             className="flex-1"
           >

@@ -28,6 +28,10 @@ vi.mock("@/lib/crypto/encryption", () => ({
   }),
 }));
 
+const { disconnectBreez } = vi.hoisted(() => ({ disconnectBreez: vi.fn(async () => {}) }));
+
+vi.mock("@/lib/lightning/breez-service", () => ({ disconnectBreez }));
+
 async function loadStore() {
   const { useWalletStore } = await import("../wallet-store");
   return useWalletStore;
@@ -48,6 +52,48 @@ describe("wallet store", () => {
     vi.resetModules();
     storedBlob = null;
     window.sessionStorage.clear();
+    disconnectBreez.mockClear();
+  });
+
+  it("disconnects the SDK on lock so it no longer holds the seed", async () => {
+    const store = await loadStore();
+    await store.getState().bootstrap();
+    await store.getState().createVault(MNEMONIC, PASSWORD);
+    disconnectBreez.mockClear();
+
+    store.getState().lock();
+
+    expect(disconnectBreez).toHaveBeenCalledTimes(1);
+    expect(store.getState().getMnemonic()).toBeNull();
+  });
+
+  it("starts a new session whenever the wallet in memory changes", async () => {
+    const store = await loadStore();
+    await store.getState().bootstrap();
+    const sessions = [store.getState().session];
+    const record = () => sessions.push(store.getState().session);
+
+    await store.getState().createVault(MNEMONIC, PASSWORD);
+    record();
+    store.getState().lock();
+    record();
+    await store.getState().unlock(PASSWORD);
+    record();
+    await store.getState().destroyVault();
+    record();
+
+    expect(new Set(sessions).size).toBe(sessions.length);
+  });
+
+  it("disconnects the previous wallet before storing a restored one", async () => {
+    const store = await loadStore();
+    await store.getState().bootstrap();
+    await store.getState().createVault(MNEMONIC, PASSWORD);
+    disconnectBreez.mockClear();
+
+    await store.getState().createVault(generateMnemonic(), PASSWORD);
+
+    expect(disconnectBreez).toHaveBeenCalledTimes(1);
   });
 
   it("never writes the mnemonic to browser storage", async () => {
