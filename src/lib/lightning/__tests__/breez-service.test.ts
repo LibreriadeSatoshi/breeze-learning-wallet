@@ -2,7 +2,7 @@ import type { PrepareSendPaymentResponse } from "@breeztech/breez-sdk-spark";
 
 const { wasmInit, connect, disconnect, sendPayment } = vi.hoisted(() => {
   const disconnect = vi.fn(async () => {});
-  const sendPayment = vi.fn(async () => ({}));
+  const sendPayment = vi.fn(async (_request: { options?: unknown }) => ({}));
   return {
     wasmInit: vi.fn(async () => {}),
     disconnect,
@@ -58,19 +58,22 @@ describe("breez service", () => {
     expect(disconnect).toHaveBeenCalledTimes(1);
   });
 
-  it("sends on-chain at the speed whose fee was quoted", async () => {
+  it("sends with the options whose fee was quoted", async () => {
     const { initBreez, executeSend, ONCHAIN_SPEED } = await loadService();
     await initBreez(CONFIG);
-    const onchain = { paymentMethod: { type: "bitcoinAddress" } } as PrepareSendPaymentResponse;
-    const spark = { paymentMethod: { type: "sparkAddress" } } as PrepareSendPaymentResponse;
+    const prep = (paymentMethod: object) => ({ paymentMethod }) as PrepareSendPaymentResponse;
+    const onchain = prep({ type: "bitcoinAddress" });
+    const sparkRoute = prep({ type: "bolt11Invoice", lightningFeeSats: 5, sparkTransferFeeSats: 0 });
+    const lightningOnly = prep({ type: "bolt11Invoice", lightningFeeSats: 5 });
+    const spark = prep({ type: "sparkAddress" });
 
-    await executeSend(onchain);
-    await executeSend(spark);
+    for (const p of [onchain, sparkRoute, lightningOnly, spark]) await executeSend(p);
 
-    expect(sendPayment).toHaveBeenNthCalledWith(1, {
-      prepareResponse: onchain,
-      options: { type: "bitcoinAddress", confirmationSpeed: ONCHAIN_SPEED },
-    });
-    expect(sendPayment).toHaveBeenNthCalledWith(2, { prepareResponse: spark, options: undefined });
+    expect(sendPayment.mock.calls.map(([request]) => request.options)).toEqual([
+      { type: "bitcoinAddress", confirmationSpeed: ONCHAIN_SPEED },
+      { type: "bolt11Invoice", preferSpark: true },
+      { type: "bolt11Invoice", preferSpark: false },
+      undefined,
+    ]);
   });
 });

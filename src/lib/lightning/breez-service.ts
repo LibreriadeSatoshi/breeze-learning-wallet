@@ -420,24 +420,20 @@ export async function executeSend(
   prepareResponse: PrepareSendResult,
 ): Promise<SendPaymentResponse> {
   if (!sdk) throw new Error("Wallet not ready.");
-  // Without options the SDK sends on-chain at its own default speed, not the
-  // one whose fee the user confirmed.
-  const options: SendPaymentOptions | undefined =
-    prepareResponse.paymentMethod.type === "bitcoinAddress"
-      ? { type: "bitcoinAddress", confirmationSpeed: ONCHAIN_SPEED }
-      : undefined;
-  try {
-    return await sdk.sendPayment({ prepareResponse, options });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Send failed";
-    if (message.includes("insufficient")) {
-      throw new Error("Insufficient balance to complete payment");
-    } else if (message.includes("route")) {
-      throw new Error("Unable to find route to destination");
-    } else if (message.includes("timeout")) {
-      throw new Error("Payment timed out. Please try again.");
-    }
-    throw new Error(message);
+  return sdk.sendPayment({ prepareResponse, options: sendOptions(prepareResponse) });
+}
+
+// Without options the SDK picks its own on-chain speed and pays BOLT11 over
+// Lightning, so the send wouldn't match the fee the user confirmed.
+function sendOptions(prepareResponse: PrepareSendResult): SendPaymentOptions | undefined {
+  const method = prepareResponse.paymentMethod;
+  switch (method.type) {
+    case "bitcoinAddress":
+      return { type: "bitcoinAddress", confirmationSpeed: ONCHAIN_SPEED };
+    case "bolt11Invoice":
+      return { type: "bolt11Invoice", preferSpark: method.sparkTransferFeeSats != null };
+    default:
+      return undefined;
   }
 }
 
