@@ -345,6 +345,7 @@
     "lightning": {
       "settingUp": "Setting up your Lightning address…",
       "setupFailed": "Couldn't set up Lightning address",
+      "loadFailed": "Couldn't load your Lightning address",
       "addressTitle": "Your Lightning address",
       "addressSubtitle": "Share this with anyone who wants to pay you over Lightning.",
       "editUsername": "Edit username"

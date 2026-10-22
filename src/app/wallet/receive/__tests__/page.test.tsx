@@ -27,4 +27,12 @@ describe("Receive page", () => {
     await screen.findByRole("button", { name: /try again/i });
     expect(registerLightningAddress).toHaveBeenCalledTimes(6);
   });
+
+  it("does not claim a new address when the lookup fails", async () => {
+    vi.mocked(getLightningAddress).mockRejectedValue(new Error("network down"));
+    renderWithProviders(<ReceivePage />);
+
+    expect(await screen.findByText(/couldn't load your lightning address/i)).toBeVisible();
+    expect(registerLightningAddress).not.toHaveBeenCalled();
+  });
 });

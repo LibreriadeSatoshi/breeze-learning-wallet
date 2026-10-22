@@ -153,7 +153,7 @@ function LightningPanel({
   onReceived: (d: ReceivedPaymentDetails) => void;
 }) {
   const t = useT();
-  const { data: lnAddress, isLoading, refetch } = useLightningAddress(true);
+  const { data: lnAddress, isLoading, isError, refetch } = useLightningAddress(true);
   const registerMutation = useRegisterLightningAddress();
   const receiveMutation = useReceiveLightning();
   const [autoClaimError, setAutoClaimError] = useState("");
@@ -183,12 +183,13 @@ function LightningPanel({
     tryingRef.current = false;
   }, [registerMutation, refetch, t]);
 
-  // Once per visit: a failure must wait for the user's retry, not loop.
+  // Once per visit, and only when the lookup confirmed there is no address:
+  // registering after a failed lookup would replace the user's address.
   useEffect(() => {
-    if (autoClaimedRef.current || isLoading || lnAddress) return;
+    if (autoClaimedRef.current || lnAddress !== null) return;
     autoClaimedRef.current = true;
     void autoClaim();
-  }, [isLoading, lnAddress, autoClaim]);
+  }, [lnAddress, autoClaim]);
 
   if (isLoading || registerMutation.isPending) {
     return (
@@ -200,6 +201,17 @@ function LightningPanel({
           </p>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="mb-6 space-y-4">
+        <StatusNote status="error">{t("receive.lightning.loadFailed")}</StatusNote>
+        <Button variant="primary" onClick={() => void refetch()}>
+          {t("common.retry")}
+        </Button>
+      </div>
     );
   }
 

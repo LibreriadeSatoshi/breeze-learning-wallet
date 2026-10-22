@@ -345,6 +345,7 @@
     "lightning": {
       "settingUp": "Configurando tu dirección Lightning…",
       "setupFailed": "No se pudo configurar la dirección Lightning",
+      "loadFailed": "No se pudo cargar tu dirección Lightning",
       "addressTitle": "Tu dirección Lightning",
       "addressSubtitle": "Compártela con cualquiera que quiera pagarte por Lightning.",
       "editUsername": "Editar"
