@@ -1,6 +1,6 @@
-# Scholar Wallet
+# ISMOS Wallet
 
-A non-custodial Bitcoin/Lightning wallet, served as a Next.js web app at `wallet.libreriadesatoshi.com`.
+A non-custodial Bitcoin/Lightning wallet, served as a Next.js web app at `wallet.ismos.xyz`.
 
 The mnemonic is generated in the browser, stored encrypted in the browser, and never sent to any server in plaintext. Wallet signing and networking are handled by Breez SDK Spark.
 

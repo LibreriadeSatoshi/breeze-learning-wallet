@@ -1,5 +1,5 @@
 {
-  "name": "etta-wallet-web",
+  "name": "ismos-wallet",
   "version": "0.1.0",
   "private": true,
   "packageManager": "yarn@4.17.0",
@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@breeztech/breez-sdk-spark": "^0.21.0",
+    "@breeztech/breez-sdk-spark": "^0.26.1",
     "@tanstack/react-query": "^5.90.10",
     "bip39": "^3.1.0",
     "hash-wasm": "^4.12.0",
@@ -38,6 +38,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8",
     "eslint-config-next": "15.5.20",
+    "fake-indexeddb": "6.2.5",
     "jsdom": "25",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",

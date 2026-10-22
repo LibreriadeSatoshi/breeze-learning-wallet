@@ -1,10 +1,10 @@
-# Scholar Wallet
+# ISMOS Wallet
 
 ## What this project is
 
-Scholar Wallet is a standalone, non-custodial Bitcoin and Lightning wallet built with Breez SDK Spark and served as a Next.js web application.
+ISMOS Wallet is a standalone, non-custodial Bitcoin and Lightning wallet built with Breez SDK Spark and served as a Next.js web application.
 
-Production: https://wallet.libreriadesatoshi.com/
+Production: https://wallet.ismos.xyz/
 
 ## Architectural principles
 
@@ -45,7 +45,7 @@ The UI follows the ISMOS design system (https://claude.ai/artifact/FCQ2UFbKVRJub
 - **Lightning must remain primary.** On the first visit to Receive, the wallet must claim a random Lightning address (`<adjective>-<noun>-<NNN>@<lnurl-domain>`). Users may edit the username; replacing it must release the previous address.
 - A one-time BOLT11 invoice must remain a secondary option for specific-amount requests.
 - Bitcoin address must remain a secondary tab, which is generated each time the receive page mounts and described as funds being added to the wallet after confirmation.
-- The Lightning address domain must come from `NEXT_PUBLIC_LNURL_DOMAIN` (default `pay.libreriadesatoshi.com`) and be whitelisted by Breez using a CNAME to `breez.tips`.
+- The Lightning address domain must come from `NEXT_PUBLIC_LNURL_DOMAIN` (production uses `pay.ismos.xyz`) and be whitelisted by Breez using a CNAME to `breez.tips`.
 
 ### On-chain claim handling
 - Auto-claim must run silently with a conservative, user-configurable maximum fee leeway in sat/vB.

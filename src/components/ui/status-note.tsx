@@ -32,14 +32,17 @@ interface StatusNoteProps {
   children: React.ReactNode;
   className?: string;
   role?: "alert" | "status";
+  quiet?: boolean;
 }
 
 // Status is never carried by colour alone: colour, icon and the word together.
-export function StatusNote({ status, children, className = "", role }: StatusNoteProps) {
+// Quiet keeps the icon, word and border but drops the fill, so Weld stays on the one critical warning per screen.
+export function StatusNote({ status, children, className = "", role, quiet = false }: StatusNoteProps) {
   const t = useT();
   const Icon = icons[status];
+  const look = quiet ? "border-1.5 border-strong text-fg" : styles[status];
   return (
-    <div role={role} className={`rounded p-4 ${styles[status]} ${className}`}>
+    <div role={role} className={`rounded p-4 ${look} ${className}`}>
       <p className="flex items-center gap-2 font-mono text-label font-semibold tracking-label">
         <Icon aria-hidden="true" className="h-5 w-5 flex-none" />
         {t(words[status])}

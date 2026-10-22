@@ -3,12 +3,12 @@ import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 import { clearLocalDriveState } from "@/lib/backup/drive-client";
 import { disconnectBreez } from "@/lib/lightning/breez-service";
+import { migrateLegacyStorageKeys, storageKey } from "@/lib/storage/storage-keys";
 
 let mnemonicInMemory: string | null = null;
 
-const SESSION_KEY_MNEMONIC = "scholar-wallet:session-mnemonic";
-const STORAGE_KEY_AUTH_MODE = "scholar-wallet:auth-mode";
-const STORAGE_KEY_SHOW_BALANCE = "scholar-wallet:show-balance";
+const STORAGE_KEY_AUTH_MODE = storageKey("auth-mode");
+const STORAGE_KEY_SHOW_BALANCE = storageKey("show-balance");
 
 const LEGACY_STORAGE_KEYS = [
   "etta-wallet-storage",
@@ -20,21 +20,10 @@ export type AuthMode = "password" | "passkey";
 
 function persistMnemonic(mnemonic: string) {
   mnemonicInMemory = mnemonic;
-  if (typeof window !== "undefined") {
-    window.sessionStorage.setItem(SESSION_KEY_MNEMONIC, mnemonic);
-  }
 }
 
 function clearMnemonic() {
   mnemonicInMemory = null;
-  if (typeof window !== "undefined") {
-    window.sessionStorage.removeItem(SESSION_KEY_MNEMONIC);
-  }
-}
-
-function readSessionMnemonic(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.sessionStorage.getItem(SESSION_KEY_MNEMONIC);
 }
 
 function readAuthMode(): AuthMode | null {
@@ -83,24 +72,21 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
 
   bootstrap: async () => {
     if (get().isBootstrapped) return;
+    migrateLegacyStorageKeys();
     if (typeof window !== "undefined") {
       for (const key of LEGACY_STORAGE_KEYS) {
         window.localStorage.removeItem(key);
       }
     }
     const blob = await loadVault();
-    const session = readSessionMnemonic();
     const mode = readAuthMode();
     const hasVault = blob !== null || mode === "passkey";
     const showBalance = readShowBalance();
 
-    if (session && hasVault) {
-      mnemonicInMemory = session;
-    }
     set({
       hasVault,
       authMode: mode,
-      isUnlocked: session !== null && hasVault,
+      isUnlocked: hasVault && mnemonicInMemory !== null,
       isBootstrapped: true,
       showBalance,
     });

@@ -13,6 +13,7 @@ import {
   useRecommendedFees,
 } from "@/hooks/use-breez";
 import { useT } from "@/lib/i18n/hook";
+import { isRejectedDeposit } from "@/lib/lightning/deposits";
 import type { DepositInfo, RecommendedFees } from "@breeztech/breez-sdk-spark";
 
 type FeeChoice = "fast" | "medium" | "slow" | "custom";
@@ -25,7 +26,7 @@ export default function RecoveryPage() {
   const { data: allDeposits = [], refetch } = useUnclaimedDeposits(isUnlocked);
   const { data: fees } = useRecommendedFees(isUnlocked);
 
-  const rejected = allDeposits.filter((d) => d.claimError);
+  const rejected = allDeposits.filter(isRejectedDeposit);
 
   useEffect(() => {
     if (!isUnlocked) router.push("/welcome");

@@ -89,16 +89,7 @@ export default function ReceivePage() {
   return (
     <div>
       <div className="max-w-reading mx-auto px-4 py-6 sm:px-6">
-        <div className="flex items-center gap-2 mb-6">
-          <button type="button"
-            onClick={() => router.back()}
-            aria-label={t("common.back")}
-            className="-ml-3 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg hover:bg-raised transition-colors duration-fast"
-          >
-            <ArrowLeft aria-hidden="true" className="h-6 w-6" />
-          </button>
-          <h1 className="font-serif text-h2 text-heading">{t("receive.title")}</h1>
-        </div>
+        <ReceiveHeader onBack={() => router.back()} />
 
         <div className="mb-6 grid grid-cols-3 gap-4 border-b border-hairline">
           {RECEIVE_METHODS.map(({ id, icon: Icon }) => {
@@ -136,6 +127,22 @@ export default function ReceivePage() {
         )}
         {paymentMethod === "spark" && <SparkPanel onReceived={setReceived} />}
       </div>
+    </div>
+  );
+}
+
+function ReceiveHeader({ onBack }: { onBack: () => void }) {
+  const t = useT();
+  return (
+    <div className="flex items-center gap-2 mb-6">
+      <button type="button"
+        onClick={onBack}
+        aria-label={t("common.back")}
+        className="-ml-3 inline-flex min-h-control min-w-[44px] items-center justify-center rounded text-fg hover:bg-raised transition-colors duration-fast"
+      >
+        <ArrowLeft aria-hidden="true" className="h-6 w-6" />
+      </button>
+      <h1 className="font-serif text-h2 text-heading">{t("receive.title")}</h1>
     </div>
   );
 }
@@ -436,6 +443,7 @@ function SuccessView({
   const formattedDate = new Date(details.timestamp * 1000).toLocaleString();
   return (
     <div className="max-w-reading mx-auto px-4 py-6 sm:px-6">
+      <ReceiveHeader onBack={onDone} />
       <StatusNote status="success" className="mb-6">
         <h2 className="font-serif text-h2 text-heading">{t("receive.success.title")}</h2>
         <p className="mt-2 font-mono text-h2 font-medium tabular-nums text-fg">

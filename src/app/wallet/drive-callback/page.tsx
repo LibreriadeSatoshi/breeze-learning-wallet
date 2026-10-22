@@ -32,7 +32,7 @@ export default function DriveCallbackPage() {
   useEffect(() => {
     if (ranRef.current) return;
     ranRef.current = true;
-    (async () => {
+    void (async () => {
       const params = new URLSearchParams(window.location.search);
       const result = await handleDriveCallback(params);
 

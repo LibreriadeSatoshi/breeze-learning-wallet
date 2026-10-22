@@ -55,7 +55,7 @@ export default function WelcomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const ok = await isPasskeySupported();
       if (!cancelled) setPasskeyAvailable(ok);
     })();
@@ -197,7 +197,7 @@ export default function WelcomePage() {
                 placeholder={t("welcome.unlock.passwordPlaceholder")}
                 disabled={unlocking}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleUnlock();
+                  if (e.key === "Enter") void handleUnlock();
                 }}
                 autoFocus
               />

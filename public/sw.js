@@ -2,14 +2,13 @@
 // Skips API calls, websockets, and cross-origin requests so they always
 // go to the network.
 
-const CACHE_NAME = 'scholar-wallet-v1';
+const CACHE_NAME = 'ismos-wallet-v1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.webmanifest',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon-maskable-192.png',
-  '/icons/icon-maskable-512.png',
+  '/icons/icon.png',
+  '/brand/ismos-mark-ink.svg',
+  '/brand/ismos-mark-paper.svg',
 ];
 
 self.addEventListener('install', (event) => {

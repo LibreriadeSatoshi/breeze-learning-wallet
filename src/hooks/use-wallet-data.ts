@@ -1,5 +1,6 @@
 import { useBalance, useConversionLimits, usePayments, useRefreshBreez, useToggleStableBalance, useUnclaimedDeposits, useUserSettings } from "./use-breez";
 import { useFiat } from "./use-fiat";
+import { isRejectedDeposit } from "@/lib/lightning/deposits";
 
 export const useWalletData = (isReady: boolean) => {
   const { data: balances, isLoading: balanceLoading } = useBalance(isReady);
@@ -16,7 +17,7 @@ export const useWalletData = (isReady: boolean) => {
     useToggleStableBalance();
   const { data: conversionLimits, isLoading: convertionLimitLoading } =
     useConversionLimits(isReady);
-  const rejectedDeposits = unclaimedDeposits.filter((d) => d.claimError);
+  const rejectedDeposits = unclaimedDeposits.filter(isRejectedDeposit);
   const { data: userSettings, isLoading: userSettingsLoading } =
     useUserSettings(isReady);
 
