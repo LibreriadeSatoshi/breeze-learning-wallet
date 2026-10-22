@@ -59,6 +59,18 @@ export function pickBip21Method(bip21: Bip21): { input: string; parsed: InputTyp
   return null;
 }
 
+// The SDK rejects any other amount for a destination that fixes its own.
+export function fixedAmountSat(parsed: InputType): number | undefined {
+  switch (parsed.type) {
+    case "bolt11Invoice":
+      return parsed.amountMsat == null ? undefined : Math.ceil(parsed.amountMsat / 1000);
+    case "sparkInvoice":
+      return parsed.amount == null || parsed.tokenIdentifier ? undefined : Number(parsed.amount);
+    default:
+      return undefined;
+  }
+}
+
 export const WALLET_NETWORK: BitcoinNetwork =
   SELECTED_BITCOIN_NETWORK === "mainnet" ? "bitcoin" : "regtest";
 
@@ -122,7 +134,7 @@ const SEND_ERRORS: ReadonlyArray<[RegExp, string]> = [
   [/network error|failed to fetch/i, "send.errors.offline"],
   [/insufficient/i, "send.errors.insufficientFunds"],
   [/amount is required/i, "send.errors.amountRequired"],
-  [/expired/i, "send.errors.expired"],
+  [/invoice (has )?expired|expired invoice/i, "send.errors.expired"],
   [/amount too (small|large)|dust/i, "send.errors.amountOutOfRange"],
   [/route/i, "send.errors.noRoute"],
   [/timed? ?out/i, "send.errors.timeout"],

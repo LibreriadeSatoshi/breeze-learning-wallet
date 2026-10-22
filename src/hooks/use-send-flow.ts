@@ -19,6 +19,7 @@ import {
   type PrepareResult,
   describeUnsupported,
   destinationKindForParsed,
+  fixedAmountSat,
   isOtherNetwork,
   overspends,
   pickBip21Method,
@@ -163,6 +164,12 @@ export function useSendFlow() {
       const resolved = await resolveDestination();
       if (!resolved) return;
 
+      const fixed = fixedAmountSat(resolved.parsed);
+      if (fixed !== undefined) {
+        amount.setFromSats(fixed);
+        return;
+      }
+
       const prep = await preparePayment(resolved, totalBalanceSats);
       if (!prep) return;
 
@@ -188,11 +195,12 @@ export function useSendFlow() {
       const resolved = await resolveDestination();
       if (!resolved) return;
 
-      // A payment link's amount fills in for an empty field, and shows there.
-      const amountSat = amount.amountSat ?? resolved.amountSat;
-      if (amount.amountSat === undefined && resolved.amountSat !== undefined) {
-        amount.setFromSats(resolved.amountSat);
-      }
+      // An invoice's own amount wins and goes unsent; a payment link's amount
+      // only fills an empty field. Either one shows in the field.
+      const fixed = fixedAmountSat(resolved.parsed);
+      const amountSat = fixed === undefined ? (amount.amountSat ?? resolved.amountSat) : undefined;
+      const shown = fixed ?? amountSat;
+      if (shown !== undefined && shown !== amount.amountSat) amount.setFromSats(shown);
       const prep = await preparePayment(resolved, amountSat);
       if (!prep) return;
 

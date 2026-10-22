@@ -3,6 +3,7 @@ import {
   type PrepareResult,
   WALLET_NETWORK,
   describeRecipient,
+  fixedAmountSat,
   isOtherNetwork,
   pickBip21Method,
   readFeeSat,
@@ -41,6 +42,18 @@ describe("pickBip21Method", () => {
 
   it("returns nothing when no method is payable", () => {
     expect(pickBip21Method(bip21([{ type: "url" } as InputType]))).toBeNull();
+  });
+});
+
+describe("fixedAmountSat", () => {
+  it("reads the amount an invoice fixes, rounding msat up", () => {
+    expect(fixedAmountSat({ ...(bolt11 as object), amountMsat: 1_000_500 } as InputType)).toBe(1001);
+    expect(fixedAmountSat(bolt11)).toBeUndefined();
+    expect(fixedAmountSat({ type: "sparkInvoice", amount: "2500" } as InputType)).toBe(2500);
+    expect(
+      fixedAmountSat({ type: "sparkInvoice", amount: "2500", tokenIdentifier: "btkn1" } as InputType),
+    ).toBeUndefined();
+    expect(fixedAmountSat(onchain)).toBeUndefined();
   });
 });
 
