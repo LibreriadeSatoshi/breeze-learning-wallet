@@ -98,4 +98,28 @@ describe("Send page", () => {
     expect(await screen.findByText(/different bitcoin network/i)).toBeVisible();
     expect(prepareSend).not.toHaveBeenCalled();
   });
+
+  it("says a payment link's only invoice has expired", async () => {
+    vi.mocked(parseInput).mockResolvedValue({
+      type: "bip21",
+      uri: "bitcoin:?lightning=lnbcrt1old",
+      extras: [],
+      paymentMethods: [
+        {
+          type: "bolt11Invoice",
+          invoice: { bolt11: "lnbcrt1old" },
+          network: WALLET_NETWORK,
+          timestamp: 1_000,
+          expiry: 3600,
+        },
+      ],
+    } as unknown as InputType);
+    const user = userEvent.setup();
+    renderWithProviders(<SendPage />);
+
+    await submit(user, "bitcoin:?lightning=lnbcrt1old");
+
+    expect(await screen.findByText(/this invoice has expired/i)).toBeVisible();
+    expect(prepareSend).not.toHaveBeenCalled();
+  });
 });

@@ -37,7 +37,8 @@ export function SendConfirmStep({
   const destLabel = describeDestination(prepareResult, t);
   const recipient = describeRecipient(prepareResult);
   // Lightning addresses are read whole; long machine strings keep both ends to compare.
-  const shownRecipient = recipient.to.includes("@") ? recipient.to : truncateStr(recipient.to, 14, 10);
+  const isLightningAddress = recipient.to.includes("@");
+  const shownRecipient = isLightningAddress ? recipient.to : truncateStr(recipient.to, 10, 8);
 
   return (
     <div>
@@ -81,7 +82,10 @@ export function SendConfirmStep({
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-fg-muted">{t("send.to")}</span>
-              <span title={recipient.to} className="min-w-0 break-all text-right font-mono text-fg">
+              <span
+                title={recipient.to}
+                className={`min-w-0 text-right font-mono text-fg ${isLightningAddress ? "break-all" : "whitespace-nowrap"}`}
+              >
                 {shownRecipient}
               </span>
             </div>

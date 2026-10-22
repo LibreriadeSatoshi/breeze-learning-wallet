@@ -135,7 +135,9 @@ export function useSendFlow() {
       const bip21 = resolved.parsed;
       const method = pickBip21Method(bip21);
       if (!method) {
-        setError(t("send.unsupported.bip21"));
+        // Invoices come first, so one left unpicked has expired.
+        const expired = bip21.paymentMethods.some((m) => m.type === "bolt11Invoice");
+        setError(t(expired ? "send.errors.expired" : "send.unsupported.bip21"));
         return null;
       }
       resolved = {

@@ -14,10 +14,13 @@ type Bip21 = Extract<InputType, { type: "bip21" }>;
 
 const onchain = { type: "bitcoinAddress", address: "bcrt1qaddr", network: WALLET_NETWORK } as InputType;
 const spark = { type: "sparkAddress", address: "sparkrt1addr", network: WALLET_NETWORK } as InputType;
+const NOW_SEC = 1_800_000_000;
 const bolt11 = {
   type: "bolt11Invoice",
   invoice: { bolt11: "lnbcrt1invoice" },
   network: WALLET_NETWORK,
+  timestamp: NOW_SEC - 60,
+  expiry: 3600,
 } as InputType;
 
 function bip21(paymentMethods: InputType[]): Bip21 {
@@ -35,13 +38,17 @@ function sendPrep(paymentMethod: object, memo?: string): PrepareResult {
 
 describe("pickBip21Method", () => {
   it("prefers Lightning, then Spark, then on-chain", () => {
-    expect(pickBip21Method(bip21([onchain, spark, bolt11]))).toEqual({ input: "lnbcrt1invoice", parsed: bolt11 });
-    expect(pickBip21Method(bip21([onchain, spark]))).toEqual({ input: "sparkrt1addr", parsed: spark });
-    expect(pickBip21Method(bip21([onchain]))).toEqual({ input: "bcrt1qaddr", parsed: onchain });
+    expect(pickBip21Method(bip21([onchain, spark, bolt11]), NOW_SEC)).toEqual({ input: "lnbcrt1invoice", parsed: bolt11 });
+    expect(pickBip21Method(bip21([onchain, spark]), NOW_SEC)).toEqual({ input: "sparkrt1addr", parsed: spark });
+    expect(pickBip21Method(bip21([onchain]), NOW_SEC)).toEqual({ input: "bcrt1qaddr", parsed: onchain });
+  });
+
+  it("falls back from an expired invoice to the link's other methods", () => {
+    expect(pickBip21Method(bip21([bolt11, onchain]), NOW_SEC + 3600)).toEqual({ input: "bcrt1qaddr", parsed: onchain });
   });
 
   it("returns nothing when no method is payable", () => {
-    expect(pickBip21Method(bip21([{ type: "url" } as InputType]))).toBeNull();
+    expect(pickBip21Method(bip21([{ type: "url" } as InputType]), NOW_SEC)).toBeNull();
   });
 });
 

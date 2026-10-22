@@ -49,10 +49,18 @@ function paymentString(method: InputType): string | null {
   }
 }
 
-// The SDK parses a BIP21 URI but can't prepare a payment to it directly.
-export function pickBip21Method(bip21: Bip21): { input: string; parsed: InputType } | null {
+function isExpired(method: InputType, nowSec: number): boolean {
+  return method.type === "bolt11Invoice" && method.timestamp + method.expiry <= nowSec;
+}
+
+// The SDK parses a BIP21 URI but can't prepare a payment to it directly. An
+// expired invoice falls through to the link's other methods, which still work.
+export function pickBip21Method(
+  bip21: Bip21,
+  nowSec: number = Math.floor(Date.now() / 1000),
+): { input: string; parsed: InputType } | null {
   for (const type of BIP21_PREFERENCE) {
-    const method = bip21.paymentMethods.find((m) => m.type === type);
+    const method = bip21.paymentMethods.find((m) => m.type === type && !isExpired(m, nowSec));
     const input = method && paymentString(method);
     if (method && input) return { input, parsed: method };
   }
