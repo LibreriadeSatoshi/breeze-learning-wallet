@@ -60,9 +60,11 @@ async function getBreezApiKey(): Promise<string> {
   return data.apiKey;
 }
 
+// Pre-rebrand name kept on purpose: renaming would orphan the SDK's local database.
+export const SDK_STORAGE_DIR = "scholar-wallet-data";
+
 export interface BreezSparkConfig {
   network: "mainnet" | "regtest";
-  storageDir?: string;
   mnemonic: string;
   lnurlDomain?: string;
   claimLeewaySatPerVbyte?: number;
@@ -127,7 +129,7 @@ async function connectSdk(config: BreezSparkConfig): Promise<void> {
   sdk = await connect({
     config: sdkConfig,
     seed: { type: "mnemonic", mnemonic: config.mnemonic },
-    storageDir: config.storageDir ?? "scholar-wallet-data",
+    storageDir: SDK_STORAGE_DIR,
   });
 
   await setupEventListener();
@@ -665,4 +667,33 @@ export function disconnectBreez(): Promise<void> {
       clearTimeout(timer);
     }
   });
+}
+
+const DELETE_DB_TIMEOUT_MS = 5_000;
+
+function deleteDatabase(name: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(name);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error ?? new Error(`Couldn't delete ${name}`));
+    // A connection the SDK left open delays the delete until it closes; the
+    // browser still finishes it, so don't hold the user on it.
+    request.onblocked = () => setTimeout(resolve, DELETE_DB_TIMEOUT_MS);
+  });
+}
+
+// Removes everything the SDK cached on this device: payment history, the
+// Lightning address and deposit addresses. Restoring the phrase rebuilds it
+// from the network.
+export async function deleteSdkStorage(): Promise<void> {
+  await disconnectBreez();
+  if (typeof indexedDB === "undefined" || !indexedDB.databases) {
+    console.warn("Can't list IndexedDB databases; the SDK's local data was left in place.");
+    return;
+  }
+  const prefix = `${SDK_STORAGE_DIR}/`;
+  const names = (await indexedDB.databases())
+    .map((db) => db.name)
+    .filter((name): name is string => !!name?.startsWith(prefix));
+  await Promise.all(names.map(deleteDatabase));
 }
