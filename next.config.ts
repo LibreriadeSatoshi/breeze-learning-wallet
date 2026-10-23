@@ -23,31 +23,11 @@ const contentSecurityPolicy = [
   ...(isDev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
-const permissionsPolicy = [
-  "camera=()",
-  "microphone=()",
-  "geolocation=()",
-  "payment=()",
-  "usb=()",
-  "serial=()",
-  "bluetooth=()",
-  "hid=()",
-  "browsing-topics=()",
-  "publickey-credentials-get=(self)",
-  "publickey-credentials-create=(self)",
-  "clipboard-read=(self)",
-  "clipboard-write=(self)",
-].join(", ");
-
 const securityHeaders = [
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
-  { key: "X-Frame-Options", value: "DENY" },
-  { key: "Referrer-Policy", value: "strict-origin" },
-  { key: "Permissions-Policy", value: permissionsPolicy },
   // Google's sign-in window reports back to this page, which a stricter
   // opener policy would cut off.
   { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
-  { key: "X-Content-Type-Options", value: "nosniff" },
 ];
 
 const nextConfig: NextConfig = {
