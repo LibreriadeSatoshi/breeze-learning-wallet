@@ -28,9 +28,12 @@ vi.mock("@/lib/crypto/encryption", () => ({
   }),
 }));
 
-const { disconnectBreez } = vi.hoisted(() => ({ disconnectBreez: vi.fn(async () => {}) }));
+const { disconnectBreez, deleteSdkStorage } = vi.hoisted(() => ({
+  disconnectBreez: vi.fn(async () => {}),
+  deleteSdkStorage: vi.fn(async () => {}),
+}));
 
-vi.mock("@/lib/lightning/breez-service", () => ({ disconnectBreez }));
+vi.mock("@/lib/lightning/breez-service", () => ({ disconnectBreez, deleteSdkStorage }));
 
 async function loadStore() {
   const { useWalletStore } = await import("../wallet-store");
@@ -53,6 +56,7 @@ describe("wallet store", () => {
     storedBlob = null;
     window.sessionStorage.clear();
     disconnectBreez.mockClear();
+    deleteSdkStorage.mockClear();
   });
 
   it("disconnects the SDK on lock so it no longer holds the seed", async () => {
@@ -85,30 +89,30 @@ describe("wallet store", () => {
     expect(new Set(sessions).size).toBe(sessions.length);
   });
 
-  it("stores a Drive backup locked, with password unlock, and drops the old wallet", async () => {
+  it("stores a Drive backup locked, with password unlock, and clears the old wallet", async () => {
     const store = await loadStore();
     await store.getState().bootstrap();
     await store.getState().createVault(MNEMONIC, PASSWORD);
-    disconnectBreez.mockClear();
+    deleteSdkStorage.mockClear();
     const backup = new TextEncoder().encode(JSON.stringify({ plaintext: "other words", password: "pw" }));
 
     await store.getState().adoptVaultBackup(backup);
 
-    expect(disconnectBreez).toHaveBeenCalledTimes(1);
+    expect(deleteSdkStorage).toHaveBeenCalledTimes(1);
     expect(storedBlob).toEqual(backup);
     expect(store.getState()).toMatchObject({ hasVault: true, authMode: "password", isUnlocked: false });
     expect(store.getState().getMnemonic()).toBeNull();
   });
 
-  it("disconnects the previous wallet before storing a restored one", async () => {
+  it("clears the previous wallet's SDK data before storing a restored one", async () => {
     const store = await loadStore();
     await store.getState().bootstrap();
     await store.getState().createVault(MNEMONIC, PASSWORD);
-    disconnectBreez.mockClear();
+    deleteSdkStorage.mockClear();
 
     await store.getState().createVault(generateMnemonic(), PASSWORD);
 
-    expect(disconnectBreez).toHaveBeenCalledTimes(1);
+    expect(deleteSdkStorage).toHaveBeenCalledTimes(1);
   });
 
   it("never writes the mnemonic to browser storage", async () => {
@@ -177,8 +181,11 @@ describe("wallet store", () => {
     await store.getState().bootstrap();
     await store.getState().createVault(MNEMONIC, PASSWORD);
 
+    deleteSdkStorage.mockClear();
+
     await store.getState().destroyVault();
 
+    expect(deleteSdkStorage).toHaveBeenCalledTimes(1);
     expect(storedBlob).toBeNull();
     expect(store.getState().hasVault).toBe(false);
     expect(store.getState().getMnemonic()).toBeNull();

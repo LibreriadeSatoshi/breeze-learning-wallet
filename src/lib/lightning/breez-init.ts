@@ -21,8 +21,6 @@ export async function initializeBreezWallet(): Promise<InitResult> {
 
     await initBreez({
       network: SELECTED_BITCOIN_NETWORK,
-      // Pre-rebrand name kept on purpose: renaming would orphan the SDK's local database.
-      storageDir: "scholar-wallet-data",
       mnemonic,
       lnurlDomain: LNURL_DOMAIN,
       claimLeewaySatPerVbyte: getClaimLeeway(),

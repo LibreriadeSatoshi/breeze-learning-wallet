@@ -1,3 +1,4 @@
+import "fake-indexeddb/auto";
 import type { PrepareSendPaymentResponse } from "@breeztech/breez-sdk-spark";
 
 const { wasmInit, connect, disconnect, sendPayment, getPayment, emit } = vi.hoisted(() => {
@@ -113,5 +114,29 @@ describe("breez service", () => {
       await vi.advanceTimersByTimeAsync(5_000);
       await expect(outcome).resolves.toBe("pending");
     });
+  });
+
+  it("deletes only the SDK's databases when the wallet is forgotten", async () => {
+    const open = (name: string) =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open(name);
+        request.onsuccess = () => {
+          request.result.close();
+          resolve();
+        };
+        request.onerror = () => reject(request.error);
+      });
+    const sdkDbs = ["scholar-wallet-data/regtest/1a2b3c4d", "scholar-wallet-data/regtest/1a2b3c4d-tree"];
+    for (const name of [...sdkDbs, "ismos-wallet", "unrelated"]) await open(name);
+    const { initBreez, deleteSdkStorage } = await loadService();
+    await initBreez(CONFIG);
+
+    await deleteSdkStorage();
+
+    const left = (await indexedDB.databases()).map((db) => db.name);
+    expect(left).toEqual(expect.arrayContaining(["ismos-wallet", "unrelated"]));
+    expect(left).not.toEqual(expect.arrayContaining([sdkDbs[0]]));
+    expect(left).not.toEqual(expect.arrayContaining([sdkDbs[1]]));
+    expect(disconnect).toHaveBeenCalledTimes(1);
   });
 });
