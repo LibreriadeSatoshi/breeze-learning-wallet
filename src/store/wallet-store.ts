@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 import { clearLocalDriveState } from "@/lib/backup/drive-client";
-import { disconnectBreez } from "@/lib/lightning/breez-service";
+import { deleteSdkStorage, disconnectBreez } from "@/lib/lightning/breez-service";
 import { migrateLegacyStorageKeys, storageKey } from "@/lib/storage/storage-keys";
 
 let mnemonicInMemory: string | null = null;
@@ -103,7 +103,8 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
 
   createVault: async (mnemonic, password) => {
     const blob = await encryptMnemonic(mnemonic, password);
-    await disconnectBreez();
+    // A replaced wallet must leave nothing behind, like a forgotten one.
+    await deleteSdkStorage();
     await saveVault(blob);
     setAuthMode("password");
     persistMnemonic(mnemonic);
@@ -132,7 +133,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   },
 
   destroyVault: async () => {
-    await disconnectBreez();
+    await deleteSdkStorage();
     await clearVault();
     clearLocalDriveState();
     setAuthMode(null);
