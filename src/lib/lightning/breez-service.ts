@@ -18,6 +18,7 @@ import type {
   Conversion,
   Contact,
   OnchainConfirmationSpeed,
+  PaymentStatus,
   SendPaymentOptions,
 } from "@breeztech/breez-sdk-spark";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "./types";
@@ -416,11 +417,17 @@ export async function prepareSend(
   });
 }
 
+// The idempotency key makes the SDK send at most once for one confirmed payment.
 export async function executeSend(
   prepareResponse: PrepareSendResult,
+  idempotencyKey: string,
 ): Promise<SendPaymentResponse> {
   if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.sendPayment({ prepareResponse, options: sendOptions(prepareResponse) });
+  return sdk.sendPayment({
+    prepareResponse,
+    options: sendOptions(prepareResponse),
+    idempotencyKey,
+  });
 }
 
 // Without options the SDK picks its own on-chain speed and pays BOLT11 over
@@ -454,9 +461,46 @@ export async function prepareLnurlPay(
 
 export async function executeLnurlPay(
   prepareResponse: PrepareLnurlPayResult,
+  idempotencyKey: string,
 ): Promise<LnurlPayResponse> {
   if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.lnurlPay({ prepareResponse });
+  return sdk.lnurlPay({ prepareResponse, idempotencyKey });
+}
+
+// Lightning sends return while still pending; this waits for the payment's
+// outcome event, or gives up and reports it as still pending.
+export function waitForPaymentOutcome(
+  paymentId: string,
+  timeoutMs: number,
+): Promise<PaymentStatus> {
+  return new Promise((resolve) => {
+    let done = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let unsubscribe = () => {};
+    const finish = (status: PaymentStatus) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      unsubscribe();
+      resolve(status);
+    };
+    unsubscribe = onSdkEvent((event) => {
+      if (
+        (event.type === "paymentSucceeded" || event.type === "paymentFailed") &&
+        event.payment.id === paymentId
+      ) {
+        finish(event.payment.status);
+      }
+    });
+    timer = setTimeout(() => finish("pending"), timeoutMs);
+    // The outcome may have landed before the listener was added.
+    sdk
+      ?.getPayment({ paymentId })
+      .then(({ payment }) => {
+        if (payment.status !== "pending") finish(payment.status);
+      })
+      .catch(() => {});
+  });
 }
 
 export async function listUnclaimedDeposits(): Promise<DepositInfo[]> {

@@ -17,28 +17,20 @@ export type PrepareResult =
 
 type SendDestinationKind =
   | "bolt11"
-  | "bolt12"
   | "bitcoinAddress"
   | "sparkAddress"
   | "sparkInvoice";
 
 type Bip21 = Extract<InputType, { type: "bip21" }>;
 
-// Lightning first, then Spark, then on-chain: cheapest and fastest first.
-const BIP21_PREFERENCE = [
-  "bolt11Invoice",
-  "bolt12Offer",
-  "sparkInvoice",
-  "sparkAddress",
-  "bitcoinAddress",
-] as const;
+// Cheapest and fastest first. BOLT12 is missing because the SDK's
+// prepareSendPayment can't pay it yet.
+const BIP21_PREFERENCE = ["bolt11Invoice", "sparkInvoice", "sparkAddress", "bitcoinAddress"] as const;
 
 function paymentString(method: InputType): string | null {
   switch (method.type) {
     case "bolt11Invoice":
       return method.invoice.bolt11;
-    case "bolt12Offer":
-      return method.offer.offer;
     case "sparkInvoice":
       return method.invoice;
     case "sparkAddress":
@@ -50,7 +42,14 @@ function paymentString(method: InputType): string | null {
 }
 
 function isExpired(method: InputType, nowSec: number): boolean {
-  return method.type === "bolt11Invoice" && method.timestamp + method.expiry <= nowSec;
+  switch (method.type) {
+    case "bolt11Invoice":
+      return method.timestamp + method.expiry <= nowSec;
+    case "sparkInvoice":
+      return method.expiryTime != null && method.expiryTime <= nowSec;
+    default:
+      return false;
+  }
 }
 
 // The SDK parses a BIP21 URI but can't prepare a payment to it directly. An
@@ -203,10 +202,6 @@ export function destinationKindForParsed(parsed: InputType): SendDestinationKind
   switch (parsed.type) {
     case "bolt11Invoice":
       return "bolt11";
-    case "bolt12Offer":
-    case "bolt12Invoice":
-    case "bolt12InvoiceRequest":
-      return "bolt12";
     case "bitcoinAddress":
       return "bitcoinAddress";
     case "sparkAddress":
@@ -239,6 +234,10 @@ export function describeUnsupported(
       return t("send.unsupported.url");
     case "silentPaymentAddress":
       return t("send.unsupported.silentPayment");
+    case "bolt12Offer":
+    case "bolt12Invoice":
+    case "bolt12InvoiceRequest":
+      return t("send.unsupported.bolt12");
     default:
       return null;
   }

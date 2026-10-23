@@ -14,6 +14,7 @@ import { useAmountInput } from "@/hooks/use-amount-input";
 import { useContactSelection } from "@/hooks/use-contact-selection";
 import { useSpendableBalance } from "@/hooks/use-spendable-balance";
 import { useT } from "@/lib/i18n/hook";
+import { waitForPaymentOutcome } from "@/lib/lightning/breez-service";
 import type { Contact, InputType, LnurlPayRequestDetails } from "@breeztech/breez-sdk-spark";
 import {
   type PrepareResult,
@@ -32,6 +33,7 @@ import {
 type SendStep = "input" | "confirm" | "processing" | "success" | "error";
 
 const SUCCESS_REDIRECT_MS = 2000;
+const OUTCOME_WAIT_MS = 15_000;
 
 interface ResolvedDestination {
   dest: string;
@@ -47,6 +49,8 @@ export function useSendFlow() {
   const [step, setStep] = useState<SendStep>("input");
   const [destination, setDestination] = useState("");
   const [prepareResult, setPrepareResult] = useState<PrepareResult | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState("");
+  const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
   const [isMaxing, setIsMaxing] = useState(false);
   const parseMutation = useParseInput();
@@ -63,12 +67,13 @@ export function useSendFlow() {
     if (!isUnlocked) router.push("/welcome");
   }, [isUnlocked, router]);
 
-  // Tied to the success screen, so leaving it first cancels the redirect.
+  // Tied to the success screen, so leaving it first cancels the redirect. A
+  // pending payment stays put so its explanation can be read.
   useEffect(() => {
-    if (step !== "success") return;
+    if (step !== "success" || isPending) return;
     const timer = setTimeout(() => router.push("/wallet/home"), SUCCESS_REDIRECT_MS);
     return () => clearTimeout(timer);
-  }, [step, router]);
+  }, [step, isPending, router]);
 
   const handlePaste = async () => {
     try {
@@ -216,6 +221,7 @@ export function useSendFlow() {
         return;
       }
       setPrepareResult(prep);
+      setIdempotencyKey(crypto.randomUUID());
       setStep("confirm");
     } catch (err) {
       setError(sendErrorMessage(err, t, "send.genericError"));
@@ -227,11 +233,20 @@ export function useSendFlow() {
     setStep("processing");
     setError("");
     try {
-      if (prepareResult.kind === "send") {
-        await executeMutation.mutateAsync(prepareResult.data);
-      } else {
-        await executeLnurlMutation.mutateAsync(prepareResult.data);
+      const { payment } =
+        prepareResult.kind === "send"
+          ? await executeMutation.mutateAsync({ prepareResponse: prepareResult.data, idempotencyKey })
+          : await executeLnurlMutation.mutateAsync({ prepareResponse: prepareResult.data, idempotencyKey });
+      const status =
+        payment.status === "pending"
+          ? await waitForPaymentOutcome(payment.id, OUTCOME_WAIT_MS)
+          : payment.status;
+      if (status === "failed") {
+        setError(t("send.notDelivered"));
+        setStep("error");
+        return;
       }
+      setIsPending(status === "pending");
       setStep("success");
     } catch (err) {
       setError(sendErrorMessage(err, t, "send.failed"));
@@ -259,6 +274,7 @@ export function useSendFlow() {
     inputValue: amount.value,
     isSats: amount.isSats,
     prepareResult,
+    isPending,
     error,
     contact: contacts.contact,
     showContactsModal: contacts.isModalOpen,

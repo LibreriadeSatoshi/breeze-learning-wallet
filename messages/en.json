@@ -283,8 +283,11 @@
     "confirmSend": "Confirm & send payment",
     "sendingPayment": "Sending payment…",
     "sent": "Payment sent",
+    "pendingTitle": "Payment on its way",
+    "pendingBody": "It's taking a moment to settle. It will show as complete in your activity, so check there before trying again.",
     "backToWallet": "Back to wallet",
     "failed": "Payment failed",
+    "notDelivered": "The payment couldn't be delivered.",
     "selfPayment": "You can't pay yourself. Use a different destination.",
     "genericError": "Something went wrong. Please try again.",
     "errors": {
@@ -301,7 +304,6 @@
     "tryAgain": "Try again",
     "destinationKind": {
       "bolt11": "Lightning invoice",
-      "bolt12": "BOLT12 offer",
       "bitcoinAddress": "Bitcoin address",
       "sparkAddress": "Spark address",
       "sparkInvoice": "Spark invoice",
@@ -312,7 +314,8 @@
       "lnurlWithdraw": "LNURL-withdraw is for receiving, not sending.",
       "url": "That looks like a web link, not a payment destination.",
       "silentPayment": "Silent payment addresses aren't supported yet.",
-      "bip21": "This payment link has no payment method this wallet supports."
+      "bip21": "This payment link has no payment method this wallet supports.",
+      "bolt12": "BOLT12 offers can't be paid from this wallet yet."
     },
     "contacts": {
       "title": "Contacts",

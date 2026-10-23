@@ -1,7 +1,12 @@
 import type { InputType, PrepareSendPaymentResponse } from "@breeztech/breez-sdk-spark";
 import { renderWithProviders, screen } from "@/test/test-utils";
 import userEvent from "@testing-library/user-event";
-import { parseInput, prepareSend } from "@/lib/lightning/breez-service";
+import {
+  executeSend,
+  parseInput,
+  prepareSend,
+  waitForPaymentOutcome,
+} from "@/lib/lightning/breez-service";
 import { WALLET_NETWORK } from "@/lib/wallet/send-helpers";
 import { useWalletStore } from "@/store/wallet-store";
 import SendPage from "../page";
@@ -17,6 +22,8 @@ vi.mock("@/lib/lightning/breez-service", async (importOriginal) => ({
   listFiatRates: vi.fn(async () => []),
   parseInput: vi.fn(),
   prepareSend: vi.fn(),
+  executeSend: vi.fn(),
+  waitForPaymentOutcome: vi.fn(),
 }));
 
 const ADDRESS = "bcrt1qrecipientaddress0000000000000000000";
@@ -121,5 +128,42 @@ describe("Send page", () => {
 
     expect(await screen.findByText(/this invoice has expired/i)).toBeVisible();
     expect(prepareSend).not.toHaveBeenCalled();
+  });
+
+  describe("after confirming", () => {
+    beforeEach(() => {
+      vi.mocked(parseInput).mockResolvedValue({
+        type: "bitcoinAddress",
+        address: ADDRESS,
+        network: WALLET_NETWORK,
+      } as unknown as InputType);
+      vi.mocked(prepareSend).mockResolvedValue(onchainPrep(1000));
+      vi.mocked(executeSend).mockResolvedValue({
+        payment: { id: "p1", status: "pending" },
+      } as Awaited<ReturnType<typeof executeSend>>);
+    });
+
+    async function confirm() {
+      const user = userEvent.setup();
+      renderWithProviders(<SendPage />);
+      await submit(user, ADDRESS, "1000");
+      await user.click(await screen.findByRole("button", { name: /confirm & send/i }));
+    }
+
+    it("sends once per confirmed payment and says when it is still settling", async () => {
+      vi.mocked(waitForPaymentOutcome).mockResolvedValue("pending");
+      await confirm();
+
+      expect(await screen.findByText(/payment on its way/i)).toBeVisible();
+      const [, key] = vi.mocked(executeSend).mock.calls[0];
+      expect(key).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it("reports a payment that failed after it was sent", async () => {
+      vi.mocked(waitForPaymentOutcome).mockResolvedValue("failed");
+      await confirm();
+
+      expect(await screen.findByText(/couldn't be delivered/i)).toBeVisible();
+    });
   });
 });

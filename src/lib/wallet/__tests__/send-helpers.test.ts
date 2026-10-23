@@ -3,6 +3,7 @@ import {
   type PrepareResult,
   WALLET_NETWORK,
   describeRecipient,
+  describeUnsupported,
   fixedAmountSat,
   isOtherNetwork,
   pickBip21Method,
@@ -45,6 +46,14 @@ describe("pickBip21Method", () => {
 
   it("falls back from an expired invoice to the link's other methods", () => {
     expect(pickBip21Method(bip21([bolt11, onchain]), NOW_SEC + 3600)).toEqual({ input: "bcrt1qaddr", parsed: onchain });
+    const sparkInvoice = { type: "sparkInvoice", invoice: "sparkrt1inv", expiryTime: NOW_SEC - 1 } as InputType;
+    expect(pickBip21Method(bip21([sparkInvoice, onchain]), NOW_SEC)).toEqual({ input: "bcrt1qaddr", parsed: onchain });
+  });
+
+  it("skips a BOLT12 offer, which the SDK can't pay yet", () => {
+    const offer = { type: "bolt12Offer", offer: { offer: "lno1offer" } } as InputType;
+    expect(pickBip21Method(bip21([offer, onchain]), NOW_SEC)).toEqual({ input: "bcrt1qaddr", parsed: onchain });
+    expect(pickBip21Method(bip21([offer]), NOW_SEC)).toBeNull();
   });
 
   it("returns nothing when no method is payable", () => {
@@ -61,6 +70,14 @@ describe("fixedAmountSat", () => {
       fixedAmountSat({ type: "sparkInvoice", amount: "2500", tokenIdentifier: "btkn1" } as InputType),
     ).toBeUndefined();
     expect(fixedAmountSat(onchain)).toBeUndefined();
+  });
+});
+
+describe("describeUnsupported", () => {
+  it("explains that BOLT12 can't be paid yet", () => {
+    const t = (key: string) => key;
+    expect(describeUnsupported({ type: "bolt12Offer" } as InputType, t)).toBe("send.unsupported.bolt12");
+    expect(describeUnsupported(bolt11, t)).toBeNull();
   });
 });
 

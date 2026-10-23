@@ -1,16 +1,26 @@
 import type { PrepareSendPaymentResponse } from "@breeztech/breez-sdk-spark";
 
-const { wasmInit, connect, disconnect, sendPayment } = vi.hoisted(() => {
+const { wasmInit, connect, disconnect, sendPayment, getPayment, emit } = vi.hoisted(() => {
   const disconnect = vi.fn(async () => {});
-  const sendPayment = vi.fn(async (_request: { options?: unknown }) => ({}));
+  const sendPayment = vi.fn(async (_request: { options?: unknown; idempotencyKey?: string }) => ({}));
+  const getPayment = vi.fn(async (_request: { paymentId: string }) => ({
+    payment: { id: "p1", status: "pending" },
+  }));
+  const listeners: Array<{ onEvent: (event: unknown) => void }> = [];
   return {
     wasmInit: vi.fn(async () => {}),
     disconnect,
     sendPayment,
+    getPayment,
+    emit: (event: unknown) => listeners.forEach((l) => l.onEvent(event)),
     connect: vi.fn(async () => ({
-      addEventListener: vi.fn(async () => "listener"),
+      addEventListener: vi.fn(async (listener: { onEvent: (event: unknown) => void }) => {
+        listeners.push(listener);
+        return "listener";
+      }),
       disconnect,
       sendPayment,
+      getPayment,
     })),
   };
 });
@@ -67,7 +77,7 @@ describe("breez service", () => {
     const lightningOnly = prep({ type: "bolt11Invoice", lightningFeeSats: 5 });
     const spark = prep({ type: "sparkAddress" });
 
-    for (const p of [onchain, sparkRoute, lightningOnly, spark]) await executeSend(p);
+    for (const p of [onchain, sparkRoute, lightningOnly, spark]) await executeSend(p, "key-1");
 
     expect(sendPayment.mock.calls.map(([request]) => request.options)).toEqual([
       { type: "bitcoinAddress", confirmationSpeed: ONCHAIN_SPEED },
@@ -75,5 +85,33 @@ describe("breez service", () => {
       { type: "bolt11Invoice", preferSpark: false },
       undefined,
     ]);
+    expect(sendPayment.mock.calls.every(([request]) => request.idempotencyKey === "key-1")).toBe(true);
+  });
+
+  describe("waitForPaymentOutcome", () => {
+    it("resolves with the outcome event for that payment", async () => {
+      const { initBreez, waitForPaymentOutcome } = await loadService();
+      await initBreez(CONFIG);
+      const outcome = waitForPaymentOutcome("p1", 5_000);
+      emit({ type: "paymentSucceeded", payment: { id: "other", status: "completed" } });
+      emit({ type: "paymentFailed", payment: { id: "p1", status: "failed" } });
+      await expect(outcome).resolves.toBe("failed");
+    });
+
+    it("uses an outcome that landed before it started listening", async () => {
+      const { initBreez, waitForPaymentOutcome } = await loadService();
+      await initBreez(CONFIG);
+      getPayment.mockResolvedValueOnce({ payment: { id: "p1", status: "completed" } });
+      await expect(waitForPaymentOutcome("p1", 5_000)).resolves.toBe("completed");
+    });
+
+    it("reports a payment still pending after the wait", async () => {
+      vi.useFakeTimers();
+      const { initBreez, waitForPaymentOutcome } = await loadService();
+      await initBreez(CONFIG);
+      const outcome = waitForPaymentOutcome("p1", 5_000);
+      await vi.advanceTimersByTimeAsync(5_000);
+      await expect(outcome).resolves.toBe("pending");
+    });
   });
 });
