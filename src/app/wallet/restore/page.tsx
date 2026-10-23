@@ -12,8 +12,11 @@ import { Mark } from '@/components/brand/logo';
 import { validateMnemonic } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
 import {
-  startDriveAuthFlow,
+  downloadVault,
+  driveErrorKey,
+  getDriveToken,
   isDriveBackupConfigured,
+  preloadDriveAuth,
 } from '@/lib/backup/drive-client';
 import { useT } from '@/lib/i18n/hook';
 
@@ -34,9 +37,12 @@ export default function RestoreWalletPage() {
   const hasVault = useWalletStore((s) => s.hasVault);
   const bootstrap = useWalletStore((s) => s.bootstrap);
   const createVault = useWalletStore((s) => s.createVault);
+  const adoptVaultBackup = useWalletStore((s) => s.adoptVaultBackup);
+  const [driveBusy, setDriveBusy] = useState(false);
 
   useEffect(() => {
     void bootstrap();
+    preloadDriveAuth();
   }, [bootstrap]);
 
   // Restoring stores a vault itself, which must not read as one to overwrite.
@@ -94,11 +100,23 @@ export default function RestoreWalletPage() {
 
   const handleDriveRestore = async () => {
     setError('');
-    if (await confirmOverwriteFirst()) return;
+    // Checked without awaiting when the vault state is known, so Google's
+    // window still opens within the click.
+    if (!overwriteAcknowledged && hasVault !== false && (await confirmOverwriteFirst())) return;
+    setDriveBusy(true);
     try {
-      startDriveAuthFlow({ type: 'restore', returnTo: '/welcome' });
+      const token = await getDriveToken();
+      const blob = await downloadVault(token);
+      if (!blob) {
+        setError(t('drive.noBackup'));
+        return;
+      }
+      await adoptVaultBackup(blob);
+      router.push('/welcome');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('restore.methods.drive.startFailed'));
+      setError(t(driveErrorKey(err)));
+    } finally {
+      setDriveBusy(false);
     }
   };
 
@@ -144,7 +162,8 @@ export default function RestoreWalletPage() {
             </button>
             <button type="button"
               onClick={() => void handleDriveRestore()}
-              disabled={!driveAvailable}
+              disabled={!driveAvailable || driveBusy}
+              aria-busy={driveBusy}
               className={methodClass}
             >
               <Cloud aria-hidden="true" className="mt-0.5 h-6 w-6 flex-none" />

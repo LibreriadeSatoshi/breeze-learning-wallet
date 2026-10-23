@@ -12,9 +12,13 @@ import { MnemonicDisplay } from '@/components/wallet/mnemonic-display';
 import { generateMnemonic, mnemonicToWords } from '@/lib/bitcoin/mnemonic';
 import { useWalletStore } from '@/store/wallet-store';
 import {
-  startDriveAuthFlow,
+  driveErrorKey,
+  getDriveToken,
   isDriveBackupConfigured,
+  preloadDriveAuth,
+  uploadVault,
 } from '@/lib/backup/drive-client';
+import { loadVault } from '@/lib/storage/vault-storage';
 import { useT } from '@/lib/i18n/hook';
 
 type Step = 'reveal' | 'shown' | 'verify' | 'password' | 'creating' | 'drive-offer';
@@ -141,14 +145,27 @@ export default function CreateWalletPage() {
     }
   };
 
-  const handleDriveBackup = () => {
+  useEffect(() => {
+    if (step === 'drive-offer') preloadDriveAuth();
+  }, [step]);
+
+  // The token comes first so Google's window opens within the click.
+  const handleDriveBackup = async () => {
     setDriveError('');
     setDriveBusy(true);
     try {
-      startDriveAuthFlow({ type: 'backup', returnTo: '/wallet/home' });
+      const token = await getDriveToken();
+      const blob = await loadVault();
+      if (!blob) {
+        setDriveError(t('drive.noVault'));
+        return;
+      }
+      await uploadVault(token, blob);
+      router.push('/wallet/home');
     } catch (err) {
+      setDriveError(t(driveErrorKey(err)));
+    } finally {
       setDriveBusy(false);
-      setDriveError(err instanceof Error ? err.message : t('create.drive.failed'));
     }
   };
 
@@ -437,7 +454,7 @@ export default function CreateWalletPage() {
               <Button
                 variant="primary"
                 size="lg"
-                onClick={handleDriveBackup}
+                onClick={() => void handleDriveBackup()}
                 loading={driveBusy}
                 disabled={driveBusy}
                 className="w-full"

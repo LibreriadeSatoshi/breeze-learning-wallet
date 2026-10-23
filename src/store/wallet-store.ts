@@ -55,6 +55,8 @@ interface WalletStore {
   bootstrap: () => Promise<void>;
   refreshHasVault: () => Promise<void>;
   createVault: (mnemonic: string, password: string) => Promise<void>;
+  // Stores a vault restored from backup; it stays locked until its password is entered.
+  adoptVaultBackup: (blob: Uint8Array) => Promise<void>;
   unlock: (password: string) => Promise<void>;
   adoptPasskeyWallet: (mnemonic: string) => void;
   lock: () => void;
@@ -109,6 +111,14 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     setAuthMode("password");
     persistMnemonic(mnemonic);
     set({ hasVault: true, authMode: "password", isUnlocked: true, session: get().session + 1 });
+  },
+
+  adoptVaultBackup: async (blob) => {
+    await deleteSdkStorage();
+    await saveVault(blob);
+    setAuthMode("password");
+    clearMnemonic();
+    set({ hasVault: true, authMode: "password", isUnlocked: false, session: get().session + 1 });
   },
 
   unlock: async (password) => {

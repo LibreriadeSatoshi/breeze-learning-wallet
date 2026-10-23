@@ -1,159 +1,170 @@
 import { GOOGLE_OAUTH_CLIENT_ID } from "@/lib/config";
 import { storageKey } from "@/lib/storage/storage-keys";
 
-const SCOPE = [
-  "https://www.googleapis.com/auth/drive.appdata",
-  "https://www.googleapis.com/auth/userinfo.email",
-].join(" ");
+// The browser gets the token from Google Identity Services and calls Drive
+// itself, so the operator never sees a token and is not in the request path.
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+const GIS_SRC = "https://accounts.google.com/gsi/client";
+const DRIVE_API = "https://www.googleapis.com/drive/v3";
+const DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3";
 const VAULT_FILE_NAME = "vault.bin";
+// Renew a little early so a token can't expire mid-upload.
+const TOKEN_EXPIRY_MARGIN_MS = 60_000;
 
 const STORAGE_KEY_CONNECTED = storageKey("drive-connected");
 const STORAGE_KEY_LAST_SYNC = storageKey("drive-last-sync");
 const STORAGE_KEY_EMAIL = storageKey("drive-email");
-const SESSION_KEY_PENDING = storageKey("drive-pending");
 
-const AUTH_BASE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
+interface TokenResponse {
+  access_token: string;
+  expires_in: number;
+  scope: string;
+  error?: string;
+}
 
-export type DriveIntent =
-  | { type: "connect"; returnTo: string }
-  | { type: "backup"; returnTo: string }
-  | { type: "restore"; returnTo: string };
+interface TokenClient {
+  requestAccessToken(overrides?: { prompt?: string }): void;
+}
 
-type PendingFlow = {
-  state: string;
-  intent: DriveIntent;
-};
+interface GisOauth2 {
+  initTokenClient(config: {
+    client_id: string;
+    scope: string;
+    callback: (response: TokenResponse) => void;
+    error_callback?: (error: { type: string }) => void;
+  }): TokenClient;
+  hasGrantedAllScopes(response: TokenResponse, scope: string): boolean;
+  revoke(token: string, done?: () => void): void;
+}
 
+declare global {
+  interface Window {
+    google?: { accounts?: { oauth2?: GisOauth2 } };
+  }
+}
+
+export type DriveErrorCode =
+  | "notConfigured"
+  | "denied"
+  | "popupClosed"
+  | "popupBlocked"
+  | "unavailable"
+  | "failed";
+
+export class DriveError extends Error {
+  constructor(readonly code: DriveErrorCode) {
+    super(`Google Drive: ${code}`);
+    this.name = "DriveError";
+  }
+}
+
+let gisLoad: Promise<GisOauth2> | null = null;
+let tokenClient: TokenClient | null = null;
+let pendingToken: { resolve: (token: string) => void; reject: (error: DriveError) => void } | null =
+  null;
 let cachedToken: { value: string; expiresAt: number } | null = null;
 
-function isConfigured(): boolean {
+export function isDriveBackupConfigured(): boolean {
   return Boolean(GOOGLE_OAUTH_CLIENT_ID);
 }
 
-function getRedirectUri(): string {
-  return `${window.location.origin}/wallet/drive-callback`;
-}
-
-function randomState(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-export function startDriveAuthFlow(intent: DriveIntent): void {
-  if (!isConfigured()) {
-    throw new Error("Google OAuth client ID is not configured");
-  }
-  const state = randomState();
-  const pending: PendingFlow = { state, intent };
-  window.sessionStorage.setItem(SESSION_KEY_PENDING, JSON.stringify(pending));
-
-  const url = new URL(AUTH_BASE_URL);
-  url.searchParams.set("client_id", GOOGLE_OAUTH_CLIENT_ID!);
-  url.searchParams.set("redirect_uri", getRedirectUri());
-  url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", SCOPE);
-  url.searchParams.set("state", state);
-  url.searchParams.set("include_granted_scopes", "true");
-  url.searchParams.set("prompt", intent.type === "backup" ? "" : "consent");
-
-  window.location.href = url.toString();
-}
-
-function takePendingFlow(): PendingFlow | null {
-  const raw = window.sessionStorage.getItem(SESSION_KEY_PENDING);
-  if (!raw) return null;
-  window.sessionStorage.removeItem(SESSION_KEY_PENDING);
-  try {
-    return JSON.parse(raw) as PendingFlow;
-  } catch {
-    return null;
-  }
-}
-
-type ExchangeResponse = {
-  accessToken: string;
-  expiresIn: number;
-  scope: string;
-};
-
-async function exchangeCode(code: string): Promise<ExchangeResponse> {
-  const res = await fetch("/api/drive/exchange", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code, redirectUri: getRedirectUri() }),
+function loadGis(): Promise<GisOauth2> {
+  const ready = window.google?.accounts?.oauth2;
+  if (ready) return Promise.resolve(ready);
+  gisLoad ??= new Promise<GisOauth2>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = GIS_SRC;
+    script.async = true;
+    script.onload = () => {
+      const oauth2 = window.google?.accounts?.oauth2;
+      if (oauth2) resolve(oauth2);
+      else reject(new DriveError("unavailable"));
+    };
+    script.onerror = () => reject(new DriveError("unavailable"));
+    document.head.appendChild(script);
+  }).catch((error: unknown) => {
+    gisLoad = null;
+    throw error;
   });
-  if (!res.ok) {
-    const data = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(data.error ?? `Token exchange failed (${res.status})`);
-  }
-  return res.json();
+  return gisLoad;
 }
 
-export type DriveCallbackResult =
-  | { ok: true; token: string; intent: DriveIntent }
-  | { ok: false; error: string; intent: DriveIntent | null };
+// Loading Google's script ahead of the click keeps the sign-in window inside
+// the user's gesture, which browsers require to let a pop-up open.
+export function preloadDriveAuth(): void {
+  if (typeof window === "undefined" || !isDriveBackupConfigured()) return;
+  loadGis().catch(() => {});
+}
 
-export async function handleDriveCallback(
-  params: URLSearchParams,
-): Promise<DriveCallbackResult> {
-  const pending = takePendingFlow();
-  const intent = pending?.intent ?? null;
+function settle(outcome: { token: string } | { error: DriveError }): void {
+  const pending = pendingToken;
+  pendingToken = null;
+  if (!pending) return;
+  if ("token" in outcome) pending.resolve(outcome.token);
+  else pending.reject(outcome.error);
+}
 
-  const error = params.get("error");
-  if (error) {
-    const message =
-      error === "access_denied"
-        ? "Google Drive access was not granted."
-        : `Google sign-in failed: ${error}`;
-    return { ok: false, error: message, intent };
+function getTokenClient(oauth2: GisOauth2): TokenClient {
+  tokenClient ??= oauth2.initTokenClient({
+    client_id: GOOGLE_OAUTH_CLIENT_ID!,
+    scope: DRIVE_SCOPE,
+    callback: (response) => {
+      if (response.error || !oauth2.hasGrantedAllScopes(response, DRIVE_SCOPE)) {
+        settle({ error: new DriveError("denied") });
+        return;
+      }
+      cachedToken = {
+        value: response.access_token,
+        expiresAt: Date.now() + response.expires_in * 1000,
+      };
+      settle({ token: response.access_token });
+    },
+    error_callback: (error) => {
+      settle({
+        error: new DriveError(error.type === "popup_failed_to_open" ? "popupBlocked" : "popupClosed"),
+      });
+    },
+  });
+  return tokenClient;
+}
+
+function requestToken(oauth2: GisOauth2): Promise<string> {
+  settle({ error: new DriveError("popupClosed") });
+  return new Promise<string>((resolve, reject) => {
+    pendingToken = { resolve, reject };
+    // An empty prompt only asks for consent the first time.
+    getTokenClient(oauth2).requestAccessToken({ prompt: "" });
+  });
+}
+
+// Call this first in a click handler, before any other await, so the
+// sign-in window opens within the user's gesture.
+export function getDriveToken(): Promise<string> {
+  if (!isDriveBackupConfigured()) return Promise.reject(new DriveError("notConfigured"));
+  if (cachedToken && cachedToken.expiresAt - TOKEN_EXPIRY_MARGIN_MS > Date.now()) {
+    return Promise.resolve(cachedToken.value);
   }
+  const ready = window.google?.accounts?.oauth2;
+  if (ready) return requestToken(ready);
+  return loadGis().then(requestToken);
+}
 
-  const code = params.get("code");
-  const state = params.get("state");
-  const grantedScope = params.get("scope") ?? "";
-
-  if (!pending) {
-    return {
-      ok: false,
-      error: "Missing or expired session. Please try again.",
-      intent: null,
-    };
-  }
-  if (!code || !state || state !== pending.state) {
-    return {
-      ok: false,
-      error: "Invalid OAuth state. Please try again.",
-      intent,
-    };
-  }
-  if (!grantedScope.split(" ").includes("https://www.googleapis.com/auth/drive.appdata")) {
-    return {
-      ok: false,
-      error:
-        "Google Drive access was not granted. Allow Drive access to back up your wallet.",
-      intent,
-    };
-  }
-
+async function driveFetch(token: string, url: string, init: RequestInit = {}): Promise<Response> {
+  let response: Response;
   try {
-    const { accessToken, expiresIn } = await exchangeCode(code);
-    cachedToken = {
-      value: accessToken,
-      expiresAt: Date.now() + expiresIn * 1000,
-    };
-    return { ok: true, token: accessToken, intent: pending.intent };
-  } catch (e) {
-    return {
-      ok: false,
-      error: e instanceof Error ? e.message : "Token exchange failed.",
-      intent,
-    };
+    response = await fetch(url, {
+      ...init,
+      headers: { ...init.headers, Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new DriveError("unavailable");
   }
+  if (response.status === 401) {
+    cachedToken = null;
+    throw new DriveError("denied");
+  }
+  if (!response.ok) throw new DriveError("failed");
+  return response;
 }
 
 export function isDriveConnected(): boolean {
@@ -171,42 +182,32 @@ export function getDriveEmail(): string | null {
   return window.localStorage.getItem(STORAGE_KEY_EMAIL);
 }
 
-async function fetchUserEmail(token: string): Promise<string | null> {
+// Drive's own account info is readable with the appdata scope alone, so no
+// separate email scope is needed.
+async function fetchAccountEmail(token: string): Promise<string | null> {
   try {
-    const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { email?: string };
-    return data.email ?? null;
+    const response = await driveFetch(token, `${DRIVE_API}/about?fields=user(emailAddress)`);
+    const data = (await response.json()) as { user?: { emailAddress?: string } };
+    return data.user?.emailAddress ?? null;
   } catch {
     return null;
   }
 }
 
-function markConnected() {
+async function recordSync(token: string): Promise<void> {
+  const email = await fetchAccountEmail(token);
   window.localStorage.setItem(STORAGE_KEY_CONNECTED, "1");
-}
-
-function setEmail(email: string | null) {
   if (email) window.localStorage.setItem(STORAGE_KEY_EMAIL, email);
   else window.localStorage.removeItem(STORAGE_KEY_EMAIL);
-}
-
-function markSyncedNow() {
   window.localStorage.setItem(STORAGE_KEY_LAST_SYNC, new Date().toISOString());
-}
-
-function clearConnection() {
-  window.localStorage.removeItem(STORAGE_KEY_CONNECTED);
-  window.localStorage.removeItem(STORAGE_KEY_LAST_SYNC);
-  window.localStorage.removeItem(STORAGE_KEY_EMAIL);
-  cachedToken = null;
 }
 
 export function clearLocalDriveState(): void {
   if (typeof window === "undefined") return;
-  clearConnection();
+  window.localStorage.removeItem(STORAGE_KEY_CONNECTED);
+  window.localStorage.removeItem(STORAGE_KEY_LAST_SYNC);
+  window.localStorage.removeItem(STORAGE_KEY_EMAIL);
+  cachedToken = null;
 }
 
 function toPlainBytes(src: Uint8Array): Uint8Array<ArrayBuffer> {
@@ -216,125 +217,69 @@ function toPlainBytes(src: Uint8Array): Uint8Array<ArrayBuffer> {
 }
 
 async function findVaultFileId(token: string): Promise<string | null> {
-  const url = new URL("https://www.googleapis.com/drive/v3/files");
+  const url = new URL(`${DRIVE_API}/files`);
   url.searchParams.set("spaces", "appDataFolder");
   url.searchParams.set("fields", "files(id,name)");
   url.searchParams.set("q", `name = '${VAULT_FILE_NAME}'`);
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Drive list failed: ${res.status} ${body}`);
-  }
-  const data = (await res.json()) as { files: Array<{ id: string; name: string }> };
+  const response = await driveFetch(token, url.toString());
+  const data = (await response.json()) as { files: Array<{ id: string }> };
   return data.files[0]?.id ?? null;
 }
 
-async function uploadNew(token: string, blob: Uint8Array): Promise<string> {
+async function createVaultFile(token: string, blob: Uint8Array): Promise<void> {
   const metadata = { name: VAULT_FILE_NAME, parents: ["appDataFolder"] };
-  const boundary = "ismos-wallet-" + randomState();
-  const payload = toPlainBytes(blob);
+  const boundary = `ismos-wallet-${crypto.randomUUID()}`;
   const body = new Blob([
     `--${boundary}\r\n`,
     "Content-Type: application/json; charset=UTF-8\r\n\r\n",
     JSON.stringify(metadata),
     `\r\n--${boundary}\r\n`,
     "Content-Type: application/octet-stream\r\n\r\n",
-    payload,
+    toPlainBytes(blob),
     `\r\n--${boundary}--`,
   ]);
-  const res = await fetch(
-    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": `multipart/related; boundary=${boundary}`,
-      },
-      body,
-    },
-  );
-  if (!res.ok) throw new Error(`Drive upload failed: ${res.status}`);
-  const data = (await res.json()) as { id: string };
-  return data.id;
+  await driveFetch(token, `${DRIVE_UPLOAD_API}/files?uploadType=multipart&fields=id`, {
+    method: "POST",
+    headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+    body,
+  });
 }
 
-async function updateExisting(
-  token: string,
-  fileId: string,
-  blob: Uint8Array,
-): Promise<void> {
-  const res = await fetch(
-    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
-    {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/octet-stream",
-      },
-      body: new Blob([toPlainBytes(blob)]),
-    },
-  );
-  if (!res.ok) throw new Error(`Drive update failed: ${res.status}`);
+async function replaceVaultFile(token: string, fileId: string, blob: Uint8Array): Promise<void> {
+  await driveFetch(token, `${DRIVE_UPLOAD_API}/files/${fileId}?uploadType=media`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/octet-stream" },
+    body: new Blob([toPlainBytes(blob)]),
+  });
 }
 
 export async function uploadVault(token: string, blob: Uint8Array): Promise<void> {
   const existing = await findVaultFileId(token);
-  if (existing) {
-    await updateExisting(token, existing, blob);
-  } else {
-    await uploadNew(token, blob);
-  }
-  const email = await fetchUserEmail(token);
-  markConnected();
-  setEmail(email);
-  markSyncedNow();
+  if (existing) await replaceVaultFile(token, existing, blob);
+  else await createVaultFile(token, blob);
+  await recordSync(token);
 }
 
-export async function fetchVault(token: string): Promise<Uint8Array | null> {
+export async function downloadVault(token: string): Promise<Uint8Array | null> {
   const fileId = await findVaultFileId(token);
   if (!fileId) return null;
-  const res = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-  if (!res.ok) throw new Error(`Drive download failed: ${res.status}`);
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  const email = await fetchUserEmail(token);
-  markConnected();
-  setEmail(email);
-  markSyncedNow();
+  const response = await driveFetch(token, `${DRIVE_API}/files/${fileId}?alt=media`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  await recordSync(token);
   return bytes;
 }
 
-export async function disconnect(): Promise<void> {
-  const token = cachedToken?.value ?? null;
-  try {
-    if (token) {
-      const fileId = await findVaultFileId(token);
-      if (fileId) {
-        await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-    }
-  } catch {
-    // best-effort
+// Deletes the Drive copy and revokes access. It only reports success once the
+// file is gone, so the settings page never claims a deletion that didn't happen.
+export async function deleteBackupAndDisconnect(token: string): Promise<void> {
+  const fileId = await findVaultFileId(token);
+  if (fileId) {
+    await driveFetch(token, `${DRIVE_API}/files/${fileId}`, { method: "DELETE" });
   }
-  if (token) {
-    try {
-      const url = new URL(REVOKE_URL);
-      url.searchParams.set("token", token);
-      await fetch(url.toString(), { method: "POST" });
-    } catch {
-      // best-effort
-    }
-  }
-  clearConnection();
+  window.google?.accounts?.oauth2?.revoke(token);
+  clearLocalDriveState();
 }
 
-export function isDriveBackupConfigured(): boolean {
-  return isConfigured();
+export function driveErrorKey(error: unknown): string {
+  return `drive.errors.${error instanceof DriveError ? error.code : "failed"}`;
 }

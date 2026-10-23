@@ -136,8 +136,7 @@
     "drive": {
       "blurbCiphertext": "Qué se guarda: tu frase de recuperación de 12 palabras, cifrada con la contraseña de tu billetera. Google ve un archivo ilegible. Sin tu contraseña, el archivo no se puede usar.",
       "blurbConvenience": "Tu frase escrita en papel sigue siendo la copia maestra. Drive solo te permite restaurar en otro dispositivo sin escribir las 12 palabras.",
-      "backup": "Hacer copia en Drive",
-      "failed": "No se pudo iniciar la copia en Google Drive"
+      "backup": "Hacer copia en Drive"
     }
   },
   "restore": {
@@ -155,8 +154,7 @@
       "drive": {
         "title": "Desde Google Drive",
         "subtitle": "Inicia sesión en tu cuenta de Google para descargar tu bóveda cifrada.",
-        "notConfigured": "No configurado para esta build.",
-        "startFailed": "No se pudo iniciar el inicio de sesión con Google Drive"
+        "notConfigured": "No configurado para esta build."
       }
     },
     "phrase": {
@@ -178,14 +176,17 @@
       "confirm": "Reemplazar billetera"
     }
   },
-  "driveCallback": {
-    "signingIn": "Finalizando inicio de sesión con Google…",
-    "uploading": "Subiendo copia cifrada…",
-    "downloading": "Descargando tu bóveda cifrada…",
-    "saving": "Guardando en este dispositivo…",
+  "drive": {
     "noBackup": "No se encontró ninguna copia en tu Google Drive. ¿Hiciste una copia desde esta app antes?",
     "noVault": "No hay billetera para respaldar.",
-    "operationFailed": "La operación de Drive falló."
+    "errors": {
+      "notConfigured": "La copia en Google Drive no está configurada en esta app.",
+      "denied": "No se concedió acceso a Google Drive.",
+      "popupClosed": "La ventana de Google se cerró antes de terminar.",
+      "popupBlocked": "Tu navegador bloqueó la ventana de Google. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
+      "unavailable": "No se pudo conectar con Google. Revisa tu conexión e inténtalo de nuevo.",
+      "failed": "Google Drive no completó la solicitud. Inténtalo de nuevo."
+    }
   },
   "home": {
     "title": "Mi billetera",
@@ -439,13 +440,10 @@
       "title": "Copia en Google Drive",
       "subtitle": "Guarda una copia cifrada de tu billetera en tu propio Google Drive (carpeta oculta de la app). Tu frase de recuperación sigue siendo la copia maestra.",
       "connect": "Conectar Google Drive",
-      "connectStartFailed": "No se pudo iniciar el inicio de sesión con Google Drive",
-      "backupStartFailed": "No se pudo iniciar la copia",
       "account": "Cuenta",
       "lastBackup": "Última copia",
       "backupNow": "Copiar ahora",
       "disconnect": "Desconectar",
-      "disconnectFailed": "No se pudo desconectar",
       "disconnectConfirmTitle": "¿Desconectar y borrar la copia?",
       "disconnectConfirmDescription": "Esto elimina el archivo cifrado de tu Google Drive. Para restaurar en otro dispositivo vas a necesitar tu frase de recuperación, no Google Drive.",
       "disconnectWarning": "La billetera en este dispositivo no se ve afectada. Solo se borra la copia de Drive.",
