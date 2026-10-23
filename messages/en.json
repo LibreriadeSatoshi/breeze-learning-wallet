@@ -136,8 +136,7 @@
     "drive": {
       "blurbCiphertext": "What gets saved: your 12-word recovery phrase, encrypted with your wallet password. Google sees an unreadable file. Without your password, the file can't be used.",
       "blurbConvenience": "Your written-down phrase is still the master backup. Drive just lets you restore on another device without typing the 12 words.",
-      "backup": "Back up to Google Drive",
-      "failed": "Failed to start Google Drive backup"
+      "backup": "Back up to Google Drive"
     }
   },
   "restore": {
@@ -155,8 +154,7 @@
       "drive": {
         "title": "From Google Drive",
         "subtitle": "Sign in to your Google account to download your encrypted vault.",
-        "notConfigured": "Not configured for this build.",
-        "startFailed": "Failed to start Google Drive sign-in"
+        "notConfigured": "Not configured for this build."
       }
     },
     "phrase": {
@@ -178,14 +176,17 @@
       "confirm": "Replace wallet"
     }
   },
-  "driveCallback": {
-    "signingIn": "Finishing Google sign-in…",
-    "uploading": "Uploading encrypted backup…",
-    "downloading": "Downloading your encrypted vault…",
-    "saving": "Saving to this device…",
+  "drive": {
     "noBackup": "No backup found in your Google Drive. Did you back up from this app before?",
     "noVault": "No wallet to back up.",
-    "operationFailed": "Drive operation failed."
+    "errors": {
+      "notConfigured": "Google Drive backup isn't set up for this app.",
+      "denied": "Google Drive access wasn't granted.",
+      "popupClosed": "The Google window was closed before finishing.",
+      "popupBlocked": "Your browser blocked the Google window. Allow pop-ups for this site and try again.",
+      "unavailable": "Couldn't reach Google. Check your connection and try again.",
+      "failed": "Google Drive didn't complete the request. Try again."
+    }
   },
   "home": {
     "title": "My wallet",
@@ -439,13 +440,10 @@
       "title": "Google Drive backup",
       "subtitle": "Stores an encrypted copy of your wallet in your own Google Drive (hidden app folder). Your recovery phrase is still the master backup.",
       "connect": "Connect Google Drive",
-      "connectStartFailed": "Failed to start Google Drive sign-in",
-      "backupStartFailed": "Failed to start backup",
       "account": "Account",
       "lastBackup": "Last backed up",
       "backupNow": "Back up now",
       "disconnect": "Disconnect",
-      "disconnectFailed": "Failed to disconnect",
       "disconnectConfirmTitle": "Disconnect and delete the backup?",
       "disconnectConfirmDescription": "This removes the encrypted file from your Google Drive. To restore on another device you'll need your recovery phrase, not Google Drive.",
       "disconnectWarning": "The wallet on this device is not affected. Only the Drive copy is deleted.",

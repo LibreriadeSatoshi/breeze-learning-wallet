@@ -85,6 +85,21 @@ describe("wallet store", () => {
     expect(new Set(sessions).size).toBe(sessions.length);
   });
 
+  it("stores a Drive backup locked, with password unlock, and drops the old wallet", async () => {
+    const store = await loadStore();
+    await store.getState().bootstrap();
+    await store.getState().createVault(MNEMONIC, PASSWORD);
+    disconnectBreez.mockClear();
+    const backup = new TextEncoder().encode(JSON.stringify({ plaintext: "other words", password: "pw" }));
+
+    await store.getState().adoptVaultBackup(backup);
+
+    expect(disconnectBreez).toHaveBeenCalledTimes(1);
+    expect(storedBlob).toEqual(backup);
+    expect(store.getState()).toMatchObject({ hasVault: true, authMode: "password", isUnlocked: false });
+    expect(store.getState().getMnemonic()).toBeNull();
+  });
+
   it("disconnects the previous wallet before storing a restored one", async () => {
     const store = await loadStore();
     await store.getState().bootstrap();
