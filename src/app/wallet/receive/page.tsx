@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -153,12 +153,13 @@ function LightningPanel({
   onReceived: (d: ReceivedPaymentDetails) => void;
 }) {
   const t = useT();
-  const { data: lnAddress, isLoading, refetch } = useLightningAddress(true);
+  const { data: lnAddress, isLoading, isError, refetch } = useLightningAddress(true);
   const registerMutation = useRegisterLightningAddress();
   const receiveMutation = useReceiveLightning();
   const [autoClaimError, setAutoClaimError] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const tryingRef = useRef(false);
+  const autoClaimedRef = useRef(false);
 
   const autoClaim = useCallback(async () => {
     if (tryingRef.current) return;
@@ -182,14 +183,19 @@ function LightningPanel({
     tryingRef.current = false;
   }, [registerMutation, refetch, t]);
 
+  // Once per visit, and only when the lookup confirmed there is no address:
+  // registering after a failed lookup would replace the user's address.
   useEffect(() => {
-    if (!isLoading && !lnAddress && !registerMutation.isPending) {
-      autoClaim();
-    }
-  }, [isLoading, lnAddress, registerMutation.isPending, autoClaim]);
+    if (autoClaimedRef.current || lnAddress !== null) return;
+    autoClaimedRef.current = true;
+    void autoClaim();
+  }, [lnAddress, autoClaim]);
 
+  // The one-time invoice works without an address, so a failed address
+  // setup must not hide it.
+  let addressSection: ReactNode = null;
   if (isLoading || registerMutation.isPending) {
-    return (
+    addressSection = (
       <Card className="mb-6">
         <CardContent className="pt-8 pb-8 text-center">
           <div aria-hidden="true" className="h-12 w-12 mx-auto mb-4 rounded-full border-2 border-track border-t-strong animate-spin" />
@@ -199,24 +205,24 @@ function LightningPanel({
         </CardContent>
       </Card>
     );
-  }
-
-  if (autoClaimError) {
-    return (
+  } else if (isError || autoClaimError) {
+    addressSection = (
       <div className="mb-6 space-y-4">
-        <StatusNote status="error">{autoClaimError}</StatusNote>
-        <Button variant="primary" onClick={autoClaim}>
+        <StatusNote status="error">
+          {isError ? t("receive.lightning.loadFailed") : autoClaimError}
+        </StatusNote>
+        <Button variant="primary" onClick={isError ? () => void refetch() : autoClaim}>
           {t("common.retry")}
         </Button>
       </div>
     );
+  } else if (lnAddress) {
+    addressSection = <AddressCard info={lnAddress} onEdit={() => setEditOpen(true)} />;
   }
-
-  if (!lnAddress) return null;
 
   return (
     <>
-      <AddressCard info={lnAddress} onEdit={() => setEditOpen(true)} />
+      {addressSection}
       <InvoiceCreator
         onReceived={onReceived}
         title={t("receive.invoice.title")}
@@ -229,7 +235,7 @@ function LightningPanel({
           })
         }
       />
-      {editOpen && (
+      {editOpen && lnAddress && (
         <EditUsernameModal
           currentAddress={lnAddress.lightningAddress}
           onClose={() => setEditOpen(false)}

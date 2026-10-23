@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { encryptMnemonic, decryptMnemonic } from "@/lib/crypto/encryption";
 import { saveVault, loadVault, clearVault } from "@/lib/storage/vault-storage";
 import { clearLocalDriveState } from "@/lib/backup/drive-client";
-import { disconnectBreez } from "@/lib/lightning/breez-service";
+import { deleteSdkStorage, disconnectBreez } from "@/lib/lightning/breez-service";
 import { migrateLegacyStorageKeys, storageKey } from "@/lib/storage/storage-keys";
 
 let mnemonicInMemory: string | null = null;
@@ -49,10 +49,14 @@ interface WalletStore {
   isUnlocked: boolean;
   isBootstrapped: boolean;
   showBalance: boolean;
+  // Changes whenever the wallet held in memory changes or is dropped.
+  session: number;
 
   bootstrap: () => Promise<void>;
   refreshHasVault: () => Promise<void>;
   createVault: (mnemonic: string, password: string) => Promise<void>;
+  // Stores a vault restored from backup; it stays locked until its password is entered.
+  adoptVaultBackup: (blob: Uint8Array) => Promise<void>;
   unlock: (password: string) => Promise<void>;
   adoptPasskeyWallet: (mnemonic: string) => void;
   lock: () => void;
@@ -69,6 +73,7 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
   isUnlocked: false,
   isBootstrapped: false,
   showBalance: true,
+  session: 0,
 
   bootstrap: async () => {
     if (get().isBootstrapped) return;
@@ -100,10 +105,20 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
 
   createVault: async (mnemonic, password) => {
     const blob = await encryptMnemonic(mnemonic, password);
+    // A replaced wallet must leave nothing behind, like a forgotten one.
+    await deleteSdkStorage();
     await saveVault(blob);
     setAuthMode("password");
     persistMnemonic(mnemonic);
-    set({ hasVault: true, authMode: "password", isUnlocked: true });
+    set({ hasVault: true, authMode: "password", isUnlocked: true, session: get().session + 1 });
+  },
+
+  adoptVaultBackup: async (blob) => {
+    await deleteSdkStorage();
+    await saveVault(blob);
+    setAuthMode("password");
+    clearMnemonic();
+    set({ hasVault: true, authMode: "password", isUnlocked: false, session: get().session + 1 });
   },
 
   unlock: async (password) => {
@@ -111,27 +126,29 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     if (!blob) throw new Error("No vault found");
     const plaintext = await decryptMnemonic(blob, password);
     persistMnemonic(plaintext);
-    set({ isUnlocked: true });
+    set({ isUnlocked: true, session: get().session + 1 });
   },
 
   adoptPasskeyWallet: (mnemonic) => {
+    void disconnectBreez();
     setAuthMode("passkey");
     persistMnemonic(mnemonic);
-    set({ hasVault: true, authMode: "passkey", isUnlocked: true });
+    set({ hasVault: true, authMode: "passkey", isUnlocked: true, session: get().session + 1 });
   },
 
   lock: () => {
+    void disconnectBreez();
     clearMnemonic();
-    set({ isUnlocked: false });
+    set({ isUnlocked: false, session: get().session + 1 });
   },
 
   destroyVault: async () => {
-    await disconnectBreez();
+    await deleteSdkStorage();
     await clearVault();
     clearLocalDriveState();
     setAuthMode(null);
     clearMnemonic();
-    set({ hasVault: false, authMode: null, isUnlocked: false });
+    set({ hasVault: false, authMode: null, isUnlocked: false, session: get().session + 1 });
   },
 
   getMnemonic: () => mnemonicInMemory,

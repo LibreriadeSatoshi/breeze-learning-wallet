@@ -17,17 +17,24 @@ import type {
   BuyBitcoinResponse,
   Conversion,
   Contact,
+  OnchainConfirmationSpeed,
+  PaymentStatus,
+  SendPaymentOptions,
 } from "@breeztech/breez-sdk-spark";
 import type { Balances, ConversionLimits, Payment, UserSettings } from "./types";
 
 type SparkSdk = Awaited<ReturnType<typeof import("@breeztech/breez-sdk-spark").connect>>;
+type BreezModule = typeof import("@breeztech/breez-sdk-spark/web");
 
 let sdk: SparkSdk | null = null;
 let eventListenerId: string | null = null;
-let isInitializing: boolean = false;
 let cachedApiKey: string | null = null;
-// Mnemonic the running SDK is init'd for; used to detect wallet switches.
-let activeMnemonic: string | null = null;
+let modulePromise: Promise<BreezModule> | null = null;
+let lifecycle: Promise<unknown> = Promise.resolve();
+
+const DISCONNECT_TIMEOUT_MS = 10_000;
+
+export const ONCHAIN_SPEED: OnchainConfirmationSpeed = "medium";
 
 type EventCallback = (event: SdkEvent) => void;
 const eventCallbacks: EventCallback[] = [];
@@ -53,9 +60,11 @@ async function getBreezApiKey(): Promise<string> {
   return data.apiKey;
 }
 
+// Pre-rebrand name kept on purpose: renaming would orphan the SDK's local database.
+export const SDK_STORAGE_DIR = "scholar-wallet-data";
+
 export interface BreezSparkConfig {
   network: "mainnet" | "regtest";
-  storageDir?: string;
   mnemonic: string;
   lnurlDomain?: string;
   claimLeewaySatPerVbyte?: number;
@@ -63,58 +72,67 @@ export interface BreezSparkConfig {
 
 export const usdbTicker = "USDB";
 
-export async function initBreez(config: BreezSparkConfig): Promise<void> {
-  if (isInitializing) return;
-  if (sdk && activeMnemonic === config.mnemonic) return;
-  if (sdk) await disconnectBreez();
+// Every caller must share one WASM instance: two concurrent inits give each
+// caller its own memory, and objects freed against the wrong one corrupt it.
+export function loadBreezModule(): Promise<BreezModule> {
+  modulePromise ??= (async () => {
+    const mod = await import("@breeztech/breez-sdk-spark/web");
+    if (typeof mod.default === "function") await mod.default();
+    return mod;
+  })().catch((error: unknown) => {
+    modulePromise = null;
+    throw error;
+  });
+  return modulePromise;
+}
 
-  isInitializing = true;
+function serialized<T>(task: () => Promise<T>): Promise<T> {
+  const run = lifecycle.then(task, task);
+  lifecycle = run.catch(() => undefined);
+  return run;
+}
 
-  try {
-    const apiKey = await getBreezApiKey();
+// The wallet store disconnects whenever the mnemonic changes or is dropped,
+// so a connected SDK always belongs to the unlocked wallet.
+export function initBreez(config: BreezSparkConfig): Promise<void> {
+  return serialized(async () => {
+    if (sdk) return;
+    await connectSdk(config);
+  });
+}
 
-    const breezSdkModule = await import("@breeztech/breez-sdk-spark/web");
-    if (
-      breezSdkModule.default &&
-      typeof breezSdkModule.default === "function"
-    ) {
-      await breezSdkModule.default();
-    }
+async function connectSdk(config: BreezSparkConfig): Promise<void> {
+  const apiKey = await getBreezApiKey();
+  const { defaultConfig, connect } = await loadBreezModule();
 
-    const { defaultConfig, connect } = breezSdkModule;
-
-    const sdkConfig = defaultConfig(config.network);
-    sdkConfig.apiKey = apiKey;
-    if (config.lnurlDomain) sdkConfig.lnurlDomain = config.lnurlDomain;
-    if (config.claimLeewaySatPerVbyte !== undefined) {
-      sdkConfig.maxDepositClaimFee = {
-        type: "networkRecommended",
-        leewaySatPerVbyte: config.claimLeewaySatPerVbyte,
-      };
-    }
-
-    sdkConfig.stableBalanceConfig = {
-      tokens: [{
-        label: usdbTicker,
-        tokenIdentifier: USDB_TOKEN_IDENTIFIER
-      }]
-    }
-
-    if (!config.mnemonic) {
-      throw new Error("Mnemonic is required to initialize the wallet");
-    }
-
-    sdk = await connect({
-      config: sdkConfig,
-      seed: { type: "mnemonic", mnemonic: config.mnemonic },
-      storageDir: config.storageDir ?? "scholar-wallet-data",
-    });
-    activeMnemonic = config.mnemonic;
-
-    await setupEventListener();
-  } finally {
-    isInitializing = false;
+  const sdkConfig = defaultConfig(config.network);
+  sdkConfig.apiKey = apiKey;
+  if (config.lnurlDomain) sdkConfig.lnurlDomain = config.lnurlDomain;
+  if (config.claimLeewaySatPerVbyte !== undefined) {
+    sdkConfig.maxDepositClaimFee = {
+      type: "networkRecommended",
+      leewaySatPerVbyte: config.claimLeewaySatPerVbyte,
+    };
   }
+
+  sdkConfig.stableBalanceConfig = {
+    tokens: [{
+      label: usdbTicker,
+      tokenIdentifier: USDB_TOKEN_IDENTIFIER
+    }]
+  }
+
+  if (!config.mnemonic) {
+    throw new Error("Mnemonic is required to initialize the wallet");
+  }
+
+  sdk = await connect({
+    config: sdkConfig,
+    seed: { type: "mnemonic", mnemonic: config.mnemonic },
+    storageDir: SDK_STORAGE_DIR,
+  });
+
+  await setupEventListener();
 }
 
 async function setupEventListener(): Promise<void> {
@@ -401,22 +419,30 @@ export async function prepareSend(
   });
 }
 
+// The idempotency key makes the SDK send at most once for one confirmed payment.
 export async function executeSend(
   prepareResponse: PrepareSendResult,
+  idempotencyKey: string,
 ): Promise<SendPaymentResponse> {
   if (!sdk) throw new Error("Wallet not ready.");
-  try {
-    return await sdk.sendPayment({ prepareResponse });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Send failed";
-    if (message.includes("insufficient")) {
-      throw new Error("Insufficient balance to complete payment");
-    } else if (message.includes("route")) {
-      throw new Error("Unable to find route to destination");
-    } else if (message.includes("timeout")) {
-      throw new Error("Payment timed out. Please try again.");
-    }
-    throw new Error(message);
+  return sdk.sendPayment({
+    prepareResponse,
+    options: sendOptions(prepareResponse),
+    idempotencyKey,
+  });
+}
+
+// Without options the SDK picks its own on-chain speed and pays BOLT11 over
+// Lightning, so the send wouldn't match the fee the user confirmed.
+function sendOptions(prepareResponse: PrepareSendResult): SendPaymentOptions | undefined {
+  const method = prepareResponse.paymentMethod;
+  switch (method.type) {
+    case "bitcoinAddress":
+      return { type: "bitcoinAddress", confirmationSpeed: ONCHAIN_SPEED };
+    case "bolt11Invoice":
+      return { type: "bolt11Invoice", preferSpark: method.sparkTransferFeeSats != null };
+    default:
+      return undefined;
   }
 }
 
@@ -437,9 +463,46 @@ export async function prepareLnurlPay(
 
 export async function executeLnurlPay(
   prepareResponse: PrepareLnurlPayResult,
+  idempotencyKey: string,
 ): Promise<LnurlPayResponse> {
   if (!sdk) throw new Error("Wallet not ready.");
-  return sdk.lnurlPay({ prepareResponse });
+  return sdk.lnurlPay({ prepareResponse, idempotencyKey });
+}
+
+// Lightning sends return while still pending; this waits for the payment's
+// outcome event, or gives up and reports it as still pending.
+export function waitForPaymentOutcome(
+  paymentId: string,
+  timeoutMs: number,
+): Promise<PaymentStatus> {
+  return new Promise((resolve) => {
+    let done = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let unsubscribe = () => {};
+    const finish = (status: PaymentStatus) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      unsubscribe();
+      resolve(status);
+    };
+    unsubscribe = onSdkEvent((event) => {
+      if (
+        (event.type === "paymentSucceeded" || event.type === "paymentFailed") &&
+        event.payment.id === paymentId
+      ) {
+        finish(event.payment.status);
+      }
+    });
+    timer = setTimeout(() => finish("pending"), timeoutMs);
+    // The outcome may have landed before the listener was added.
+    sdk
+      ?.getPayment({ paymentId })
+      .then(({ payment }) => {
+        if (payment.status !== "pending") finish(payment.status);
+      })
+      .catch(() => {});
+  });
 }
 
 export async function listUnclaimedDeposits(): Promise<DepositInfo[]> {
@@ -585,16 +648,52 @@ export async function buyBitcoin(
   return sdk.buyBitcoin(request);
 }
 
-export async function disconnectBreez(): Promise<void> {
-  if (sdk) {
+export function disconnectBreez(): Promise<void> {
+  return serialized(async () => {
+    const current = sdk;
+    if (!current) return;
+    sdk = null;
+    eventListenerId = null;
+    // A hung disconnect must not block the next unlock, which waits in line.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, DISCONNECT_TIMEOUT_MS);
+    });
     try {
-      await sdk.disconnect();
-      sdk = null;
-      eventListenerId = null;
-      activeMnemonic = null;
+      await Promise.race([current.disconnect(), timeout]);
     } catch (error) {
       console.error("Failed to disconnect Breez SDK:", error);
+    } finally {
+      clearTimeout(timer);
     }
-  }
+  });
 }
 
+const DELETE_DB_TIMEOUT_MS = 5_000;
+
+function deleteDatabase(name: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(name);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error ?? new Error(`Couldn't delete ${name}`));
+    // A connection the SDK left open delays the delete until it closes; the
+    // browser still finishes it, so don't hold the user on it.
+    request.onblocked = () => setTimeout(resolve, DELETE_DB_TIMEOUT_MS);
+  });
+}
+
+// Removes everything the SDK cached on this device: payment history, the
+// Lightning address and deposit addresses. Restoring the phrase rebuilds it
+// from the network.
+export async function deleteSdkStorage(): Promise<void> {
+  await disconnectBreez();
+  if (typeof indexedDB === "undefined" || !indexedDB.databases) {
+    console.warn("Can't list IndexedDB databases; the SDK's local data was left in place.");
+    return;
+  }
+  const prefix = `${SDK_STORAGE_DIR}/`;
+  const names = (await indexedDB.databases())
+    .map((db) => db.name)
+    .filter((name): name is string => !!name?.startsWith(prefix));
+  await Promise.all(names.map(deleteDatabase));
+}

@@ -6,7 +6,8 @@ export const useWalletData = (isReady: boolean) => {
   const { data: balances, isLoading: balanceLoading } = useBalance(isReady);
   const { data: payments = [], isLoading: paymentsLoading } =
     usePayments(isReady);
-  const { data: unclaimedDeposits = [] } = useUnclaimedDeposits(isReady);
+  const { data: unclaimedDeposits = [], dataUpdatedAt: depositsFetchedAt } =
+    useUnclaimedDeposits(isReady);
   const { refresh } = useRefreshBreez();
   const {
     rate: fiatRate,
@@ -17,7 +18,9 @@ export const useWalletData = (isReady: boolean) => {
     useToggleStableBalance();
   const { data: conversionLimits, isLoading: convertionLimitLoading } =
     useConversionLimits(isReady);
-  const rejectedDeposits = unclaimedDeposits.filter(isRejectedDeposit);
+  const rejectedDeposits = unclaimedDeposits.filter((d) =>
+    isRejectedDeposit(d, depositsFetchedAt),
+  );
   const { data: userSettings, isLoading: userSettingsLoading } =
     useUserSettings(isReady);
 

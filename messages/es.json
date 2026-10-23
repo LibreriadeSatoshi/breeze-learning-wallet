@@ -136,8 +136,7 @@
     "drive": {
       "blurbCiphertext": "Qué se guarda: tu frase de recuperación de 12 palabras, cifrada con la contraseña de tu billetera. Google ve un archivo ilegible. Sin tu contraseña, el archivo no se puede usar.",
       "blurbConvenience": "Tu frase escrita en papel sigue siendo la copia maestra. Drive solo te permite restaurar en otro dispositivo sin escribir las 12 palabras.",
-      "backup": "Hacer copia en Drive",
-      "failed": "No se pudo iniciar la copia en Google Drive"
+      "backup": "Hacer copia en Drive"
     }
   },
   "restore": {
@@ -155,8 +154,7 @@
       "drive": {
         "title": "Desde Google Drive",
         "subtitle": "Inicia sesión en tu cuenta de Google para descargar tu bóveda cifrada.",
-        "notConfigured": "No configurado para esta build.",
-        "startFailed": "No se pudo iniciar el inicio de sesión con Google Drive"
+        "notConfigured": "No configurado para esta build."
       }
     },
     "phrase": {
@@ -178,14 +176,17 @@
       "confirm": "Reemplazar billetera"
     }
   },
-  "driveCallback": {
-    "signingIn": "Finalizando inicio de sesión con Google…",
-    "uploading": "Subiendo copia cifrada…",
-    "downloading": "Descargando tu bóveda cifrada…",
-    "saving": "Guardando en este dispositivo…",
+  "drive": {
     "noBackup": "No se encontró ninguna copia en tu Google Drive. ¿Hiciste una copia desde esta app antes?",
     "noVault": "No hay billetera para respaldar.",
-    "operationFailed": "La operación de Drive falló."
+    "errors": {
+      "notConfigured": "La copia en Google Drive no está configurada en esta app.",
+      "denied": "No se concedió acceso a Google Drive.",
+      "popupClosed": "La ventana de Google se cerró antes de terminar.",
+      "popupBlocked": "Tu navegador bloqueó la ventana de Google. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
+      "unavailable": "No se pudo conectar con Google. Revisa tu conexión e inténtalo de nuevo.",
+      "failed": "Google Drive no completó la solicitud. Inténtalo de nuevo."
+    }
   },
   "home": {
     "title": "Mi billetera",
@@ -270,36 +271,52 @@
     "lnurlAmountRequired": "Introduce un monto para enviar a esta dirección Lightning",
     "lnurlRange": "Esta dirección Lightning acepta {{min}}–{{max}} sats",
     "insufficientBalance": "Saldo insuficiente. Puedes enviar hasta {{balance}} sats",
-    "parseFailed": "No se pudo interpretar el destino",
+    "parseFailed": "Ese no es un destino de pago que esta billetera pueda pagar.",
     "checking": "Verificando…",
     "youreSending": "Estás enviando",
     "details": "Detalles del pago",
     "type": "Tipo",
+    "to": "Para",
+    "memo": "Nota",
     "networkFee": "Tarifa de red",
     "total": "Total",
     "processing": "Procesando…",
     "confirmSend": "Confirmar y enviar pago",
     "sendingPayment": "Enviando pago…",
     "sent": "Pago enviado",
+    "pendingTitle": "Pago en camino",
+    "pendingBody": "Está tardando un poco en completarse. Aparecerá como completado en tu actividad, así que revísala antes de intentarlo de nuevo.",
     "backToWallet": "Volver a la billetera",
     "failed": "Pago fallido",
+    "notDelivered": "No se pudo entregar el pago.",
     "selfPayment": "No puedes pagarte a ti mismo. Usa otro destino.",
     "genericError": "Algo salió mal. Intenta de nuevo.",
+    "errors": {
+      "wrongNetwork": "Este destino es de una red Bitcoin distinta a la de esta billetera.",
+      "offline": "No se pudo conectar a la red. Revisa tu conexión e inténtalo de nuevo.",
+      "insufficientFunds": "No tienes saldo suficiente para cubrir el monto y las tarifas.",
+      "amountRequired": "Ingresa un monto para enviar a este destino.",
+      "expired": "Este invoice venció. Pídele uno nuevo al destinatario.",
+      "amountOutOfRange": "Este monto está fuera de lo que acepta el destino.",
+      "noRoute": "No se encontró una forma de llegar al destinatario. Inténtalo más tarde o usa otro destino.",
+      "timeout": "El pago está tardando más de lo esperado. Revisa tu actividad antes de intentarlo de nuevo.",
+      "lnurl": "El servicio de la dirección Lightning del destinatario devolvió un error. Inténtalo más tarde."
+    },
     "tryAgain": "Reintentar",
     "destinationKind": {
       "bolt11": "Invoice Lightning",
-      "bolt12": "Oferta BOLT12",
       "bitcoinAddress": "Dirección Bitcoin",
       "sparkAddress": "Dirección Spark",
       "sparkInvoice": "Invoice Spark",
-      "bip21": "Solicitud de pago BIP21",
       "lnurlPay": "Dirección Lightning ({{domain}})"
     },
     "unsupported": {
       "lnurlAuth": "LNURL-auth es para iniciar sesión, no para pagar. Úsalo en otro lado.",
       "lnurlWithdraw": "LNURL-withdraw es para recibir, no para enviar.",
       "url": "Eso parece un enlace web, no un destino de pago.",
-      "silentPayment": "Las direcciones silent payment aún no están soportadas."
+      "silentPayment": "Las direcciones silent payment aún no están soportadas.",
+      "bip21": "Este enlace de pago no tiene ningún método de pago que esta billetera admita.",
+      "bolt12": "Esta billetera todavía no puede pagar ofertas BOLT12."
     },
     "contacts": {
       "title": "Contactos",
@@ -345,6 +362,7 @@
     "lightning": {
       "settingUp": "Configurando tu dirección Lightning…",
       "setupFailed": "No se pudo configurar la dirección Lightning",
+      "loadFailed": "No se pudo cargar tu dirección Lightning",
       "addressTitle": "Tu dirección Lightning",
       "addressSubtitle": "Compártela con cualquiera que quiera pagarte por Lightning.",
       "editUsername": "Editar"
@@ -422,13 +440,10 @@
       "title": "Copia en Google Drive",
       "subtitle": "Guarda una copia cifrada de tu billetera en tu propio Google Drive (carpeta oculta de la app). Tu frase de recuperación sigue siendo la copia maestra.",
       "connect": "Conectar Google Drive",
-      "connectStartFailed": "No se pudo iniciar el inicio de sesión con Google Drive",
-      "backupStartFailed": "No se pudo iniciar la copia",
       "account": "Cuenta",
       "lastBackup": "Última copia",
       "backupNow": "Copiar ahora",
       "disconnect": "Desconectar",
-      "disconnectFailed": "No se pudo desconectar",
       "disconnectConfirmTitle": "¿Desconectar y borrar la copia?",
       "disconnectConfirmDescription": "Esto elimina el archivo cifrado de tu Google Drive. Para restaurar en otro dispositivo vas a necesitar tu frase de recuperación, no Google Drive.",
       "disconnectWarning": "La billetera en este dispositivo no se ve afectada. Solo se borra la copia de Drive.",
@@ -454,7 +469,8 @@
       "title": "Auto-reclamo de depósitos",
       "subtitle": "Los depósitos on-chain se reclaman automáticamente cuando la tarifa de red es como máximo recomendada + margen sat/vB. Más margen significa que más reclamos tienen éxito pero puedes pagar de más en períodos calmos.",
       "label": "Margen (sat/vB)",
-      "helper": "Por defecto {{default}}. Tiene efecto luego del próximo reinicio de la billetera.",
+      "helper": "Por defecto {{default}}. Se aplica la próxima vez que desbloquees la billetera.",
+      "invalid": "Ingresa un número entero de 0 a {{max}}.",
       "saved": "Guardado"
     },
     "dangerZone": {

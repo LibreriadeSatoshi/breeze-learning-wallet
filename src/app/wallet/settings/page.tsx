@@ -30,17 +30,23 @@ import {
   getClaimLeeway,
   setClaimLeeway,
   DEFAULT_CLAIM_LEEWAY,
+  MAX_CLAIM_LEEWAY,
+  parseClaimLeeway,
   getSelectedCurrency,
   setSelectedCurrency,
 } from "@/lib/wallet/prefs";
 import {
-  startDriveAuthFlow,
-  disconnect as disconnectDrive,
-  isDriveConnected,
-  isDriveBackupConfigured,
-  getLastSyncIso,
+  deleteBackupAndDisconnect,
+  driveErrorKey,
+  getDriveToken,
   getDriveEmail,
+  getLastSyncIso,
+  isDriveBackupConfigured,
+  isDriveConnected,
+  preloadDriveAuth,
+  uploadVault,
 } from "@/lib/backup/drive-client";
+import { loadVault } from "@/lib/storage/vault-storage";
 import { useT } from "@/lib/i18n/hook";
 import { useCopy } from "@/hooks/use-copy";
 import { useFormatRelativeTime } from "@/lib/wallet/relative-time";
@@ -244,44 +250,47 @@ function DriveBackupSection() {
   const [error, setError] = useState("");
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
-  useEffect(() => {
+  const syncFromStorage = () => {
     setConnected(isDriveConnected());
     setLastSync(getLastSyncIso());
     setEmail(getDriveEmail());
-  }, []);
-
-  const handleConnect = () => {
-    setError("");
-    setBusy(true);
-    try {
-      startDriveAuthFlow({ type: "connect", returnTo: "/wallet/settings" });
-    } catch (e) {
-      setBusy(false);
-      setError(e instanceof Error ? e.message : t("settings.driveBackup.connectStartFailed"));
-    }
   };
 
-  const handleBackupNow = () => {
+  useEffect(() => {
+    syncFromStorage();
+    preloadDriveAuth();
+  }, []);
+
+  // Each handler asks for the token before any other await, so Google's
+  // window opens within the click.
+  const handleBackup = async () => {
     setError("");
     setBusy(true);
     try {
-      startDriveAuthFlow({ type: "backup", returnTo: "/wallet/settings" });
+      const token = await getDriveToken();
+      const blob = await loadVault();
+      if (!blob) {
+        setError(t("drive.noVault"));
+        return;
+      }
+      await uploadVault(token, blob);
+      syncFromStorage();
     } catch (e) {
+      setError(t(driveErrorKey(e)));
+    } finally {
       setBusy(false);
-      setError(e instanceof Error ? e.message : t("settings.driveBackup.backupStartFailed"));
     }
   };
 
   const handleDisconnect = async () => {
-    setBusy(true);
     setError("");
+    setBusy(true);
     try {
-      await disconnectDrive();
-      setConnected(false);
-      setLastSync(null);
-      setEmail(null);
+      const token = await getDriveToken();
+      await deleteBackupAndDisconnect(token);
+      syncFromStorage();
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("settings.driveBackup.disconnectFailed"));
+      setError(t(driveErrorKey(e)));
     } finally {
       setBusy(false);
     }
@@ -292,7 +301,7 @@ function DriveBackupSection() {
       <div className="space-y-3">
         <Button
           variant="primary"
-          onClick={handleConnect}
+          onClick={() => void handleBackup()}
           loading={busy}
           disabled={busy}
           className="w-full"
@@ -323,7 +332,7 @@ function DriveBackupSection() {
       <div className="grid grid-cols-2 gap-3">
         <Button
           variant="primary"
-          onClick={handleBackupNow}
+          onClick={() => void handleBackup()}
           loading={busy}
           disabled={busy}
         >
@@ -450,19 +459,22 @@ function CurrencyPickerSection() {
 
 function ClaimLeewaySection() {
   const t = useT();
-  const [value, setValue] = useState(() => String(getClaimLeeway()));
+  const [savedValue, setSavedValue] = useState(() => getClaimLeeway());
+  const [value, setValue] = useState(() => String(savedValue));
   const [saved, setSaved] = useState(false);
 
+  const parsed = parseClaimLeeway(value);
+  const invalid = parsed === null && value.trim() !== "";
+  const dirty = parsed !== null && parsed !== savedValue;
+
   const handleSave = () => {
-    const n = parseInt(value, 10);
-    if (isNaN(n) || n < 0) return;
-    setClaimLeeway(n);
+    if (parsed === null) return;
+    setClaimLeeway(parsed);
+    setSavedValue(parsed);
+    setValue(String(parsed));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
-
-  const dirty = value.trim() !== String(getClaimLeeway());
-  const invalid = value.trim() === "" || isNaN(parseInt(value, 10));
 
   return (
     <div className="space-y-3">
@@ -470,16 +482,17 @@ function ClaimLeewaySection() {
         label={t("settings.claimLeeway.label")}
         value={value}
         onChange={(e) => {
-          setValue(e.target.value.replace(/[^0-9]/g, ""));
+          setValue(e.target.value);
           setSaved(false);
         }}
         inputMode="numeric"
+        error={invalid ? t("settings.claimLeeway.invalid", { max: MAX_CLAIM_LEEWAY }) : undefined}
         helperText={t("settings.claimLeeway.helper", { default: DEFAULT_CLAIM_LEEWAY })}
       />
       <Button
         variant="primary"
         onClick={handleSave}
-        disabled={!dirty || invalid}
+        disabled={!dirty}
         className="w-full"
       >
         {saved ? t("settings.claimLeeway.saved") : t("common.save")}

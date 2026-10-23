@@ -136,8 +136,7 @@
     "drive": {
       "blurbCiphertext": "What gets saved: your 12-word recovery phrase, encrypted with your wallet password. Google sees an unreadable file. Without your password, the file can't be used.",
       "blurbConvenience": "Your written-down phrase is still the master backup. Drive just lets you restore on another device without typing the 12 words.",
-      "backup": "Back up to Google Drive",
-      "failed": "Failed to start Google Drive backup"
+      "backup": "Back up to Google Drive"
     }
   },
   "restore": {
@@ -155,8 +154,7 @@
       "drive": {
         "title": "From Google Drive",
         "subtitle": "Sign in to your Google account to download your encrypted vault.",
-        "notConfigured": "Not configured for this build.",
-        "startFailed": "Failed to start Google Drive sign-in"
+        "notConfigured": "Not configured for this build."
       }
     },
     "phrase": {
@@ -178,14 +176,17 @@
       "confirm": "Replace wallet"
     }
   },
-  "driveCallback": {
-    "signingIn": "Finishing Google sign-in…",
-    "uploading": "Uploading encrypted backup…",
-    "downloading": "Downloading your encrypted vault…",
-    "saving": "Saving to this device…",
+  "drive": {
     "noBackup": "No backup found in your Google Drive. Did you back up from this app before?",
     "noVault": "No wallet to back up.",
-    "operationFailed": "Drive operation failed."
+    "errors": {
+      "notConfigured": "Google Drive backup isn't set up for this app.",
+      "denied": "Google Drive access wasn't granted.",
+      "popupClosed": "The Google window was closed before finishing.",
+      "popupBlocked": "Your browser blocked the Google window. Allow pop-ups for this site and try again.",
+      "unavailable": "Couldn't reach Google. Check your connection and try again.",
+      "failed": "Google Drive didn't complete the request. Try again."
+    }
   },
   "home": {
     "title": "My wallet",
@@ -270,36 +271,52 @@
     "lnurlAmountRequired": "Enter an amount to send to this Lightning address",
     "lnurlRange": "This Lightning address accepts {{min}}–{{max}} sats",
     "insufficientBalance": "Insufficient balance. You can send up to {{balance}} sats",
-    "parseFailed": "Could not parse destination",
+    "parseFailed": "That isn't a payment destination this wallet can pay.",
     "checking": "Checking…",
     "youreSending": "You're sending",
     "details": "Payment details",
     "type": "Type",
+    "to": "To",
+    "memo": "Note",
     "networkFee": "Network fee",
     "total": "Total",
     "processing": "Processing…",
     "confirmSend": "Confirm & send payment",
     "sendingPayment": "Sending payment…",
     "sent": "Payment sent",
+    "pendingTitle": "Payment on its way",
+    "pendingBody": "It's taking a moment to settle. It will show as complete in your activity, so check there before trying again.",
     "backToWallet": "Back to wallet",
     "failed": "Payment failed",
+    "notDelivered": "The payment couldn't be delivered.",
     "selfPayment": "You can't pay yourself. Use a different destination.",
     "genericError": "Something went wrong. Please try again.",
+    "errors": {
+      "wrongNetwork": "This destination is on a different Bitcoin network than this wallet.",
+      "offline": "Couldn't reach the network. Check your connection and try again.",
+      "insufficientFunds": "Not enough balance to cover the amount and fees.",
+      "amountRequired": "Enter an amount to send to this destination.",
+      "expired": "This invoice has expired. Ask the recipient for a new one.",
+      "amountOutOfRange": "This amount is outside what the destination accepts.",
+      "noRoute": "Couldn't find a way to reach the recipient. Try again later or use another destination.",
+      "timeout": "The payment is taking longer than expected. Check your activity before trying again.",
+      "lnurl": "The recipient's Lightning address service returned an error. Try again later."
+    },
     "tryAgain": "Try again",
     "destinationKind": {
       "bolt11": "Lightning invoice",
-      "bolt12": "BOLT12 offer",
       "bitcoinAddress": "Bitcoin address",
       "sparkAddress": "Spark address",
       "sparkInvoice": "Spark invoice",
-      "bip21": "BIP21 payment request",
       "lnurlPay": "Lightning address ({{domain}})"
     },
     "unsupported": {
       "lnurlAuth": "LNURL-auth is for logging in, not paying. Use it elsewhere.",
       "lnurlWithdraw": "LNURL-withdraw is for receiving, not sending.",
       "url": "That looks like a web link, not a payment destination.",
-      "silentPayment": "Silent payment addresses aren't supported yet."
+      "silentPayment": "Silent payment addresses aren't supported yet.",
+      "bip21": "This payment link has no payment method this wallet supports.",
+      "bolt12": "BOLT12 offers can't be paid from this wallet yet."
     },
     "contacts": {
       "title": "Contacts",
@@ -345,6 +362,7 @@
     "lightning": {
       "settingUp": "Setting up your Lightning address…",
       "setupFailed": "Couldn't set up Lightning address",
+      "loadFailed": "Couldn't load your Lightning address",
       "addressTitle": "Your Lightning address",
       "addressSubtitle": "Share this with anyone who wants to pay you over Lightning.",
       "editUsername": "Edit username"
@@ -422,13 +440,10 @@
       "title": "Google Drive backup",
       "subtitle": "Stores an encrypted copy of your wallet in your own Google Drive (hidden app folder). Your recovery phrase is still the master backup.",
       "connect": "Connect Google Drive",
-      "connectStartFailed": "Failed to start Google Drive sign-in",
-      "backupStartFailed": "Failed to start backup",
       "account": "Account",
       "lastBackup": "Last backed up",
       "backupNow": "Back up now",
       "disconnect": "Disconnect",
-      "disconnectFailed": "Failed to disconnect",
       "disconnectConfirmTitle": "Disconnect and delete the backup?",
       "disconnectConfirmDescription": "This removes the encrypted file from your Google Drive. To restore on another device you'll need your recovery phrase, not Google Drive.",
       "disconnectWarning": "The wallet on this device is not affected. Only the Drive copy is deleted.",
@@ -454,7 +469,8 @@
       "title": "Auto-claim deposits",
       "subtitle": "On-chain deposits are claimed automatically when the network fee rate is at most recommended + leeway sat/vB. Higher leeway means more claims succeed but you may overpay during quiet periods.",
       "label": "Leeway (sat/vB)",
-      "helper": "Default {{default}}. Takes effect after the next wallet restart.",
+      "helper": "Default {{default}}. Takes effect the next time you unlock the wallet.",
+      "invalid": "Enter a whole number from 0 to {{max}}.",
       "saved": "Saved"
     },
     "dangerZone": {
