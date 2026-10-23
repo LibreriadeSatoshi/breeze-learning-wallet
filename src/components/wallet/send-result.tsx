@@ -33,19 +33,24 @@ export function SendProcessing() {
 
 export function SendSuccess({
   amountSat,
+  pending = false,
   onDone,
 }: {
   readonly amountSat: number;
+  readonly pending?: boolean;
   readonly onDone: () => void;
 }) {
   const t = useT();
   return (
     <ResultScreen>
-      <StatusNote status="success" className="mb-6">
-        <h2 className="font-serif text-h2 text-heading">{t("send.sent")}</h2>
+      <StatusNote status={pending ? "info" : "success"} className="mb-6">
+        <h2 className="font-serif text-h2 text-heading">
+          {pending ? t("send.pendingTitle") : t("send.sent")}
+        </h2>
         <p className="mt-2 font-mono text-h3 tabular-nums text-fg">
           {amountSat.toLocaleString()} {t("send.sats")}
         </p>
+        {pending && <p className="mt-2 text-body-sm text-fg">{t("send.pendingBody")}</p>}
       </StatusNote>
       <Button variant="primary" size="lg" onClick={onDone} className="w-full">
         {t("send.backToWallet")}

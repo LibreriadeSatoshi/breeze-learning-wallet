@@ -202,8 +202,13 @@ export function usePrepareSend() {
 export function useExecuteSend() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (prepareResponse: PrepareSendResult) =>
-      executeSend(prepareResponse),
+    mutationFn: async ({
+      prepareResponse,
+      idempotencyKey,
+    }: {
+      prepareResponse: PrepareSendResult;
+      idempotencyKey: string;
+    }) => executeSend(prepareResponse, idempotencyKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.balance() });
       queryClient.invalidateQueries({ queryKey: breezKeys.payments() });
@@ -266,8 +271,13 @@ export function usePrepareLnurlPay() {
 export function useExecuteLnurlPay() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (prepareResponse: PrepareLnurlPayResult) =>
-      executeLnurlPay(prepareResponse),
+    mutationFn: async ({
+      prepareResponse,
+      idempotencyKey,
+    }: {
+      prepareResponse: PrepareLnurlPayResult;
+      idempotencyKey: string;
+    }) => executeLnurlPay(prepareResponse, idempotencyKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: breezKeys.balance() });
       queryClient.invalidateQueries({ queryKey: breezKeys.payments() });

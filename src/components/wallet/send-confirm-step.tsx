@@ -10,9 +10,11 @@ import { DEFAULT_FIAT_CURRENCY } from "@/lib/wallet/prefs";
 import {
   type PrepareResult,
   describeDestination,
+  describeRecipient,
   readAmountSat,
   readFeeSat,
 } from "@/lib/wallet/send-helpers";
+import { truncateStr } from "@/lib/wallet/truncate-str";
 
 export function SendConfirmStep({
   prepareResult,
@@ -33,6 +35,10 @@ export function SendConfirmStep({
   const amountSat = readAmountSat(prepareResult) ?? 0;
   const feesSat = readFeeSat(prepareResult);
   const destLabel = describeDestination(prepareResult, t);
+  const recipient = describeRecipient(prepareResult);
+  // Lightning addresses are read whole; long machine strings keep both ends to compare.
+  const isLightningAddress = recipient.to.includes("@");
+  const shownRecipient = isLightningAddress ? recipient.to : truncateStr(recipient.to, 10, 8);
 
   return (
     <div>
@@ -74,6 +80,21 @@ export function SendConfirmStep({
               <span className="text-fg-muted">{t("send.type")}</span>
               <span className="text-right text-fg">{destLabel}</span>
             </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-fg-muted">{t("send.to")}</span>
+              <span
+                title={recipient.to}
+                className={`min-w-0 text-right font-mono text-fg ${isLightningAddress ? "break-all" : "whitespace-nowrap"}`}
+              >
+                {shownRecipient}
+              </span>
+            </div>
+            {recipient.memo && (
+              <div className="flex justify-between gap-4">
+                <span className="text-fg-muted">{t("send.memo")}</span>
+                <span className="min-w-0 break-words text-right text-fg">{recipient.memo}</span>
+              </div>
+            )}
             <div className="flex justify-between gap-4">
               <span className="text-fg-muted">{t("send.networkFee")}</span>
               <span className="font-mono tabular-nums text-fg">{feesSat.toLocaleString()} {t("send.sats")}</span>

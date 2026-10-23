@@ -22,6 +22,7 @@ describe("Receive page", () => {
     const retry = await screen.findByRole("button", { name: /try again/i });
     expect(screen.getByText(/LNURL server is not configured/)).toBeVisible();
     expect(registerLightningAddress).toHaveBeenCalledTimes(3);
+    expect(screen.getByText(/create a one-time invoice/i)).toBeVisible();
 
     await user.click(retry);
     await screen.findByRole("button", { name: /try again/i });
@@ -34,5 +35,6 @@ describe("Receive page", () => {
 
     expect(await screen.findByText(/couldn't load your lightning address/i)).toBeVisible();
     expect(registerLightningAddress).not.toHaveBeenCalled();
+    expect(screen.getByText(/create a one-time invoice/i)).toBeVisible();
   });
 });

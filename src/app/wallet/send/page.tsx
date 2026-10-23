@@ -25,6 +25,7 @@ export default function SendPage() {
     inputValue,
     isSats,
     prepareResult,
+    isPending,
     error,
     contact,
     showContactsModal,
@@ -199,6 +200,7 @@ export default function SendPage() {
     return (
       <SendSuccess
         amountSat={prepareResult ? readAmountSat(prepareResult) ?? 0 : 0}
+        pending={isPending}
         onDone={goHome}
       />
     );
